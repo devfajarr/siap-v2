@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+
+class WhatsappService
+{
+    public static function kirim($nomor, $pesan)
+    {
+        $apiUrl = env('WA_API_URL');
+        $apiKey = env('WA_API_KEY', 'dhimas'); // Default key sesuai server Anda
+
+        $nomor = self::formatNomor($nomor);
+
+        $response = Http::withHeaders([
+            'x-api-key' => $apiKey,
+            'Content-Type' => 'application/json',
+        ])->post($apiUrl, [
+            'number'  => $nomor,
+            'message' => $pesan,
+        ]);
+
+        return $response->successful();
+    }
+
+    public static function kirimDenganFile($nomor, $pesan, $filePath = null)
+    {
+        $apiUrl = env('WA_API_URL');
+        $apiKey = env('WA_API_KEY', 'dhimas');
+
+        $nomor = self::formatNomor($nomor);
+
+        $request = Http::withHeaders([
+            'x-api-key' => $apiKey,
+        ]);
+
+        if ($filePath && file_exists($filePath)) {
+            $response = $request->attach(
+                'file',
+                file_get_contents($filePath),
+                basename($filePath)
+            )->post($apiUrl, [
+                'number'  => $nomor,
+                'message' => $pesan,
+            ]);
+        } else {
+            $response = $request->post($apiUrl, [
+                'number'  => $nomor,
+                'message' => $pesan,
+            ]);
+        }
+
+        return $response->successful();
+    }
+
+    private static function formatNomor($nomor)
+    {
+        $nomor = preg_replace('/[^0-9]/', '', $nomor);
+
+        if (substr($nomor, 0, 1) === '0') {
+            return '62' . substr($nomor, 1);
+        }
+
+        if (substr($nomor, 0, 2) === '62') {
+            return $nomor;
+        }
+
+        return '62' . $nomor;
+    }
+}
