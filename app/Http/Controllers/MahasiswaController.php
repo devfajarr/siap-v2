@@ -185,6 +185,7 @@ class MahasiswaController extends Controller
             $updateData['is_first_login'] = true;
         }
 
+
         $mahasiswa->update($updateData);
 
         return response()->json(['success' => 'Data mahasiswa berhasil diperbarui'], 200);

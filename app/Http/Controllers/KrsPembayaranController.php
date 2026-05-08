@@ -15,10 +15,11 @@ use App\Models\Pembayaran;
 use Illuminate\Http\Request;
 use App\Exports\AllKrsExport;
 use App\Models\TahunAkademik;
+use App\Services\WhatsappService;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Notifications\KRSNotification;
 use Illuminate\Support\Facades\Session;
 use App\Notifications\PembayaranNotification;
-use Maatwebsite\Excel\Facades\Excel;
 
 class KrsPembayaranController extends Controller
 {
@@ -237,6 +238,14 @@ class KrsPembayaranController extends Controller
             $krs->setuju_mahasiswa = $request->setuju_mahasiswa;
             $krs->save();
             $dosen->notify(new KRSNotification($krs));
+            if (!empty($dosen->no_telephone)) {
+                $pesanDosen = "?? *Pengajuan KRS Baru*\n\n"
+                    . "Nama : *{$krs->mahasiswa->nama_lengkap}*\n"
+                    . "Kelas : {$krs->kelas->nama_kelas}\n"
+                    . "Prodi : {$krs->prodi->nama_prodi}\n\n"
+                    . "Harap *periksa & verifikasi* KRS di sistem.";
+                WhatsappService::kirim($dosen->no_telephone, $pesanDosen);
+            }
         }
         if ($request->setuju_pa) {
             $krs->setuju_pa = $request->setuju_pa;
@@ -248,8 +257,23 @@ class KrsPembayaranController extends Controller
             $mahasiswa->status_krs = true;
             $mahasiswa->save();
             $mahasiswa->notify(new KRSNotification($krs));
+            if (!empty($mahasiswa->no_telephone)) {
+                $pesanMhs = "*KRS Berhasil Diverifikasi*\n\n"
+                    . "Nama : *{$krs->mahasiswa->nama_lengkap}*\n"
+                    . "Kelas : {$krs->kelas->nama_kelas}\n"
+                    . "Prodi : {$krs->prodi->nama_prodi}\n\n"
+                    . "KRS kamu sudah *disetujui*. Silakan cek status di sistem.";
+                WhatsappService::kirim($mahasiswa->no_telephone, $pesanMhs);
+            }
             foreach ($admin as $adm) {
                 $adm->notify(new KRSNotification($krs));
+                if (!empty($adm->no_telephone)) {
+                    $pesanAdm = "*KRS Diverifikasi*\n\n"
+                        . "{$krs->mahasiswa->nama_lengkap}\n"
+                        . "{$krs->kelas->nama_kelas} • {$krs->prodi->nama_prodi}\n"
+                        . "Status: *Disetujui*";
+                    WhatsappService::kirim($adm->no_telephone, $pesanAdm);
+                }
             }
         }
         if ($request->setuju_mahasiswa) {

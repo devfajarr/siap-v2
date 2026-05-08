@@ -80,6 +80,62 @@
             text-align: left !important;
             padding-left: 10px;
         }
+
+        @keyframes pulse-ring {
+            0% {
+                opacity: 0.0;
+                transform: scale(0.95);
+            }
+
+            50% {
+                opacity: 1.0;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0.0;
+                transform: scale(1.05);
+            }
+        }
+
+        /* kelas yang memunculkan ring mengelilingi area checkbox */
+        #pembinaWrap.focus-pulse::after {
+            content: '';
+            position: absolute;
+            /* geser ring supaya mengelilingi checkbox */
+            left: -10px;
+            top: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid #ffc107;
+            /* kuning */
+            border-radius: 8px;
+            box-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+            animation: pulse-ring 1s ease-in-out 4;
+            /* kedip 4x */
+            pointer-events: none;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 10px 5px rgba(255, 193, 7, 0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+            }
+        }
+
+        .checkbox-highlight {
+            animation: pulse-ring 1s ease-in-out 4;
+            /* kedip 4x */
+            border: 2px solid #ffc107;
+            border-radius: 4px;
+        }
     </style>
     <div class="main-panel">
         <div class="content-wrapper">
@@ -218,7 +274,8 @@
                                     </tr>
                                     <tr>
                                         <td style="text-align: center; padding-bottom: 50px; position: relative">
-                                            <div style="position: absolute; left: 20%; transform: translateX(-50%);">
+                                            <div id="pembinaWrap"
+                                                style="position: absolute; left: 20%; transform: translateX(-50%);">
                                                 <form id="pembinaForm"
                                                     action="/presensi/krs/diajukan/{{ $krs->id }}/update"
                                                     method="POST">
@@ -233,6 +290,7 @@
                                                 </form>
                                             </div>
                                         </td>
+
                                         <td></td>
                                         <td style="text-align: center; padding-bottom: 30px; position: relative">
                                             <div>
@@ -282,6 +340,26 @@
                         Swal.fire('Verifikasi dibatalkan', '', 'error');
                     }
                 });
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('pembinaCheckbox');
+            if (!checkbox) return;
+
+            // hanya scroll & highlight kalau checkbox masih aktif (belum disetujui)
+            if (!checkbox.disabled) {
+                // scroll ke checkbox dengan animasi
+                checkbox.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                // tunggu sedikit setelah scroll selesai, lalu highlight
+                setTimeout(() => {
+                    checkbox.classList.add('checkbox-highlight');
+                    setTimeout(() => checkbox.classList.remove('checkbox-highlight'), 4000);
+                }, 800); // 800ms cukup supaya scroll selesai dulu
             }
         });
     </script>

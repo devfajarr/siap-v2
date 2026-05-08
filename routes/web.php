@@ -46,6 +46,7 @@ use App\Http\Controllers\InformasiLandingPageController;
 use App\Http\Controllers\PengajuanRekapBeritaController;
 use App\Http\Controllers\PengajuanRekapkontrakController;
 use App\Http\Controllers\PengajuanRekapPresensiController;
+use App\Models\Mahasiswa;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,8 +71,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/first-login', [AuthController::class, 'processFirstLogin'])
     ->name('first.login')->middleware(['auth:admin,direktur,wakil_direktur,kaprodi,mahasiswa,dosen']);
 Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware(['auth:admin,direktur,wakil_direktur,kaprodi,mahasiswa,dosen'])->name('change.password');
-
-
 
 Route::prefix('/presensi')->group(function () {
     // DASHBOARD

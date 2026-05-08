@@ -97,7 +97,7 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $jadwal->matkul->nama_matkul }}</td>
-                                                <td>{{ $jadwal->dosen->nama }}</td>
+                                                <td>{{ $jadwal->dosen->nama ?? '#' }}</td>
                                                 <td>{{ $jadwal->ruangan->nama }}</td>
                                                 <td>{{ $jadwal->kelas->nama_kelas }}</td>
                                                 <td>{{ $jadwal->hari }}</td>
@@ -107,7 +107,7 @@
                                                     <button class="btn btn-primary btn-sm editButton"
                                                         data-id="{{ $jadwal->id }}"
                                                         data-matkul="{{ $jadwal->matkul->id }}"
-                                                        data-dosen="{{ $jadwal->dosen->id }}"
+                                                        data-dosen="{{ $jadwal->dosen->id ?? '#' }}"
                                                         data-kelas="{{ $jadwal->kelas_id }}"
                                                         data-semester="{{ $jadwal->kelas->id_semester }}"
                                                         data-prodi="{{ $jadwal->kelas->id_prodi }}"
@@ -967,8 +967,6 @@
                 $('#search').val('');
                 applyFilters();
             });
-
-            applyFilters();
         });
     </script>
 @endsection

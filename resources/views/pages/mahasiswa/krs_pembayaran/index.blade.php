@@ -84,10 +84,22 @@
                                                         <span id="statusKRS">Pembayaran Belum Lunas, Segera Hubungi
                                                             Akademik</span>
                                                     </div>
-                                                @elseif ($pembayaran->status_pembayaran == 1 && $pembayaran->keterangan == 'Sudah' && $cekStatusKrs == 0 || $cekStatusKrs == 1)
+                                                @elseif (
+                                                    ($pembayaran->status_pembayaran == 1 && $pembayaran->keterangan == 'Sudah' && $cekStatusKrs == 0) ||
+                                                        $cekStatusKrs == 1)
                                                     <div class="alert alert-success mt-2" role="alert">
-                                                        <span id="statusKRS">Pembayaran Diverifikasi, Segera Ajukan
-                                                            KRS</span>
+                                                        <span id="statusKRS">
+                                                            Pembayaran Diverifikasi,
+                                                            @if ($cekStatusKrs == 0)
+                                                                <a href="#ajukanKRSSection"
+                                                                    class="fw-bold text-decoration-underline"
+                                                                    onclick="highlightAjukanKRS()">klik di sini</a>
+                                                                untuk mengajukan KRS
+                                                            @else
+                                                                KRS sudah diajukan
+                                                            @endif
+
+                                                        </span>
                                                     </div>
                                                 @elseif ($pembayaran->status_pembayaran == 0 && $pembayaran->keterangan == null)
                                                     <div class="btn btn-warning btn-sm mt-2">
@@ -183,6 +195,11 @@
                                         }
                                     }
 
+                                    .highlight-anim {
+                                        background-color: #fff3cd;
+                                        transition: background-color 0.5s ease;
+                                    }
+
                                     .custom-table {
                                         border: 1px solid black;
                                         border-collapse: collapse;
@@ -220,7 +237,8 @@
                                     }
                                 </style>
                                 <div style="display: flex; align-items: center; margin-top:40px">
-                                    <img src="{{ asset('images/logomini2.png') }}" alt="polsa" width="55px" class="mb-3">
+                                    <img src="{{ asset('images/logomini2.png') }}" alt="polsa" width="55px"
+                                        class="mb-3">
                                     <div style="margin-left: 10px;">
                                         <h3 class="fw-bold">POLITEKNIK SAWUNGGALIH AJI</h3>
                                         <h5 class="fw-bold">KARTU RENCANA STUDI</h5>
@@ -359,30 +377,42 @@
                                                         method="POST">
                                                         @method('PUT')
                                                         @csrf
-                                                        <input type="checkbox" id="pembinaCheckbox"
+                                                        <input type="checkbox" class="form-check-input" id="pembinaCheckbox"
                                                             {{ $krs->setuju_pa == 1 ? 'checked' : '' }} disabled>
                                                     </form>
                                                 </div>
                                             </td>
                                             <td></td>
-                                            <td style="text-align: center; position: relative; padding-bottom: 30px;">
+                                            <td id="ajukanKRSSection"
+                                                style="text-align: center; position: relative; padding-bottom: 30px;">
                                                 <div>
-                                                    <form id="mahasiswaForm"
-                                                        action="/presensi/mahasiswa/krs/{{ $krs->id }}/update"
-                                                        method="POST">
-                                                        @method('PUT')
-                                                        @csrf
-                                                        <input type="hidden" name="setuju_mahasiswa" value="1">
-                                                        <input type="checkbox" id="mahasiswaCheckbox"
-                                                            {{ $krs->setuju_mahasiswa == 1 ? 'checked' : '' }}
-                                                            @if ($krs->setuju_mahasiswa == 1) disabled @endif>
-                                                    </form>
+                                                    @if ($krs->mahasiswa->pembimbingAkademik == null)
+                                                        <div class="alert alert-danger mt-2">
+                                                            <strong>Perhatian:</strong> Anda belum memiliki dosen pembimbing
+                                                            akademik.
+                                                            Silakan hubungi pihak akademik terlebih dahulu.
+                                                        </div>
+                                                    @else
+                                                        <form id="mahasiswaForm"
+                                                            action="/presensi/mahasiswa/krs/{{ $krs->id }}/update"
+                                                            method="POST">
+                                                            @method('PUT')
+                                                            @csrf
+                                                            <input type="hidden" name="setuju_mahasiswa" value="1">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                id="mahasiswaCheckbox"
+                                                                {{ $krs->setuju_mahasiswa == 1 ? 'checked' : '' }}
+                                                                @if ($krs->setuju_mahasiswa == 1) disabled @endif>
+
+                                                        </form>
+                                                    @endif
                                                 </div>
                                             </td>
+
                                         </tr>
                                         <tr>
                                             <td style="text-align: left; padding-right: 20px;">
-                                                {{ $krs->mahasiswa->pembimbingAkademik->nama }}
+                                                {{ $krs->mahasiswa->pembimbingAkademik->nama ?? 'Dosen Pembimbing Akademik' }}
                                             </td>
                                             <td></td>
                                             <td style="text-align: left;">
@@ -554,5 +584,19 @@
                 });
             }
         });
+
+        function highlightAjukanKRS() {
+            const target = document.getElementById('ajukanKRSSection');
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                target.classList.add('highlight-anim');
+                setTimeout(() => {
+                    target.classList.remove('highlight-anim');
+                }, 2000);
+            }
+        }
     </script>
 @endsection

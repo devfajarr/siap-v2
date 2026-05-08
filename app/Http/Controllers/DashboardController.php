@@ -11,12 +11,14 @@ use App\Models\Kelas;
 use App\Models\Prodi;
 use App\Models\Jadwal;
 use App\Models\Matkul;
+use App\Models\Admin;
 use App\Models\Mahasiswa;
 use App\Models\NilaiHuruf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PengajuanRekapPresensi;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
