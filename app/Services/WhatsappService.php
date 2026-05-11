@@ -8,65 +8,47 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    // public static function kirim($nomor, $pesan)
-    // {
-    //    $apiUrl = env('WA_API_URL');
-    //    $apiKey = env('WA_API_KEY', 'dhimas'); // Default key sesuai server Anda
-    //
-    //    $nomor = self::formatNomor($nomor);
-    //
-    //    $response = Http::withHeaders([
-    //        'x-api-key' => $apiKey,
-    //        'Content-Type' => 'application/json',
-    //    ])->post($apiUrl, [
-    //        'number'  => $nomor,
-    //        'message' => $pesan,
-    //    ]);
-    //
-    //    return $response->successful();
-    // }
+    public static function kirim(string $nomor, string $pesan): bool
+    {
+        $apiUrl = env('WA_API_URL');
+        $apiKey = env('WA_API_KEY', 'dhimas'); // Default key sesuai server Anda
 
-    public static function kirim($nomor, $pesan)
-{
-    $apiUrl = env('WA_API_URL');
-    $apiKey = env('WA_API_KEY', 'dhimas'); // Default key sesuai server Anda
+        try {
+            $nomor = self::formatNomor($nomor);
 
-    try {
-        $nomor = self::formatNomor($nomor);
-
-        $response = Http::withHeaders([
-            'x-api-key'     => $apiKey,
-            'Content-Type'  => 'application/json',
-        ])->post($apiUrl, [
-            'number'  => $nomor,
-            'message' => $pesan,
-        ]);
-
-        // kalau gagal (misalnya 4xx atau 5xx), log errornya
-        if (! $response->successful()) {
-            Log::error('WA API gagal', [
-                'number'   => $nomor,
-                'message'  => trim($pesan),
-                'status'   => $response->status(),
-                'response' => $response->body(),
+            $response = Http::withHeaders([
+                'x-api-key'     => $apiKey,
+                'Content-Type'  => 'application/json',
+            ])->post($apiUrl, [
+                'number'  => $nomor,
+                'message' => $pesan,
             ]);
+
+            // kalau gagal (misalnya 4xx atau 5xx), log errornya
+            if (! $response->successful()) {
+                Log::error('WA API gagal', [
+                    'number'   => $nomor,
+                    'message'  => trim($pesan),
+                    'status'   => $response->status(),
+                    'response' => $response->body(),
+                ]);
+            }
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            // simpan error ke laravel.log tapi jangan hentikan proses
+            Log::error('Kirim WA gagal: ' . $e->getMessage(), [
+                'number' => $nomor ?? null,
+                'pesan'  => $pesan ?? null,
+                'trace'  => $e->getTraceAsString(),
+            ]);
+
+            // tetap return false agar proses lain tetap bisa lanjut
+            return false;
         }
-
-        return $response->successful();
-    } catch (\Throwable $e) {
-        // simpan error ke laravel.log tapi jangan hentikan proses
-        Log::error('Kirim WA gagal: '.$e->getMessage(), [
-            'number' => $nomor ?? null,
-            'pesan'  => $pesan ?? null,
-            'trace'  => $e->getTraceAsString(),
-        ]);
-
-        // tetap return false agar proses lain tetap bisa lanjut
-        return false;
     }
-}
 
-    public static function kirimDenganFile($nomor, $pesan, $filePath = null)
+    public static function kirimDenganFile(string $nomor, string $pesan, ?string $filePath = null): bool
     {
         $apiUrl = env('WA_API_URL');
         $apiKey = env('WA_API_KEY', 'dhimas');
@@ -96,7 +78,7 @@ class WhatsappService
         return $response->successful();
     }
 
-    private static function formatNomor($nomor)
+    private static function formatNomor(string $nomor): string
     {
         $nomor = preg_replace('/[^0-9]/', '', $nomor);
 

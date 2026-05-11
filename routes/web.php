@@ -362,3 +362,10 @@ Route::prefix('/presensi')->group(function () {
     Route::resource('/jadwal-ujian', JadwalUjianController::class)->except(['show'])->middleware('auth:admin');
     Route::get('/jadwal-ujian/search', [JadwalUjianController::class, 'search'])->name('jadwal-ujian.search')->middleware('auth:admin');;
 });
+
+use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
+
+Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
+    Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
+    Route::get('/profile', [\App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');
+});
