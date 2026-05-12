@@ -395,6 +395,17 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->names('v2.admin.data-ruangan')
             ->except(['show', 'create', 'edit']);
 
+        Route::resource('data-pegawai', \App\Http\Controllers\V2\Admin\PegawaiController::class)
+            ->names('v2.admin.data-pegawai')
+            ->except(['show', 'create', 'edit']);
+
+        Route::get('data-pegawai/export', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'export'])
+            ->name('v2.admin.data-pegawai.export');
+        Route::post('data-pegawai/import', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'import'])
+            ->name('v2.admin.data-pegawai.import');
+        Route::get('data-pegawai/download-format', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'downloadFormat'])
+            ->name('v2.admin.data-pegawai.download-format');
+
         Route::post('data-semester/ganti-status', [\App\Http\Controllers\V2\Admin\SemesterController::class, 'gantiStatus'])
             ->name('v2.admin.data-semester.ganti-status');
     });

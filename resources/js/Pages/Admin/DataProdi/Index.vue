@@ -14,13 +14,13 @@ import {
   TableRow,
 } from '@/Components/ui/table'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/Components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/Components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -303,197 +303,213 @@ const clearFilters = () => {
       </Card>
     </div>
 
-    <!-- Add Modal -->
-    <Dialog :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
-      <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="bg-[#4B49AC] p-6 text-white relative">
-          <DialogHeader>
-            <DialogTitle class="text-xl font-bold text-white">Tambah Program Studi</DialogTitle>
-            <DialogDescription class="text-indigo-100 mt-1">
+    <!-- Add Drawer -->
+    <Sheet :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
+      <SheetContent side="right" class="sm:max-w-[30%] w-full p-0 border-none shadow-2xl bg-white flex flex-col">
+        <div class="bg-[#4B49AC] p-6 text-white shrink-0">
+          <SheetHeader>
+            <SheetTitle class="text-xl font-bold text-white">Tambah Program Studi</SheetTitle>
+            <SheetDescription class="text-indigo-100 mt-1">
               Lengkapi rincian program studi baru di bawah ini.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
         </div>
 
-        <form @submit.prevent="submitAdd" class="p-6 space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2 md:col-span-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Program Studi</Label>
-              <Input 
-                v-model="form.nama_prodi" 
-                placeholder="Misal: Teknik Informatika" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-              <p v-if="form.errors.nama_prodi" class="text-xs text-red-500 font-medium">{{ form.errors.nama_prodi }}</p>
-            </div>
+        <form @submit.prevent="submitAdd" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Program Studi</Label>
+                <Input 
+                  v-model="form.nama_prodi" 
+                  placeholder="Misal: Teknik Informatika" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+                <p v-if="form.errors.nama_prodi" class="text-xs text-red-500 font-medium">{{ form.errors.nama_prodi }}</p>
+              </div>
 
-            <div class="space-y-2 md:col-span-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama (English)</Label>
-              <Input 
-                v-model="form.alias_nama" 
-                placeholder="e.g. Informatics Engineering" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-            </div>
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama (English)</Label>
+                <Input 
+                  v-model="form.alias_nama" 
+                  placeholder="e.g. Informatics Engineering" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+              </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Kode Prodi</Label>
-              <Input 
-                v-model="form.kode_prodi" 
-                placeholder="MK01" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-              <p v-if="form.errors.kode_prodi" class="text-xs text-red-500 font-medium">{{ form.errors.kode_prodi }}</p>
-            </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Kode Prodi</Label>
+                  <Input 
+                    v-model="form.kode_prodi" 
+                    placeholder="MK01" 
+                    class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                    required 
+                  />
+                  <p v-if="form.errors.kode_prodi" class="text-xs text-red-500 font-medium">{{ form.errors.kode_prodi }}</p>
+                </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Singkatan</Label>
-              <Input 
-                v-model="form.singkatan" 
-                placeholder="Misal: TI" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-            </div>
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Singkatan</Label>
+                  <Input 
+                    v-model="form.singkatan" 
+                    placeholder="Misal: TI" 
+                    class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                    required 
+                  />
+                </div>
+              </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jenjang</Label>
-              <Input 
-                v-model="form.jenjang" 
-                placeholder="Misal: D3" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-            </div>
+              <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jenjang</Label>
+                  <Input 
+                    v-model="form.jenjang" 
+                    placeholder="Misal: D3" 
+                    class="h-11 border-gray-200 bg-white focus:border-[#4B49AC] rounded-lg transition-all"
+                    required 
+                  />
+                </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jenjang (English)</Label>
-              <Input 
-                v-model="form.alias_jenjang" 
-                placeholder="e.g. Associate Degree" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">English</Label>
+                  <Input 
+                    v-model="form.alias_jenjang" 
+                    placeholder="e.g. Associate" 
+                    class="h-11 border-gray-200 bg-white focus:border-[#4B49AC] rounded-lg transition-all"
+                    required 
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              @click="isAddModalOpen = false" 
-              class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
-            >
-              Batal
-            </Button>
-            <Button 
-              type="submit" 
-              :disabled="form.processing" 
-              class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
-            >
-              <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
-              Simpan Prodi
-            </Button>
+          <div class="p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
+            <SheetFooter class="flex flex-row items-center justify-end gap-3">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                @click="isAddModalOpen = false" 
+                class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              >
+                Batal
+              </Button>
+              <Button 
+                type="submit" 
+                :disabled="form.processing" 
+                class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
+              >
+                <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
+                Simpan
+              </Button>
+            </SheetFooter>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
 
-    <!-- Edit Modal -->
-    <Dialog :open="isEditModalOpen" @update:open="isEditModalOpen = $event">
-      <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="bg-[#4B49AC] p-6 text-white relative">
-          <DialogHeader>
-            <DialogTitle class="text-xl font-bold text-white">Edit Program Studi</DialogTitle>
-            <DialogDescription class="text-indigo-100 mt-1">
+    <!-- Edit Drawer -->
+    <Sheet :open="isEditModalOpen" @update:open="isEditModalOpen = $event">
+      <SheetContent side="right" class="sm:max-w-[30%] w-full p-0 border-none shadow-2xl bg-white flex flex-col">
+        <div class="bg-[#4B49AC] p-6 text-white shrink-0">
+          <SheetHeader>
+            <SheetTitle class="text-xl font-bold text-white">Edit Program Studi</SheetTitle>
+            <SheetDescription class="text-indigo-100 mt-1">
               Perbarui rincian program studi di bawah ini.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
         </div>
 
-        <form @submit.prevent="submitUpdate" class="p-6 space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2 md:col-span-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Program Studi</Label>
-              <Input 
-                v-model="editForm.nama_prodi" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-              <p v-if="editForm.errors.nama_prodi" class="text-xs text-red-500 font-medium">{{ editForm.errors.nama_prodi }}</p>
-            </div>
+        <form @submit.prevent="submitUpdate" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Program Studi</Label>
+                <Input 
+                  v-model="editForm.nama_prodi" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+                <p v-if="editForm.errors.nama_prodi" class="text-xs text-red-500 font-medium">{{ editForm.errors.nama_prodi }}</p>
+              </div>
 
-            <div class="space-y-2 md:col-span-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama (English)</Label>
-              <Input 
-                v-model="editForm.alias_nama" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-            </div>
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama (English)</Label>
+                <Input 
+                  v-model="editForm.alias_nama" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+              </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Kode Prodi</Label>
-              <Input 
-                v-model="editForm.kode_prodi" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-              <p v-if="editForm.errors.kode_prodi" class="text-xs text-red-500 font-medium">{{ editForm.errors.kode_prodi }}</p>
-            </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Kode Prodi</Label>
+                  <Input 
+                    v-model="editForm.kode_prodi" 
+                    class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                    required 
+                  />
+                  <p v-if="editForm.errors.kode_prodi" class="text-xs text-red-500 font-medium">{{ editForm.errors.kode_prodi }}</p>
+                </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Singkatan</Label>
-              <Input 
-                v-model="editForm.singkatan" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-            </div>
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Singkatan</Label>
+                  <Input 
+                    v-model="editForm.singkatan" 
+                    class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                    required 
+                  />
+                </div>
+              </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jenjang</Label>
-              <Input 
-                v-model="editForm.jenjang" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
-            </div>
+              <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jenjang</Label>
+                  <Input 
+                    v-model="editForm.jenjang" 
+                    class="h-11 border-gray-200 bg-white focus:border-[#4B49AC] rounded-lg transition-all"
+                    required 
+                  />
+                </div>
 
-            <div class="space-y-2">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jenjang (English)</Label>
-              <Input 
-                v-model="editForm.alias_jenjang" 
-                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-                required 
-              />
+                <div class="space-y-2">
+                  <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">English</Label>
+                  <Input 
+                    v-model="editForm.alias_jenjang" 
+                    class="h-11 border-gray-200 bg-white focus:border-[#4B49AC] rounded-lg transition-all"
+                    required 
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              @click="isEditModalOpen = false" 
-              class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
-            >
-              Batal
-            </Button>
-            <Button 
-              type="submit" 
-              :disabled="editForm.processing" 
-              class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
-            >
-              <Loader2 v-if="editForm.processing" class="w-4 h-4 mr-2 animate-spin" />
-              Simpan Perubahan
-            </Button>
+          <div class="p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
+            <SheetFooter class="flex flex-row items-center justify-end gap-3">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                @click="isEditModalOpen = false" 
+                class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              >
+                Batal
+              </Button>
+              <Button 
+                type="submit" 
+                :disabled="editForm.processing" 
+                class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
+              >
+                <Loader2 v-if="editForm.processing" class="w-4 h-4 mr-2 animate-spin" />
+                Simpan
+              </Button>
+            </SheetFooter>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">

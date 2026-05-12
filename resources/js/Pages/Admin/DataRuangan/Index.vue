@@ -14,13 +14,13 @@ import {
   TableRow,
 } from '@/Components/ui/table'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/Components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/Components/ui/sheet'
 import { Label } from '@/Components/ui/label'
 import { Card, CardContent } from '@/Components/ui/card'
 import { 
@@ -184,86 +184,108 @@ const submitDelete = () => {
       </Card>
     </div>
 
-    <!-- Add Modal -->
-    <Dialog :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
-      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
-        <div class="bg-[#4B49AC] p-8 text-white relative">
-          <DialogHeader>
-            <DialogTitle class="text-2xl font-bold text-white">Tambah Ruangan</DialogTitle>
-            <DialogDescription class="text-indigo-100 mt-2 text-sm font-medium">
+    <!-- Add Drawer -->
+    <Sheet :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
+      <SheetContent side="right" class="sm:max-w-[30%] w-full p-0 border-none shadow-2xl bg-white flex flex-col">
+        <div class="bg-[#4B49AC] p-6 text-white shrink-0">
+          <SheetHeader>
+            <SheetTitle class="text-xl font-bold text-white">Tambah Ruangan</SheetTitle>
+            <SheetDescription class="text-indigo-100 mt-1">
               Daftarkan lokasi atau ruangan perkuliahan baru.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
         </div>
 
-        <form @submit.prevent="submitAdd" class="p-8 space-y-8">
-          <div class="space-y-6">
-            <div class="space-y-3">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Nama Ruangan</Label>
-              <Input 
-                v-model="form.nama" 
-                placeholder="Misal: R. Teori 1 atau Lab Komputer" 
-                class="h-12 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/10 rounded-xl transition-all text-lg font-bold"
-                required 
-              />
-              <p v-if="form.errors.nama" class="text-xs text-red-500 font-bold flex items-center gap-1">
-                <AlertCircle class="w-3 h-3" /> {{ form.errors.nama }}
-              </p>
+        <form @submit.prevent="submitAdd" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Ruangan</Label>
+                <Input 
+                  v-model="form.nama" 
+                  placeholder="Misal: R. Teori 1 atau Lab Komputer" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+                <p v-if="form.errors.nama" class="text-xs text-red-500 font-medium">{{ form.errors.nama }}</p>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-50">
-            <Button type="button" variant="ghost" @click="isAddModalOpen = false" class="h-12 px-6 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-all">
-              Batal
-            </Button>
-            <Button type="submit" :disabled="form.processing" class="h-12 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-xl shadow-lg shadow-indigo-100 font-bold transition-all">
-              <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
-              Simpan Data
-            </Button>
+          <div class="p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
+            <SheetFooter class="flex flex-row items-center justify-end gap-3">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                @click="isAddModalOpen = false" 
+                class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              >
+                Batal
+              </Button>
+              <Button 
+                type="submit" 
+                :disabled="form.processing" 
+                class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
+              >
+                <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
+                Simpan
+              </Button>
+            </SheetFooter>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
 
-    <!-- Edit Modal -->
-    <Dialog :open="isEditModalOpen" @update:open="isEditModalOpen = $event">
-      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
-        <div class="bg-[#4B49AC] p-8 text-white relative">
-          <DialogHeader>
-            <DialogTitle class="text-2xl font-bold text-white">Edit Ruangan</DialogTitle>
-            <DialogDescription class="text-indigo-100 mt-2 text-sm font-medium">
+    <!-- Edit Drawer -->
+    <Sheet :open="isEditModalOpen" @update:open="isEditModalOpen = $event">
+      <SheetContent side="right" class="sm:max-w-[30%] w-full p-0 border-none shadow-2xl bg-white flex flex-col">
+        <div class="bg-[#4B49AC] p-6 text-white shrink-0">
+          <SheetHeader>
+            <SheetTitle class="text-xl font-bold text-white">Edit Ruangan</SheetTitle>
+            <SheetDescription class="text-indigo-100 mt-1">
               Perbarui rincian nama ruangan terpilih.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
         </div>
 
-        <form @submit.prevent="submitUpdate" class="p-8 space-y-8">
-          <div class="space-y-6">
-            <div class="space-y-3">
-              <Label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Nama Ruangan</Label>
-              <Input 
-                v-model="editForm.nama" 
-                class="h-12 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/10 rounded-xl transition-all text-lg font-bold"
-                required 
-              />
-              <p v-if="editForm.errors.nama" class="text-xs text-red-500 font-bold flex items-center gap-1">
-                <AlertCircle class="w-3 h-3" /> {{ editForm.errors.nama }}
-              </p>
+        <form @submit.prevent="submitUpdate" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Ruangan</Label>
+                <Input 
+                  v-model="editForm.nama" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+                <p v-if="editForm.errors.nama" class="text-xs text-red-500 font-medium">{{ editForm.errors.nama }}</p>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-50">
-            <Button type="button" variant="ghost" @click="isEditModalOpen = false" class="h-12 px-6 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-all">
-              Batal
-            </Button>
-            <Button type="submit" :disabled="editForm.processing" class="h-12 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-xl shadow-lg shadow-indigo-100 font-bold transition-all">
-              <Loader2 v-if="editForm.processing" class="w-4 h-4 mr-2 animate-spin" />
-              Simpan Perubahan
-            </Button>
+          <div class="p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
+            <SheetFooter class="flex flex-row items-center justify-end gap-3">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                @click="isEditModalOpen = false" 
+                class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              >
+                Batal
+              </Button>
+              <Button 
+                type="submit" 
+                :disabled="editForm.processing" 
+                class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
+              >
+                <Loader2 v-if="editForm.processing" class="w-4 h-4 mr-2 animate-spin" />
+                Simpan
+              </Button>
+            </SheetFooter>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">

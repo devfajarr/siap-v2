@@ -15,13 +15,13 @@ import {
 } from '@/Components/ui/table'
 import { Switch } from '@/Components/ui/switch'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/Components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/Components/ui/sheet'
 import { Label } from '@/Components/ui/label'
 import { Card, CardContent } from '@/Components/ui/card'
 import { 
@@ -238,52 +238,56 @@ const submitToggleStatus = () => {
       </Card>
     </div>
 
-    <!-- Add Modal -->
-    <Dialog :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
-      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="bg-[#4B49AC] p-6 text-white relative">
-          <DialogHeader>
-            <DialogTitle class="text-xl font-bold text-white">Tambah Semester</DialogTitle>
-            <DialogDescription class="text-indigo-100 mt-1">
+    <!-- Add Drawer -->
+    <Sheet :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
+      <SheetContent side="right" class="sm:max-w-[30%] w-full p-0 border-none shadow-2xl bg-white flex flex-col">
+        <div class="bg-[#4B49AC] p-6 text-white shrink-0">
+          <SheetHeader>
+            <SheetTitle class="text-xl font-bold text-white">Tambah Semester</SheetTitle>
+            <SheetDescription class="text-indigo-100 mt-1">
               Masukkan nomor semester baru.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
         </div>
 
-        <form @submit.prevent="submitAdd" class="p-6 space-y-6">
-          <div class="space-y-2">
-            <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nomor Semester</Label>
-            <Input 
-              v-model="form.semester" 
-              type="number"
-              placeholder="Contoh: 1" 
-              class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
-              required 
-            />
-            <p v-if="form.errors.semester" class="text-xs text-red-500 font-medium">{{ form.errors.semester }}</p>
+        <form @submit.prevent="submitAdd" class="flex flex-col h-full overflow-hidden">
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="space-y-2">
+              <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nomor Semester</Label>
+              <Input 
+                v-model="form.semester" 
+                type="number"
+                placeholder="Contoh: 1" 
+                class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                required 
+              />
+              <p v-if="form.errors.semester" class="text-xs text-red-500 font-medium">{{ form.errors.semester }}</p>
+            </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              @click="isAddModalOpen = false" 
-              class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
-            >
-              Batal
-            </Button>
-            <Button 
-              type="submit" 
-              :disabled="form.processing" 
-              class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
-            >
-              <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
-              Simpan
-            </Button>
+          <div class="p-6 border-t border-gray-100 bg-gray-50/50 shrink-0">
+            <SheetFooter class="flex flex-row items-center justify-end gap-3">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                @click="isAddModalOpen = false" 
+                class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              >
+                Batal
+              </Button>
+              <Button 
+                type="submit" 
+                :disabled="form.processing" 
+                class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
+              >
+                <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
+                Simpan
+              </Button>
+            </SheetFooter>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">

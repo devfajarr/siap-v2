@@ -12,7 +12,7 @@ class PegawaiImport implements ToModel
 {
     public function model(array $row)
     {
-        if (!isset($row[0]) || strtoupper(trim($row[1])) == 'NIDN') {
+        if (!isset($row[0]) || strtoupper(trim($row[1])) == 'NUPTK') {
             return null;
         }
 
