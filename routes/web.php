@@ -374,6 +374,9 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::resource('data-matkul', \App\Http\Controllers\V2\Admin\MatkulController::class)
             ->names('v2.admin.data-matkul')
             ->except(['show', 'create', 'edit']);
+
+        Route::resource('data-prodi', \App\Http\Controllers\V2\Admin\ProdiController::class)
+            ->names('v2.admin.data-prodi')
+            ->except(['show', 'create', 'edit']);
     });
 });
-

@@ -83,7 +83,7 @@ const menuItems = [
         children: [
           { title: 'Mata Kuliah', href: '/v2/admin/data-master/data-matkul' },
 
-          { title: 'Program Studi', href: '/v2/admin/data-master/prodi' },
+          { title: 'Program Studi', href: '/v2/admin/data-master/data-prodi' },
           { title: 'Semester', href: '/v2/admin/data-master/semester' },
           { title: 'Tahun Akademik', href: '/v2/admin/data-master/tahun-akademik' },
           { title: 'Kelas', href: '/v2/admin/data-master/kelas' },
