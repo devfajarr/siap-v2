@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { usePage, Link } from '@inertiajs/vue3'
+
 import { 
   LayoutDashboard, 
   Folder, 
@@ -35,12 +36,40 @@ const toggleMenu = (title) => {
 }
 
 const isMenuActive = (item) => {
-  if (item.href && item.href !== '#' && page.url === item.href) return true
+  const currentPath = page.url.split('?')[0]
+  if (item.href && item.href !== '#' && currentPath === item.href) return true
   if (item.children) {
     return item.children.some(child => isMenuActive(child))
   }
   return false
 }
+
+const expandActiveMenu = () => {
+  menuItems.forEach(item => {
+    if (item.children && isMenuActive(item)) {
+      if (!expandedMenus.value.includes(item.title)) {
+        expandedMenus.value.push(item.title)
+      }
+      // Level 2 Check
+      item.children.forEach(child => {
+        if (child.children && isMenuActive(child)) {
+          if (!expandedMenus.value.includes(child.title)) {
+            expandedMenus.value.push(child.title)
+          }
+        }
+      })
+    }
+  })
+}
+
+onMounted(() => {
+  expandActiveMenu()
+})
+
+watch(() => page.url, () => {
+  expandActiveMenu()
+})
+
 
 const menuItems = [
   { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/admin/dashboard' },
@@ -52,7 +81,8 @@ const menuItems = [
         title: 'Akademik',
         icon: GraduationCap,
         children: [
-          { title: 'Mata Kuliah', href: '/v2/admin/data-master/matkul' },
+          { title: 'Mata Kuliah', href: '/v2/admin/data-master/data-matkul' },
+
           { title: 'Program Studi', href: '/v2/admin/data-master/prodi' },
           { title: 'Semester', href: '/v2/admin/data-master/semester' },
           { title: 'Tahun Akademik', href: '/v2/admin/data-master/tahun-akademik' },
@@ -153,10 +183,11 @@ const menuItems = [
                     :key="grandChild.title"
                     :href="grandChild.href"
                     class="flex items-center gap-3 pl-20 pr-6 py-2 text-[#6C7383] hover:text-[#4B49AC] hover:bg-[#F5F7FF] transition-all text-xs"
-                    :class="{ 'text-[#4B49AC] font-bold bg-[#F5F7FF]': page.url === grandChild.href }"
+                    :class="{ 'text-[#4B49AC] font-bold bg-[#F5F7FF]': page.url.split('?')[0] === grandChild.href }"
                   >
                     {{ grandChild.title }}
                   </Link>
+
                 </div>
               </template>
               
@@ -165,11 +196,12 @@ const menuItems = [
                 v-else
                 :href="child.href"
                 class="flex items-center gap-3 pl-12 pr-6 py-2.5 text-[#1F1F1F] hover:bg-[#F5F7FF] transition-all group relative"
-                :class="{ 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': page.url === child.href }"
+                :class="{ 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': page.url.split('?')[0] === child.href }"
               >
                 <component :is="child.icon" v-if="child.icon" class="w-4 h-4 text-[#4B49AC]" />
                 <span class="text-xs font-medium">{{ child.title }}</span>
               </Link>
+
             </div>
           </div>
         </template>
@@ -181,14 +213,16 @@ const menuItems = [
           class="flex items-center gap-4 px-6 py-3 text-[#1F1F1F] hover:bg-[#F5F7FF] transition-all group relative"
           :class="[
             { 'justify-center px-0': !isOpen },
-            { 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': page.url === item.href }
+            { 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': page.url.split('?')[0] === item.href }
           ]"
+
         >
           <component 
             :is="item.icon" 
             class="w-5 h-5 text-[#4B49AC] group-hover:scale-110 transition-transform flex-shrink-0" 
-            :class="{ 'text-[#4B49AC]': page.url === item.href }"
+            :class="{ 'text-[#4B49AC]': page.url.split('?')[0] === item.href }"
           />
+
           <span 
             v-if="isOpen"
             class="text-sm font-medium whitespace-nowrap"

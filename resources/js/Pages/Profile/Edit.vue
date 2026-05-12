@@ -24,13 +24,13 @@ const activeTab = ref('profile')
   <AdminLayout>
     <div v-if="user" class="max-w-5xl mx-auto space-y-6">
       <!-- Header Section -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-3xl border border-[#CDD1E1] shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-lg border border-[#CDD1E1] shadow-sm">
         <div class="flex items-center gap-6">
           <div class="relative group">
-            <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white shadow-xl">
+            <div class="w-24 h-24 rounded-lg overflow-hidden border-4 border-white shadow-xl">
               <img :src="user.avatar" alt="Avatar" class="w-full h-full object-cover" />
             </div>
-            <button class="absolute -bottom-2 -right-2 p-2 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-colors">
+            <button class="absolute -bottom-2 -right-2 p-2 bg-primary text-white rounded-lg shadow-lg hover:bg-primary/90 transition-colors">
               <CameraIcon class="w-4 h-4" />
             </button>
           </div>
@@ -51,16 +51,16 @@ const activeTab = ref('profile')
         <div class="lg:col-span-1 space-y-2">
           <button 
             @click="activeTab = 'profile'"
-            :class="[activeTab === 'profile' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-gray-600 border-transparent hover:bg-gray-50']"
-            class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all text-sm font-semibold"
+            :class="[activeTab === 'profile' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white text-gray-600 border-transparent hover:bg-gray-50']"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-sm font-semibold"
           >
             <UserIcon class="w-4 h-4" />
             Informasi Profil
           </button>
           <button 
             @click="activeTab = 'security'"
-            :class="[activeTab === 'security' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-gray-600 border-transparent hover:bg-gray-50']"
-            class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all text-sm font-semibold"
+            :class="[activeTab === 'security' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white text-gray-600 border-transparent hover:bg-gray-50']"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-sm font-semibold"
           >
             <ShieldIcon class="w-4 h-4" />
             Keamanan Akun
@@ -71,7 +71,7 @@ const activeTab = ref('profile')
         <div class="lg:col-span-2">
           <Transition name="fade" mode="out-in">
             <div v-if="activeTab === 'profile'" key="profile">
-              <Card class="rounded-3xl border-[#CDD1E1] shadow-sm overflow-hidden">
+              <Card class="rounded-lg border-[#CDD1E1] shadow-sm overflow-hidden">
                 <CardHeader class="bg-gray-50/50 border-b border-gray-100 p-6">
                   <CardTitle class="text-lg font-bold">Informasi Pribadi</CardTitle>
                   <CardDescription>Perbarui data diri dan preferensi profil Anda.</CardDescription>
@@ -85,7 +85,7 @@ const activeTab = ref('profile')
                         <input 
                           type="text" 
                           :value="user.nama"
-                          class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                          class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                           placeholder="Masukkan nama lengkap"
                         />
                       </div>
@@ -98,14 +98,14 @@ const activeTab = ref('profile')
                           type="text" 
                           :value="user.role"
                           disabled
-                          class="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
+                          class="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed"
                         />
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter class="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
-                  <button class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                  <button class="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
                     Simpan Perubahan
                   </button>
                 </CardFooter>
@@ -113,7 +113,7 @@ const activeTab = ref('profile')
             </div>
 
             <div v-else-if="activeTab === 'security'" key="security">
-              <Card class="rounded-3xl border-[#CDD1E1] shadow-sm overflow-hidden">
+              <Card class="rounded-lg border-[#CDD1E1] shadow-sm overflow-hidden">
                 <CardHeader class="bg-gray-50/50 border-b border-gray-100 p-6">
                   <CardTitle class="text-lg font-bold">Keamanan & Password</CardTitle>
                   <CardDescription>Kelola kredensial login dan keamanan akun Anda.</CardDescription>
@@ -126,7 +126,7 @@ const activeTab = ref('profile')
                         <KeyIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input 
                           type="password" 
-                          class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                          class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                           placeholder="••••••••"
                         />
                       </div>
@@ -138,7 +138,7 @@ const activeTab = ref('profile')
                           <LockIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <input 
                             type="password" 
-                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                             placeholder="Minimal 8 karakter"
                           />
                         </div>
@@ -149,7 +149,7 @@ const activeTab = ref('profile')
                           <LockIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <input 
                             type="password" 
-                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                             placeholder="Ulangi password baru"
                           />
                         </div>
@@ -158,7 +158,7 @@ const activeTab = ref('profile')
                   </div>
                 </CardContent>
                 <CardFooter class="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
-                  <button class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                  <button class="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
                     Update Password
                   </button>
                 </CardFooter>

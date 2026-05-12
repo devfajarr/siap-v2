@@ -368,4 +368,12 @@ use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
     Route::get('/profile', [\App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');
+
+    // Admin Data Master
+    Route::middleware('auth:admin')->prefix('admin/data-master')->group(function () {
+        Route::resource('data-matkul', \App\Http\Controllers\V2\Admin\MatkulController::class)
+            ->names('v2.admin.data-matkul')
+            ->except(['show', 'create', 'edit']);
+    });
 });
+

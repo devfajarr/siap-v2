@@ -22,12 +22,14 @@ class Matkul extends Model
 
     public function kontrak()
     {
-        return $this->hasMany(Kontrak::class);
+        return $this->hasMany(Kontrak::class, 'matkuls_id');
     }
+
     public function absen()
     {
-        return $this->hasMany(Absen::class);
+        return $this->hasMany(Absen::class, 'matkuls_id');
     }
+
 
     public function resume()
     {
@@ -71,8 +73,9 @@ class Matkul extends Model
     }
     public function jadwal()
     {
-        return $this->hasMany(Jadwal::class);
+        return $this->hasMany(Jadwal::class, 'matkuls_id');
     }
+
 
     public function pengajuanNilai()
     {
