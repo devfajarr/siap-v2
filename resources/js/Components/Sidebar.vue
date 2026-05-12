@@ -84,10 +84,10 @@ const menuItems = [
           { title: 'Mata Kuliah', href: '/v2/admin/data-master/data-matkul' },
 
           { title: 'Program Studi', href: '/v2/admin/data-master/data-prodi' },
-          { title: 'Semester', href: '/v2/admin/data-master/semester' },
+          { title: 'Semester', href: '/v2/admin/data-master/data-semester' },
           { title: 'Tahun Akademik', href: '/v2/admin/data-master/tahun-akademik' },
-          { title: 'Kelas', href: '/v2/admin/data-master/kelas' },
-          { title: 'Ruangan', href: '/v2/admin/data-master/ruangan' },
+          { title: 'Kelas', href: '/v2/admin/data-master/data-kelas' },
+          { title: 'Ruangan', href: '/v2/admin/data-master/data-ruangan' },
         ]
       },
       {

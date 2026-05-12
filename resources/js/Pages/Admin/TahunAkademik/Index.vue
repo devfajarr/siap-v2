@@ -1,0 +1,369 @@
+<script setup>
+import { ref, watch } from 'vue'
+import { Head, router, useForm, usePage } from '@inertiajs/vue3'
+
+import AdminLayout from '@/Layouts/AdminLayout.vue'
+import { Button } from '@/Components/ui/button'
+import { Input } from '@/Components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/Components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/Components/ui/dialog'
+import { Switch } from '@/Components/ui/switch'
+import { Label } from '@/Components/ui/label'
+import { Card, CardContent } from '@/Components/ui/card'
+import { 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Calendar,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Info
+} from 'lucide-vue-next'
+
+const props = defineProps({
+  tahuns: Array,
+})
+
+const page = usePage()
+
+// Modals State
+const isAddModalOpen = ref(false)
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const selectedTahun = ref(null)
+
+// Toast state
+const showToast = ref(false)
+const toastMessage = ref('')
+const toastType = ref('success')
+
+// Watch for flash messages
+watch(() => page.props.flash, (flash) => {
+  if (flash?.success) {
+    toastMessage.value = flash.success
+    toastType.value = 'success'
+    showToast.value = true
+    setTimeout(() => { showToast.value = false }, 3000)
+  } else if (flash?.error) {
+    toastMessage.value = flash.error
+    toastType.value = 'error'
+    showToast.value = true
+    setTimeout(() => { showToast.value = false }, 3000)
+  }
+}, { deep: true })
+
+// Forms
+const form = useForm({
+  tahun_akademik: '',
+  status: false,
+})
+
+const editForm = useForm({
+  id: null,
+  tahun_akademik: '',
+  status: false,
+})
+
+// Actions
+const openEditModal = (tahun) => {
+  selectedTahun.value = tahun
+  editForm.id = tahun.id
+  editForm.tahun_akademik = tahun.tahun_akademik
+  editForm.status = tahun.status == 1
+  isEditModalOpen.value = true
+}
+
+const submitAdd = () => {
+  form.post('/v2/admin/data-master/tahun-akademik', {
+    onSuccess: () => {
+      isAddModalOpen.value = false
+      form.reset()
+    }
+  })
+}
+
+const submitUpdate = () => {
+  editForm.put(`/v2/admin/data-master/tahun-akademik/${editForm.id}`, {
+    onSuccess: () => {
+      isEditModalOpen.value = false
+      editForm.reset()
+    }
+  })
+}
+
+const confirmDelete = (tahun) => {
+  selectedTahun.value = tahun
+  isDeleteModalOpen.value = true
+}
+
+const submitDelete = () => {
+  router.delete(`/v2/admin/data-master/tahun-akademik/${selectedTahun.value.id}`, {
+    onSuccess: () => {
+      isDeleteModalOpen.value = false
+    }
+  })
+}
+</script>
+
+<template>
+  <AdminLayout>
+    <Head title="Tahun Akademik" />
+
+    <div class="space-y-6">
+      <!-- Header Section -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-[#1F2937]">Tahun Akademik</h1>
+          <p class="text-[#6B7280]">Kelola daftar tahun akademik dan periode aktif sistem.</p>
+        </div>
+        <Button @click="isAddModalOpen = true" class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-sm font-semibold transition-all duration-300">
+          <Plus class="w-4 h-4 mr-2" />
+          Tambah Tahun
+        </Button>
+      </div>
+
+      <!-- Table Section -->
+      <Card class="border-none shadow-sm overflow-hidden bg-white">
+        <Table>
+          <TableHeader class="bg-[#F9FAFB]">
+            <TableRow>
+              <TableHead class="w-[100px] font-bold text-[#374151]">No</TableHead>
+              <TableHead class="font-bold text-[#374151]">Tahun Akademik</TableHead>
+              <TableHead class="font-bold text-[#374151]">Status</TableHead>
+              <TableHead class="font-bold text-[#374151]">Tanggal Dibuat</TableHead>
+              <TableHead class="text-right font-bold text-[#374151]">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-for="(tahun, index) in tahuns" :key="tahun.id" class="hover:bg-gray-50/50 transition-colors group">
+              <TableCell class="font-medium text-[#1F2937]">{{ index + 1 }}</TableCell>
+              <TableCell>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-[#4B49AC]">
+                    <Calendar class="w-4 h-4" />
+                  </div>
+                  <div class="font-bold text-[#1F2937]">{{ tahun.tahun_akademik }}</div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div v-if="tahun.status == 1" class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold ring-1 ring-green-200">
+                  <CheckCircle2 class="w-3.5 h-3.5" />
+                  AKTIF
+                </div>
+                <div v-else class="inline-flex items-center gap-1.5 bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-xs font-medium ring-1 ring-gray-200">
+                  <XCircle class="w-3.5 h-3.5" />
+                  NON-AKTIF
+                </div>
+              </TableCell>
+              <TableCell class="text-[#6B7280] text-sm">
+                {{ new Date(tahun.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+              </TableCell>
+              <TableCell class="text-right">
+                <div class="flex justify-end gap-2 transition-opacity">
+                  <Button variant="ghost" size="sm" @click="openEditModal(tahun)" class="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8 p-0">
+                    <Pencil class="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" @click="confirmDelete(tahun)" class="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0">
+                    <Trash2 class="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+            <TableRow v-if="tahuns.length === 0">
+              <TableCell colspan="5" class="h-48 text-center text-[#9CA3AF]">
+                <div class="flex flex-col items-center justify-center space-y-3">
+                  <div class="p-4 bg-gray-50 rounded-full">
+                    <Calendar class="w-10 h-10 opacity-20" />
+                  </div>
+                  <p class="font-medium text-gray-400">Belum ada data tahun akademik.</p>
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+
+    <!-- Add Modal -->
+    <Dialog :open="isAddModalOpen" @update:open="isAddModalOpen = $event">
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
+        <div class="bg-[#4B49AC] p-8 text-white relative">
+          <DialogHeader>
+            <DialogTitle class="text-2xl font-bold text-white">Tambah Tahun Akademik</DialogTitle>
+            <DialogDescription class="text-indigo-100 mt-2">
+              Daftarkan periode akademik baru untuk sistem.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <form @submit.prevent="submitAdd" class="p-8 space-y-8">
+          <div class="space-y-6">
+            <div class="space-y-3">
+              <Label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Tahun Akademik</Label>
+              <Input 
+                v-model="form.tahun_akademik" 
+                placeholder="Contoh: 2023/2024" 
+                class="h-12 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/10 rounded-xl transition-all text-lg font-medium"
+                required 
+              />
+              <p class="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info class="w-3 h-3" /> Gunakan format YYYY/YYYY
+              </p>
+              <p v-if="form.errors.tahun_akademik" class="text-xs text-red-500 font-bold flex items-center gap-1">
+                <AlertCircle class="w-3 h-3" /> {{ form.errors.tahun_akademik }}
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div class="space-y-0.5">
+                <Label class="text-sm font-bold text-[#1F2937]">Status Aktif</Label>
+                <p class="text-xs text-[#6B7280]">Jadikan sebagai periode aktif saat ini.</p>
+              </div>
+              <Switch 
+                :checked="form.status" 
+                @update:checked="form.status = $event"
+              />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-50">
+            <Button type="button" variant="ghost" @click="isAddModalOpen = false" class="h-12 px-6 rounded-xl text-gray-500 font-bold hover:bg-gray-100">
+              Batal
+            </Button>
+            <Button type="submit" :disabled="form.processing" class="h-12 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-xl shadow-lg shadow-indigo-100 font-bold transition-all">
+              <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
+              Simpan Data
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Edit Modal -->
+    <Dialog :open="isEditModalOpen" @update:open="isEditModalOpen = $event">
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
+        <div class="bg-[#4B49AC] p-8 text-white relative">
+          <DialogHeader>
+            <DialogTitle class="text-2xl font-bold text-white">Edit Tahun Akademik</DialogTitle>
+            <DialogDescription class="text-indigo-100 mt-2">
+              Perbarui rincian periode akademik terpilih.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <form @submit.prevent="submitUpdate" class="p-8 space-y-8">
+          <div class="space-y-6">
+            <div class="space-y-3">
+              <Label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Tahun Akademik</Label>
+              <Input 
+                v-model="editForm.tahun_akademik" 
+                class="h-12 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/10 rounded-xl transition-all text-lg font-medium"
+                required 
+              />
+              <p v-if="editForm.errors.tahun_akademik" class="text-xs text-red-500 font-bold flex items-center gap-1">
+                <AlertCircle class="w-3 h-3" /> {{ editForm.errors.tahun_akademik }}
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div class="space-y-0.5">
+                <Label class="text-sm font-bold text-[#1F2937]">Status Aktif</Label>
+                <p class="text-xs text-[#6B7280]">Jadikan sebagai periode aktif saat ini.</p>
+              </div>
+              <Switch 
+                :checked="editForm.status" 
+                @update:checked="editForm.status = $event"
+              />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-50">
+            <Button type="button" variant="ghost" @click="isEditModalOpen = false" class="h-12 px-6 rounded-xl text-gray-500 font-bold hover:bg-gray-100">
+              Batal
+            </Button>
+            <Button type="submit" :disabled="editForm.processing" class="h-12 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-xl shadow-lg shadow-indigo-100 font-bold transition-all">
+              <Loader2 v-if="editForm.processing" class="w-4 h-4 mr-2 animate-spin" />
+              Simpan Perubahan
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Delete Modal -->
+    <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">
+      <DialogContent class="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
+        <div class="p-8 text-center">
+          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle class="w-10 h-10 text-red-500" />
+          </div>
+          <DialogHeader>
+            <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Konfirmasi Hapus</DialogTitle>
+            <DialogDescription class="text-gray-500 text-center mt-3 px-4 leading-relaxed">
+              Apakah Anda yakin ingin menghapus tahun akademik <span class="text-red-600 font-extrabold">{{ selectedTahun?.tahun_akademik }}</span>?
+              <p class="text-[10px] mt-2 font-medium bg-red-50 text-red-500 p-2 rounded-lg italic">Data yang dihapus dapat dipulihkan melalui menu sampah jika diperlukan.</p>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="flex items-center justify-center gap-3 mt-10">
+            <Button type="button" variant="ghost" @click="isDeleteModalOpen = false" class="h-12 px-6 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-all">
+              Batal
+            </Button>
+            <Button @click="submitDelete" class="h-12 px-8 bg-danger hover:bg-danger/90 text-white rounded-xl shadow-lg shadow-danger/20 font-bold transition-all">
+              Ya, Hapus Data
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Toast Notification -->
+    <transition name="toast">
+      <div v-if="showToast" class="fixed bottom-10 right-10 z-[100]">
+        <div class="bg-[#1F2937] text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center gap-4 border border-gray-700 backdrop-blur-sm bg-opacity-95">
+          <div :class="toastType === 'error' ? 'bg-red-500' : 'bg-green-500'" class="p-2 rounded-full ring-4 ring-white/10">
+            <CheckCircle2 v-if="toastType === 'success'" class="w-5 h-5 text-white" />
+            <XCircle v-else class="w-5 h-5 text-white" />
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sm font-bold tracking-tight">{{ toastMessage }}</span>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+  </AdminLayout>
+</template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(100px) scale(0.8);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(100px) scale(0.8);
+}
+</style>

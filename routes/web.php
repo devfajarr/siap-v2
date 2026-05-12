@@ -378,5 +378,24 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::resource('data-prodi', \App\Http\Controllers\V2\Admin\ProdiController::class)
             ->names('v2.admin.data-prodi')
             ->except(['show', 'create', 'edit']);
+
+        Route::resource('data-semester', \App\Http\Controllers\V2\Admin\SemesterController::class)
+            ->names('v2.admin.data-semester')
+            ->except(['show', 'create', 'edit', 'update']);
+
+        Route::resource('data-kelas', \App\Http\Controllers\V2\Admin\KelasController::class)
+            ->names('v2.admin.data-kelas')
+            ->except(['show', 'create', 'edit']);
+
+        Route::resource('tahun-akademik', \App\Http\Controllers\V2\Admin\TahunAkademikController::class)
+            ->names('v2.admin.tahun-akademik')
+            ->except(['show', 'create', 'edit']);
+
+        Route::resource('data-ruangan', \App\Http\Controllers\V2\Admin\RuanganController::class)
+            ->names('v2.admin.data-ruangan')
+            ->except(['show', 'create', 'edit']);
+
+        Route::post('data-semester/ganti-status', [\App\Http\Controllers\V2\Admin\SemesterController::class, 'gantiStatus'])
+            ->name('v2.admin.data-semester.ganti-status');
     });
 });
