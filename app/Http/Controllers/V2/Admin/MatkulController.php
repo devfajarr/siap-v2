@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Matkul;
 use App\Models\Prodi;
 use App\Models\Semester;
+use App\Http\Requests\V2\Admin\Matkul\StoreMatkulRequest;
+use App\Http\Requests\V2\Admin\Matkul\UpdateMatkulRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -50,34 +52,9 @@ class MatkulController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreMatkulRequest $request)
     {
-        $validated = $request->validate([
-            'nama_matkul' => [
-                'required', 'string', 'max:255',
-                Rule::unique('matkuls')->where(function ($query) use ($request) {
-                    return $query->where('semester_id', $request->semester_id)
-                        ->where('prodi_id', $request->prodi_id);
-                })
-            ],
-            'alias' => 'required|string|max:255',
-            'kode' => [
-                'required', 'string', 'max:50',
-                Rule::unique('matkuls')->where(function ($query) use ($request) {
-                    return $query->where('semester_id', $request->semester_id)
-                        ->where('prodi_id', $request->prodi_id);
-                })
-            ],
-            'prodi_id' => 'required|exists:prodi,id',
-            'semester_id' => 'required|exists:semesters,id',
-            'teori' => 'required|integer|min:0',
-            'praktek' => 'required|integer|min:0',
-        ], [
-            'nama_matkul.unique' => 'Nama mata kuliah sudah terdaftar untuk kombinasi semester dan prodi ini.',
-            'kode.unique' => 'Kode mata kuliah sudah terdaftar untuk kombinasi semester dan prodi ini.',
-        ]);
-
-        Matkul::create($validated);
+        Matkul::create($request->validated());
 
         return redirect()->back()->with('success', 'Mata kuliah berhasil ditambahkan.');
     }
@@ -85,36 +62,11 @@ class MatkulController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(UpdateMatkulRequest $request, $id)
     {
         $matkul = Matkul::findOrFail($id);
         
-        $validated = $request->validate([
-            'nama_matkul' => [
-                'required', 'string', 'max:255',
-                Rule::unique('matkuls')->ignore($matkul->id)->where(function ($query) use ($request) {
-                    return $query->where('semester_id', $request->semester_id)
-                        ->where('prodi_id', $request->prodi_id);
-                })
-            ],
-            'alias' => 'required|string|max:255',
-            'kode' => [
-                'required', 'string', 'max:50',
-                Rule::unique('matkuls')->ignore($matkul->id)->where(function ($query) use ($request) {
-                    return $query->where('semester_id', $request->semester_id)
-                        ->where('prodi_id', $request->prodi_id);
-                })
-            ],
-            'prodi_id' => 'required|exists:prodi,id',
-            'semester_id' => 'required|exists:semesters,id',
-            'teori' => 'required|integer|min:0',
-            'praktek' => 'required|integer|min:0',
-        ], [
-            'nama_matkul.unique' => 'Nama mata kuliah sudah terdaftar untuk kombinasi semester dan prodi ini.',
-            'kode.unique' => 'Kode mata kuliah sudah terdaftar untuk kombinasi semester dan prodi ini.',
-        ]);
-
-        $matkul->update($validated);
+        $matkul->update($request->validated());
 
         return redirect()->back()->with('success', 'Mata kuliah berhasil diperbarui.');
     }

@@ -30,6 +30,14 @@ import {
 } from '@/Components/ui/select'
 import { Label } from '@/Components/ui/label'
 import { Card, CardContent } from '@/Components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/Components/ui/dialog'
 import { 
   Plus, 
   Search, 
@@ -513,31 +521,31 @@ const clearFilters = () => {
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">
-      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="p-6 text-center">
-          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle class="w-10 h-10 text-red-500" />
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
+        <div class="p-8 text-center">
+          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <AlertCircle class="w-10 h-10 text-danger" />
           </div>
           <DialogHeader>
             <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Konfirmasi Hapus</DialogTitle>
-            <DialogDescription class="text-gray-500 text-center mt-2 px-4">
-              Apakah Anda yakin ingin menghapus program studi <span class="text-red-600 font-bold">"{{ selectedProdi?.nama_prodi }}"</span>? 
-              <br><span class="text-xs mt-2 block italic text-red-400 font-medium">Tindakan ini akan menghapus semua data kelas dan kaprodi terkait secara permanen.</span>
+            <DialogDescription class="text-gray-500 text-center mt-3 px-2 text-base">
+              Apakah Anda yakin ingin menghapus program studi <span class="text-danger font-bold">"{{ selectedProdi?.nama_prodi }}"</span>? 
+              <br><span class="text-xs mt-3 block italic text-gray-400 font-medium tracking-wide">Tindakan ini akan menghapus semua data kurikulum dan mahasiswa terkait secara permanen.</span>
             </DialogDescription>
           </DialogHeader>
 
-          <div class="flex items-center justify-center gap-3 mt-8">
+          <div class="flex items-center justify-center gap-4 mt-10">
             <Button 
               type="button" 
               variant="ghost" 
               @click="isDeleteModalOpen = false" 
-              class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              class="h-12 px-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
             >
               Batal
             </Button>
             <Button 
               @click="submitDelete" 
-              class="h-11 px-8 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 transition-all font-semibold"
+              class="h-12 px-10 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 transition-all font-semibold"
             >
               Ya, Hapus Data
             </Button>

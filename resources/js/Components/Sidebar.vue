@@ -95,10 +95,10 @@ const menuItems = [
         icon: UserCheck,
         children: [
           { title: 'Pegawai', href: '/v2/admin/data-master/data-pegawai' },
-          { title: 'Dosen', href: '/v2/admin/data-master/dosen' },
-          { title: 'Kaprodi', href: '/v2/admin/data-master/kaprodi' },
-          { title: 'Wakil Direktur', href: '/v2/admin/data-master/wadir' },
-          { title: 'Direktur', href: '/v2/admin/data-master/direktur' },
+          { title: 'Dosen', href: '/v2/admin/data-master/data-dosen' },
+          { title: 'Kaprodi', href: '/v2/admin/data-master/data-kaprodi' },
+          { title: 'Wakil Direktur', href: '/v2/admin/data-master/data-wadir' },
+          { title: 'Direktur', href: '/v2/admin/data-master/data-direktur' },
         ]
       }
     ]

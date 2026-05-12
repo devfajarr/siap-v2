@@ -399,6 +399,27 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->names('v2.admin.data-pegawai')
             ->except(['show', 'create', 'edit']);
 
+        Route::resource('data-dosen', \App\Http\Controllers\V2\Admin\DosenController::class)
+            ->names('v2.admin.data-dosen')
+            ->except(['show', 'create', 'edit']);
+
+        Route::get('data-dosen/export', [\App\Http\Controllers\V2\Admin\DosenController::class, 'export'])
+            ->name('v2.admin.data-dosen.export');
+        Route::post('data-dosen/import', [\App\Http\Controllers\V2\Admin\DosenController::class, 'import'])
+            ->name('v2.admin.data-dosen.import');
+        Route::get('data-dosen/download-format', [\App\Http\Controllers\V2\Admin\DosenController::class, 'downloadFormat'])
+            ->name('v2.admin.data-dosen.download-format');
+
+        Route::resource('data-kaprodi', \App\Http\Controllers\V2\Admin\KaprodiController::class)
+            ->names('v2.admin.data-kaprodi')
+            ->except(['show', 'create', 'edit']);
+        Route::resource('data-wadir', \App\Http\Controllers\V2\Admin\WadirController::class)
+            ->names('v2.admin.data-wadir')
+            ->except(['show', 'create', 'edit']);
+        Route::resource('data-direktur', \App\Http\Controllers\V2\Admin\DirekturController::class)
+            ->names('v2.admin.data-direktur')
+            ->except(['show', 'create', 'edit']);
+
         Route::get('data-pegawai/export', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'export'])
             ->name('v2.admin.data-pegawai.export');
         Route::post('data-pegawai/import', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'import'])

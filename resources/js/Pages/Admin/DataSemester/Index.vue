@@ -24,6 +24,14 @@ import {
 } from '@/Components/ui/sheet'
 import { Label } from '@/Components/ui/label'
 import { Card, CardContent } from '@/Components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/Components/ui/dialog'
 import { 
   Plus, 
   Trash2, 
@@ -291,33 +299,33 @@ const submitToggleStatus = () => {
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">
-      <DialogContent class="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="p-6 text-center">
-          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle class="w-10 h-10 text-red-500" />
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
+        <div class="p-8 text-center">
+          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <AlertCircle class="w-10 h-10 text-danger" />
           </div>
           <DialogHeader>
             <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Konfirmasi Hapus</DialogTitle>
-            <DialogDescription class="text-gray-500 text-center mt-2 px-4">
-              Apakah Anda yakin ingin menghapus <span class="text-red-600 font-bold">Semester {{ selectedSemester?.semester }}</span>? 
-              <br><span class="text-xs mt-2 block italic text-red-400 font-medium">Semua data kelas terkait akan dihapus secara permanen.</span>
+            <DialogDescription class="text-gray-500 text-center mt-3 px-2 text-base">
+              Apakah Anda yakin ingin menghapus <span class="text-danger font-bold">Semester {{ selectedSemester?.semester }}</span>? 
+              <br><span class="text-xs mt-3 block italic text-gray-400 font-medium tracking-wide">Semua data kelas terkait akan dihapus secara permanen.</span>
             </DialogDescription>
           </DialogHeader>
 
-          <div class="flex items-center justify-center gap-3 mt-8">
+          <div class="flex items-center justify-center gap-4 mt-10">
             <Button 
               type="button" 
               variant="ghost" 
               @click="isDeleteModalOpen = false" 
-              class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              class="h-12 px-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
             >
               Batal
             </Button>
             <Button 
               @click="submitDelete" 
-              class="h-11 px-8 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 transition-all font-semibold"
+              class="h-12 px-10 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 transition-all font-semibold"
             >
-              Ya, Hapus
+              Ya, Hapus Data
             </Button>
           </div>
         </div>
@@ -326,31 +334,31 @@ const submitToggleStatus = () => {
 
     <!-- Status Change Confirmation -->
     <Dialog :open="isStatusModalOpen" @update:open="isStatusModalOpen = $event">
-      <DialogContent class="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="p-6 text-center">
-          <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
+        <div class="p-8 text-center">
+          <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
             <ToggleRight class="w-10 h-10 text-[#4B49AC]" />
           </div>
           <DialogHeader>
             <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Ubah Status Aktif</DialogTitle>
-            <DialogDescription class="text-gray-500 text-center mt-2 px-4">
+            <DialogDescription class="text-gray-500 text-center mt-3 px-2 text-base">
               Anda akan mengaktifkan semua <span class="text-[#4B49AC] font-bold uppercase">Semester {{ selectedType }}</span> dan menonaktifkan yang lainnya. 
-              Lanjutkan?
+              <br><span class="text-xs mt-3 block italic text-gray-400 font-medium tracking-wide">Lanjutkan proses ini?</span>
             </DialogDescription>
           </DialogHeader>
 
-          <div class="flex items-center justify-center gap-3 mt-8">
+          <div class="flex items-center justify-center gap-4 mt-10">
             <Button 
               type="button" 
               variant="ghost" 
               @click="isStatusModalOpen = false" 
-              class="h-11 px-6 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+              class="h-12 px-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
             >
               Batal
             </Button>
             <Button 
               @click="submitToggleStatus" 
-              class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
+              class="h-12 px-10 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 transition-all font-semibold"
             >
               Ya, Aktifkan
             </Button>

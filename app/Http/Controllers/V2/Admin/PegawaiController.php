@@ -4,10 +4,11 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
-use Illuminate\Http\Request;
+use App\Http\Requests\V2\Admin\Pegawai\StorePegawaiRequest;
+use App\Http\Requests\V2\Admin\Pegawai\UpdatePegawaiRequest;
 use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
@@ -40,41 +41,9 @@ class PegawaiController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StorePegawaiRequest $request)
     {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'nuptk' => [
-                'nullable',
-                'numeric',
-                'digits:12',
-                Rule::unique('pegawais')->whereNull('deleted_at'),
-            ],
-            'jenis_kelamin' => 'required|in:Laki-Laki,Perempuan',
-            'no_telephone' => [
-                'required',
-                'string',
-                'max:15',
-                Rule::unique('pegawais')->whereNull('deleted_at'),
-            ],
-            'agama' => 'required|string',
-            'tanggal_lahir' => 'required|date',
-            'tempat_lahir' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('pegawais')->whereNull('deleted_at'),
-            ],
-            'password' => 'required|min:6'
-        ], [
-            'nuptk.digits' => 'NUPTK harus terdiri dari 12 digit',
-            'nuptk.unique' => 'NUPTK sudah terdaftar',
-            'no_telephone.unique' => 'Nomor WhatsApp sudah terdaftar',
-            'email.unique' => 'Email sudah terdaftar',
-        ]);
+        $validated = $request->validated();
 
         Pegawai::create([
             'nama' => $validated['nama'],
@@ -93,44 +62,11 @@ class PegawaiController extends Controller
         return redirect()->back()->with('success', 'Data pegawai berhasil ditambahkan.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function update(UpdatePegawaiRequest $request, $id)
     {
         $pegawai = Pegawai::findOrFail($id);
 
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'nuptk' => [
-                'nullable',
-                'numeric',
-                'digits:12',
-                Rule::unique('pegawais')->ignore($pegawai->id)->whereNull('deleted_at'),
-            ],
-            'jenis_kelamin' => 'required|in:Laki-Laki,Perempuan',
-            'no_telephone' => [
-                'required',
-                'string',
-                'max:15',
-                Rule::unique('pegawais')->ignore($pegawai->id)->whereNull('deleted_at'),
-            ],
-            'agama' => 'required|string',
-            'tanggal_lahir' => 'required|date',
-            'tempat_lahir' => 'required|string|max:255',
-            'status' => 'required|in:0,1',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('pegawais')->ignore($pegawai->id)->whereNull('deleted_at'),
-            ],
-            'password' => 'nullable|min:6'
-        ], [
-            'nuptk.digits' => 'NUPTK harus terdiri dari 12 digit',
-            'nuptk.unique' => 'NUPTK sudah terdaftar',
-            'no_telephone.unique' => 'Nomor WhatsApp sudah terdaftar',
-            'email.unique' => 'Email sudah terdaftar',
-        ]);
+        $validated = $request->validated();
 
         $updateData = collect($validated)->except('password')->toArray();
 

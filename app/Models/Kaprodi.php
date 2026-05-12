@@ -21,6 +21,6 @@ class Kaprodi extends Authenticatable
     }
 
     public function dosen(){
-        return $this->belongsTo(Wadir::class,'dosens_id','id');
+        return $this->belongsTo(Dosen::class,'dosens_id','id');
     }
 }

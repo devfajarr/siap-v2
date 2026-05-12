@@ -23,6 +23,14 @@ import {
 } from '@/Components/ui/sheet'
 import { Label } from '@/Components/ui/label'
 import { Card, CardContent } from '@/Components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/Components/ui/dialog'
 import { 
   Plus, 
   Pencil, 
@@ -289,24 +297,32 @@ const submitDelete = () => {
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">
-      <DialogContent class="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-2xl">
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
         <div class="p-8 text-center">
-          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle class="w-10 h-10 text-red-500" />
+          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <AlertCircle class="w-10 h-10 text-danger" />
           </div>
           <DialogHeader>
             <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Konfirmasi Hapus</DialogTitle>
-            <DialogDescription class="text-gray-500 text-center mt-3 px-4 leading-relaxed">
-              Apakah Anda yakin ingin menghapus ruangan <span class="text-red-600 font-extrabold">{{ selectedRuangan?.nama }}</span>?
-              <p class="text-[10px] mt-4 font-bold bg-red-50 text-red-500 p-2 rounded-lg italic">Menghapus ruangan dapat mempengaruhi data jadwal perkuliahan yang sudah ada.</p>
+            <DialogDescription class="text-gray-500 text-center mt-3 px-2 text-base leading-relaxed">
+              Apakah Anda yakin ingin menghapus ruangan <span class="text-danger font-extrabold">{{ selectedRuangan?.nama }}</span>?
+              <p class="text-[10px] mt-4 font-bold bg-red-50 text-danger p-2 rounded-lg italic tracking-wide">Menghapus ruangan dapat mempengaruhi data jadwal perkuliahan yang sudah ada secara permanen.</p>
             </DialogDescription>
           </DialogHeader>
 
-          <div class="flex items-center justify-center gap-3 mt-10">
-            <Button type="button" variant="ghost" @click="isDeleteModalOpen = false" class="h-12 px-6 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition-all">
+          <div class="flex items-center justify-center gap-4 mt-10">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              @click="isDeleteModalOpen = false" 
+              class="h-12 px-8 rounded-lg text-gray-500 font-bold hover:bg-gray-100 transition-all"
+            >
               Batal
             </Button>
-            <Button @click="submitDelete" class="h-12 px-8 bg-danger hover:bg-danger/90 text-white rounded-xl shadow-lg shadow-danger/20 font-bold transition-all">
+            <Button 
+              @click="submitDelete" 
+              class="h-12 px-10 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 font-bold transition-all"
+            >
               Ya, Hapus Data
             </Button>
           </div>

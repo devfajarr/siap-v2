@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TahunAkademik;
+use App\Http\Requests\V2\Admin\TahunAkademik\StoreTahunAkademikRequest;
+use App\Http\Requests\V2\Admin\TahunAkademik\UpdateTahunAkademikRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,28 +20,8 @@ class TahunAkademikController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreTahunAkademikRequest $request)
     {
-        $request->validate([
-            'tahun_akademik' => [
-                'required',
-                'regex:/^[0-9]{4}\/[0-9]{4}$/'
-            ],
-            'status' => 'required|boolean',
-        ], [
-            'tahun_akademik.required' => 'Tahun akademik wajib diisi',
-            'tahun_akademik.regex' => 'Format tahun akademik tidak valid [YYYY/YYYY]',
-            'status.required' => 'Status wajib dipilih',
-        ]);
-
-        $tahun = explode('/', $request->tahun_akademik);
-        $tahunPertama = (int) $tahun[0];
-        $tahunKedua = (int) $tahun[1];
-
-        if ($tahunKedua <= $tahunPertama) {
-            return redirect()->back()->withErrors(['tahun_akademik' => 'Tahun kedua harus lebih besar dari tahun pertama']);
-        }
-
         if ($request->status == 1) {
             TahunAkademik::where('status', 1)->update(['status' => 0]);
         }
@@ -52,28 +34,8 @@ class TahunAkademikController extends Controller
         return redirect()->back()->with('success', 'Tahun akademik berhasil ditambahkan.');
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateTahunAkademikRequest $request, $id)
     {
-        $request->validate([
-            'tahun_akademik' => [
-                'required',
-                'regex:/^[0-9]{4}\/[0-9]{4}$/'
-            ],
-            'status' => 'required|boolean',
-        ], [
-            'tahun_akademik.required' => 'Tahun akademik wajib diisi.',
-            'tahun_akademik.regex' => 'Format tahun akademik tidak valid [YYYY/YYYY]',
-            'status.required' => 'Status wajib dipilih',
-        ]);
-
-        $tahun = explode('/', $request->tahun_akademik);
-        $tahunPertama = (int) $tahun[0];
-        $tahunKedua = (int) $tahun[1];
-
-        if ($tahunKedua <= $tahunPertama) {
-            return redirect()->back()->withErrors(['tahun_akademik' => 'Tahun kedua harus lebih besar dari tahun pertama']);
-        }
-
         if ($request->status == 1) {
             TahunAkademik::where('status', 1)->update(['status' => 0]);
         }

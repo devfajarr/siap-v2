@@ -593,22 +593,32 @@ const downloadTemplate = () => {
 
     <!-- Delete Modal -->
     <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">
-      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="p-6 text-center">
-          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle class="w-10 h-10 text-red-500" />
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
+        <div class="p-8 text-center">
+          <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <AlertCircle class="w-10 h-10 text-danger" />
           </div>
           <DialogHeader>
             <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Konfirmasi Hapus</DialogTitle>
-            <DialogDescription class="text-gray-500 text-center mt-2 px-4">
-              Apakah Anda yakin ingin menghapus data pegawai <span class="text-red-600 font-bold">"{{ selectedPegawai?.nama }}"</span>? 
-              <br><span class="text-xs mt-2 block italic text-red-400 font-medium">Tindakan ini akan menghapus data permanen dan tidak dapat dibatalkan.</span>
+            <DialogDescription class="text-gray-500 text-center mt-3 px-2 text-base">
+              Apakah Anda yakin ingin menghapus data pegawai <span class="text-danger font-bold">"{{ selectedPegawai?.nama }}"</span>? 
+              <br><span class="text-xs mt-3 block italic text-gray-400 font-medium tracking-wide">Tindakan ini akan menghapus data permanen dan tidak dapat dibatalkan.</span>
             </DialogDescription>
           </DialogHeader>
 
-          <div class="flex items-center justify-center gap-3 mt-8">
-            <Button type="button" variant="ghost" @click="isDeleteModalOpen = false" class="h-11 px-6 rounded-lg font-semibold">Batal</Button>
-            <Button @click="submitDelete" class="h-11 px-8 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg font-semibold">
+          <div class="flex items-center justify-center gap-4 mt-10">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              @click="isDeleteModalOpen = false" 
+              class="h-12 px-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-all font-semibold"
+            >
+              Batal
+            </Button>
+            <Button 
+              @click="submitDelete" 
+              class="h-12 px-10 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 transition-all font-semibold"
+            >
               Ya, Hapus Data
             </Button>
           </div>
@@ -618,8 +628,8 @@ const downloadTemplate = () => {
 
     <!-- Import Modal -->
     <Dialog :open="isImportModalOpen" @update:open="isImportModalOpen = $event">
-      <DialogContent class="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-xl">
-        <div class="bg-[#4B49AC] p-6 text-white">
+      <DialogContent class="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
+        <div class="bg-[#4B49AC] p-6 text-white shrink-0">
           <DialogHeader>
             <DialogTitle class="text-xl font-bold text-white">Import Data Pegawai</DialogTitle>
             <DialogDescription class="text-indigo-100 mt-1">
@@ -628,14 +638,14 @@ const downloadTemplate = () => {
           </DialogHeader>
         </div>
         
-        <div class="p-6 space-y-6">
-          <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex items-start gap-4">
+        <div class="p-8 space-y-6">
+          <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex items-start gap-4">
             <div class="bg-white p-2 rounded-lg shadow-sm shrink-0">
               <FileSpreadsheet class="w-6 h-6 text-[#4B49AC]" />
             </div>
             <div class="space-y-1">
               <h4 class="text-sm font-bold text-[#4B49AC]">Gunakan Template Standard</h4>
-              <p class="text-xs text-indigo-700 leading-relaxed">
+              <p class="text-[11px] text-indigo-700 leading-relaxed">
                 Pastikan file Anda mengikuti format kolom yang telah ditentukan agar sistem dapat memproses data dengan benar.
               </p>
               <Button variant="link" @click="downloadTemplate" class="p-0 h-auto text-xs font-bold text-[#4B49AC] hover:text-[#3f3d91]">
@@ -644,18 +654,25 @@ const downloadTemplate = () => {
             </div>
           </div>
 
-          <div class="space-y-2">
+          <div class="space-y-3">
             <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pilih File Excel</Label>
-            <div class="relative group cursor-pointer border-2 border-dashed border-gray-200 hover:border-[#4B49AC] rounded-xl p-8 transition-all text-center" @click="$refs.fileInput.click()">
+            <div class="relative group cursor-pointer border-2 border-dashed border-gray-200 hover:border-[#4B49AC] rounded-lg p-10 transition-all text-center bg-gray-50/30" @click="$refs.fileInput.click()">
               <input type="file" ref="fileInput" class="hidden" @change="handleFileSelect" accept=".xlsx,.xls,.csv" />
-              <div v-if="!importForm.file" class="space-y-2">
-                <Upload class="w-8 h-8 text-gray-300 mx-auto group-hover:text-[#4B49AC] transition-all" />
-                <p class="text-sm text-gray-500">Klik atau seret file ke sini</p>
+              <div v-if="!importForm.file" class="space-y-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 transition-all">
+                  <Upload class="w-6 h-6 text-gray-400 group-hover:text-[#4B49AC]" />
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-700">Klik atau seret file ke sini</p>
+                  <p class="text-xs text-gray-400 mt-1">Format yang didukung: .xlsx, .xls, .csv</p>
+                </div>
               </div>
               <div v-else class="flex flex-col items-center gap-2">
-                <CheckCircle2 class="w-8 h-8 text-green-500" />
-                <p class="text-sm font-semibold text-gray-800">{{ importForm.file.name }}</p>
-                <Button variant="ghost" size="sm" @click.stop="importForm.file = null" class="text-red-500 hover:text-red-600 h-auto p-0 font-medium">Ganti file</Button>
+                <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                  <CheckCircle2 class="w-6 h-6 text-green-500" />
+                </div>
+                <p class="text-sm font-bold text-gray-800">{{ importForm.file.name }}</p>
+                <Button variant="ghost" size="sm" @click.stop="importForm.file = null" class="text-red-500 hover:text-red-600 h-auto p-0 font-bold text-xs mt-1">Ganti file</Button>
               </div>
             </div>
             <p v-if="importForm.errors.file" class="text-xs text-red-500 font-medium mt-1">{{ importForm.errors.file }}</p>
@@ -663,8 +680,8 @@ const downloadTemplate = () => {
         </div>
 
         <DialogFooter class="p-6 bg-gray-50/50 border-t border-gray-100 flex flex-row items-center justify-end gap-3">
-          <Button type="button" variant="ghost" @click="isImportModalOpen = false" class="h-11 px-6 rounded-lg font-semibold">Batal</Button>
-          <Button @click="submitImport" :disabled="importForm.processing || !importForm.file" class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg font-semibold">
+          <Button type="button" variant="ghost" @click="isImportModalOpen = false" class="h-11 px-6 rounded-lg font-semibold text-gray-500">Batal</Button>
+          <Button @click="submitImport" :disabled="importForm.processing || !importForm.file" class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-200 transition-all font-semibold">
             <Loader2 v-if="importForm.processing" class="w-4 h-4 mr-2 animate-spin" />
             Mulai Import
           </Button>

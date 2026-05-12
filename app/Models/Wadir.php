@@ -23,6 +23,6 @@ class Wadir extends Authenticatable
         return $this->morphMany(Message::class, 'receiver');
     }
     public function dosen(){
-        return $this->belongsTo(Wadir::class,'dosens_id','id');
+        return $this->belongsTo(Dosen::class,'dosens_id','id');
     }
 }

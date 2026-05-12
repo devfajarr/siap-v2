@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ruangan;
+use App\Http\Requests\V2\Admin\Ruangan\StoreRuanganRequest;
+use App\Http\Requests\V2\Admin\Ruangan\UpdateRuanganRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,30 +20,18 @@ class RuanganController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreRuanganRequest $request)
     {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255'
-        ], [
-            'nama.required' => 'Nama ruangan harus diisi'
-        ]);
-
-        Ruangan::create($validated);
+        Ruangan::create($request->validated());
 
         return redirect()->back()->with('success', 'Ruangan berhasil ditambahkan.');
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateRuanganRequest $request, $id)
     {
         $ruangan = Ruangan::findOrFail($id);
 
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255'
-        ], [
-            'nama.required' => 'Nama ruangan harus diisi'
-        ]);
-
-        $ruangan->update($validated);
+        $ruangan->update($request->validated());
 
         return redirect()->back()->with('success', 'Ruangan berhasil diperbarui.');
     }

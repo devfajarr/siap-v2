@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Prodi;
 use App\Models\Kelas;
 use App\Models\Kaprodi;
+use App\Http\Requests\V2\Admin\Prodi\StoreProdiRequest;
+use App\Http\Requests\V2\Admin\Prodi\UpdateProdiRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -39,23 +41,9 @@ class ProdiController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreProdiRequest $request)
     {
-        $validated = $request->validate([
-            'kode_prodi' => [
-                'required', 'string', 'max:50',
-                Rule::unique('prodi')->whereNull('deleted_at'),
-            ],
-            'nama_prodi' => 'required|string|max:255',
-            'singkatan' => 'required|string|max:50',
-            'jenjang' => 'required|string|max:50',
-            'alias_nama' => 'required|string|max:255',
-            'alias_jenjang' => 'required|string|max:50',
-        ], [
-            'kode_prodi.unique' => 'Kode prodi sudah terdaftar.',
-        ]);
-
-        Prodi::create($validated);
+        Prodi::create($request->validated());
 
         return redirect()->back()->with('success', 'Program studi berhasil ditambahkan.');
     }
@@ -63,25 +51,11 @@ class ProdiController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(UpdateProdiRequest $request, $id)
     {
         $prodi = Prodi::findOrFail($id);
 
-        $validated = $request->validate([
-            'kode_prodi' => [
-                'required', 'string', 'max:50',
-                Rule::unique('prodi')->ignore($prodi->id)->whereNull('deleted_at'),
-            ],
-            'nama_prodi' => 'required|string|max:255',
-            'singkatan' => 'required|string|max:50',
-            'jenjang' => 'required|string|max:50',
-            'alias_nama' => 'required|string|max:255',
-            'alias_jenjang' => 'required|string|max:50',
-        ], [
-            'kode_prodi.unique' => 'Kode prodi sudah terdaftar.',
-        ]);
-
-        $prodi->update($validated);
+        $prodi->update($request->validated());
 
         return redirect()->back()->with('success', 'Program studi berhasil diperbarui.');
     }

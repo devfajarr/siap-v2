@@ -5,6 +5,8 @@ namespace App\Http\Controllers\V2\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\Semester;
+use App\Http\Requests\V2\Admin\Semester\StoreSemesterRequest;
+use App\Http\Requests\V2\Admin\Semester\ToggleSemesterStatusRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -35,16 +37,9 @@ class SemesterController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreSemesterRequest $request)
     {
-        $validated = $request->validate([
-            'semester' => 'required|numeric|max:99|unique:semesters,semester,NULL,id,deleted_at,NULL'
-        ], [
-            "semester.required" => "Semester harus diisi",
-            "semester.numeric" => "Semester harus berupa angka",
-            "semester.max" => "Maksimal 2 digit",
-            "semester.unique" => "Semester ini sudah ada"
-        ]);
+        $validated = $request->validated();
 
         $activeSemester = Semester::where('status', 1)->first();
         $newSemesterIsEven = $validated['semester'] % 2 == 0;
@@ -88,12 +83,8 @@ class SemesterController extends Controller
     /**
      * Toggle status based on parity (Ganjil/Genap)
      */
-    public function gantiStatus(Request $request)
+    public function gantiStatus(ToggleSemesterStatusRequest $request)
     {
-        $request->validate([
-            'type' => 'required|in:genap,ganjil',
-        ]);
-
         $type = $request->type;
 
         try {

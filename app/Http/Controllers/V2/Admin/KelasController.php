@@ -8,6 +8,8 @@ use App\Models\Prodi;
 use App\Models\Semester;
 use App\Models\Mahasiswa;
 use App\Models\Jadwal;
+use App\Http\Requests\V2\Admin\Kelas\StoreKelasRequest;
+use App\Http\Requests\V2\Admin\Kelas\UpdateKelasRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -42,24 +44,8 @@ class KelasController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreKelasRequest $request)
     {
-        $validated = $request->validate([
-            'id_prodi' => 'required|exists:prodi,id',
-            'id_semester' => 'required|exists:semesters,id',
-            'jenis_kelas' => 'required|in:Reguler,Non Reguler',
-            'kode_kelas' => [
-                'required',
-                'string',
-                Rule::unique('kelas', 'kode_kelas')->whereNull('deleted_at')
-            ]
-        ], [
-            'id_prodi.required' => 'Prodi harus dipilih',
-            'id_semester.required' => 'Semester harus dipilih',
-            'jenis_kelas.required' => 'Jenis kelas harus dipilih',
-            'kode_kelas.required' => 'Kode kelas harus diisi',
-            'kode_kelas.unique' => 'Kode kelas sudah terdaftar',
-        ]);
 
         $prodi = Prodi::findOrFail($request->id_prodi);
         $semester = Semester::findOrFail($request->id_semester);
@@ -80,26 +66,9 @@ class KelasController extends Controller
         return redirect()->back()->with('success', 'Kelas berhasil ditambahkan.');
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateKelasRequest $request, $id)
     {
         $kelas = Kelas::findOrFail($id);
-
-        $validated = $request->validate([
-            'id_prodi' => 'required|exists:prodi,id',
-            'id_semester' => 'required|exists:semesters,id',
-            'jenis_kelas' => 'required|in:Reguler,Non Reguler',
-            'kode_kelas' => [
-                'required',
-                'string',
-                Rule::unique('kelas', 'kode_kelas')->ignore($kelas->id)->whereNull('deleted_at')
-            ]
-        ], [
-            'id_prodi.required' => 'Prodi harus dipilih',
-            'id_semester.required' => 'Semester harus dipilih',
-            'jenis_kelas.required' => 'Jenis kelas harus dipilih',
-            'kode_kelas.required' => 'Kode kelas harus diisi',
-            'kode_kelas.unique' => 'Kode kelas sudah terdaftar',
-        ]);
 
         $prodi = Prodi::findOrFail($request->id_prodi);
         $semester = Semester::findOrFail($request->id_semester);
