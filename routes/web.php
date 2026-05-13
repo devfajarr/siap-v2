@@ -430,4 +430,22 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::post('data-semester/ganti-status', [\App\Http\Controllers\V2\Admin\SemesterController::class, 'gantiStatus'])
             ->name('v2.admin.data-semester.ganti-status');
     });
+
+    // Data Mahasiswa (Tanpa data-master prefix)
+    Route::middleware('auth:admin')->prefix('admin')->group(function () {
+        Route::resource('data-mahasiswa', \App\Http\Controllers\V2\Admin\MahasiswaController::class)
+            ->names('v2.admin.data-mahasiswa')
+            ->parameters(['data-mahasiswa' => 'id'])
+            ->except(['create', 'edit']);
+        Route::post('data-mahasiswa/bulk-delete', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'bulkDelete'])
+            ->name('v2.admin.data-mahasiswa.bulk-delete');
+        Route::post('data-mahasiswa/pindah-kelas', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'pindahKelas'])
+            ->name('v2.admin.data-mahasiswa.pindah-kelas');
+        Route::post('data-mahasiswa/import', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'import'])
+            ->name('v2.admin.data-mahasiswa.import');
+        Route::get('data-mahasiswa/export/{id}', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'export'])
+            ->name('v2.admin.data-mahasiswa.export');
+        Route::get('data-mahasiswa/export-all', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'exportAll'])
+            ->name('v2.admin.data-mahasiswa.export-all');
+    });
 });

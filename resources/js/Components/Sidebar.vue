@@ -37,7 +37,10 @@ const toggleMenu = (title) => {
 
 const isMenuActive = (item) => {
   const currentPath = page.url.split('?')[0]
-  if (item.href && item.href !== '#' && currentPath === item.href) return true
+  if (item.href && item.href !== '#') {
+    // Exact match or sub-path match (e.g. /v2/admin/data-mahasiswa matches /v2/admin/data-mahasiswa/3)
+    if (currentPath === item.href || currentPath.startsWith(item.href + '/')) return true
+  }
   if (item.children) {
     return item.children.some(child => isMenuActive(child))
   }
@@ -103,7 +106,7 @@ const menuItems = [
       }
     ]
   },
-  { title: 'Mahasiswa', icon: Users, href: '/v2/admin/mahasiswa' },
+  { title: 'Mahasiswa', icon: Users, href: '/v2/admin/data-mahasiswa' },
   { title: 'Jadwal', icon: Calendar, href: '#' },
   { title: 'Pengajuan Edit', icon: History, href: '#' },
   { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '#' },
@@ -213,14 +216,14 @@ const menuItems = [
           class="flex items-center gap-4 px-6 py-3 text-[#1F1F1F] hover:bg-[#F5F7FF] transition-all group relative"
           :class="[
             { 'justify-center px-0': !isOpen },
-            { 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': page.url.split('?')[0] === item.href }
+            { 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': isMenuActive(item) }
           ]"
 
         >
           <component 
             :is="item.icon" 
             class="w-5 h-5 text-[#4B49AC] group-hover:scale-110 transition-transform flex-shrink-0" 
-            :class="{ 'text-[#4B49AC]': page.url.split('?')[0] === item.href }"
+            :class="{ 'text-[#4B49AC]': isMenuActive(item) }"
           />
 
           <span 
