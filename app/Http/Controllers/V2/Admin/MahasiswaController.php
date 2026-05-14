@@ -33,10 +33,15 @@ class MahasiswaController extends Controller
         ->get()
         ->map(function ($kelas) {
             return [
-                'id' => $kelas->id,
-                'nama_kelas' => $kelas->nama_kelas,
-                'prodi' => $kelas->prodi?->nama_prodi,
-                'semester' => $kelas->semester?->semester,
+                'id'              => $kelas->id,
+                'nama_kelas'      => $kelas->nama_kelas,
+                'prodi'           => $kelas->prodi?->nama_prodi,
+                'prodi_singkatan' => $kelas->prodi?->singkatan,
+                'id_prodi'        => $kelas->id_prodi,
+                'semester'        => $kelas->semester?->semester,
+                'id_semester'     => $kelas->id_semester,
+                'semester_status' => $kelas->semester?->status,  // 1=Aktif, 0=Non-Aktif
+                'jenis_kelas'     => $kelas->jenis_kelas,
                 'mahasiswa_count' => $kelas->mahasiswa->count(),
             ];
         });
@@ -157,12 +162,25 @@ class MahasiswaController extends Controller
     public function pindahKelas(Request $request)
     {
         $request->validate([
-            'ids' => 'required|array',
-            'kelas_id' => 'required|exists:kelas,id',
+            'ids'             => 'required|array',
+            'kelas_id'        => 'required|exists:kelas,id',
+            'source_kelas_id' => 'required|exists:kelas,id',
         ]);
 
+        $sourceKelas = Kelas::findOrFail($request->source_kelas_id);
+        $targetKelas = Kelas::findOrFail($request->kelas_id);
+
+        if (
+            $targetKelas->id_prodi   !== $sourceKelas->id_prodi ||
+            $targetKelas->jenis_kelas !== $sourceKelas->jenis_kelas
+        ) {
+            return back()->withErrors([
+                'kelas_id' => 'Kelas tujuan harus memiliki program studi dan jenis kelas yang sama dengan kelas asal.',
+            ]);
+        }
+
         Mahasiswa::whereIn('id', $request->ids)->update([
-            'kelas_id' => $request->kelas_id,
+            'kelas_id'   => $request->kelas_id,
             'status_krs' => 0,
         ]);
 

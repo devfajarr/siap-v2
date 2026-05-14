@@ -433,6 +433,14 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
 
     // Data Mahasiswa (Tanpa data-master prefix)
     Route::middleware('auth:admin')->prefix('admin')->group(function () {
+        Route::resource('jadwal-mengajar', \App\Http\Controllers\V2\Admin\JadwalMengajarController::class)
+            ->names('v2.admin.jadwal-mengajar')
+            ->except(['create', 'edit', 'show']);
+
+        Route::resource('jadwal-ujian', \App\Http\Controllers\V2\Admin\JadwalUjianController::class)
+            ->names('v2.admin.jadwal-ujian')
+            ->except(['create', 'edit', 'show']);
+
         Route::resource('data-mahasiswa', \App\Http\Controllers\V2\Admin\MahasiswaController::class)
             ->names('v2.admin.data-mahasiswa')
             ->parameters(['data-mahasiswa' => 'id'])

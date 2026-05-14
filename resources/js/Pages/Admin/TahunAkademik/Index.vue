@@ -88,6 +88,28 @@ const editForm = useForm({
   status: false,
 })
 
+// Toggle State
+const isToggleConfirmOpen = ref(false)
+const tahunToToggle = ref(null)
+const newToggleStatus = ref(false)
+
+const confirmToggle = (tahun, checked) => {
+  tahunToToggle.value = tahun
+  newToggleStatus.value = checked
+  isToggleConfirmOpen.value = true
+}
+
+const submitToggleStatus = () => {
+  router.put(`/v2/admin/data-master/tahun-akademik/${tahunToToggle.value.id}`, {
+    tahun_akademik: tahunToToggle.value.tahun_akademik,
+    status: newToggleStatus.value,
+  }, {
+    onSuccess: () => {
+      isToggleConfirmOpen.value = false
+    }
+  })
+}
+
 // Actions
 const openEditModal = (tahun) => {
   selectedTahun.value = tahun
@@ -170,13 +192,17 @@ const submitDelete = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <div v-if="tahun.status == 1" class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold ring-1 ring-green-200">
-                  <CheckCircle2 class="w-3.5 h-3.5" />
-                  AKTIF
-                </div>
-                <div v-else class="inline-flex items-center gap-1.5 bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-xs font-medium ring-1 ring-gray-200">
-                  <XCircle class="w-3.5 h-3.5" />
-                  NON-AKTIF
+                <div class="flex items-center gap-3">
+                  <Switch 
+                    :checked="tahun.status == 1" 
+                    @update:checked="confirmToggle(tahun, $event)" 
+                  />
+                  <div v-if="tahun.status == 1" class="inline-flex items-center gap-1.5 text-green-700 text-xs font-bold">
+                    <CheckCircle2 class="w-3.5 h-3.5" /> AKTIF
+                  </div>
+                  <div v-else class="inline-flex items-center gap-1.5 text-gray-500 text-xs font-medium">
+                    <XCircle class="w-3.5 h-3.5" /> NON-AKTIF
+                  </div>
                 </div>
               </TableCell>
               <TableCell class="text-[#6B7280] text-sm">
@@ -365,6 +391,45 @@ const submitDelete = () => {
               class="h-12 px-10 bg-danger hover:bg-danger/90 text-white rounded-lg shadow-lg shadow-danger/20 font-bold transition-all"
             >
               Ya, Hapus Data
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Toggle Confirm Modal -->
+    <Dialog :open="isToggleConfirmOpen" @update:open="isToggleConfirmOpen = $event">
+      <DialogContent class="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl bg-white rounded-lg">
+        <div class="p-8 text-center">
+          <div :class="newToggleStatus ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-600'" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <CheckCircle2 v-if="newToggleStatus" class="w-10 h-10" />
+            <XCircle v-else class="w-10 h-10" />
+          </div>
+          <DialogHeader>
+            <DialogTitle class="text-2xl font-bold text-gray-800 text-center">Konfirmasi Perubahan</DialogTitle>
+            <DialogDescription class="text-gray-500 text-center mt-3 px-2 text-base leading-relaxed">
+              Apakah Anda yakin ingin <span class="font-bold text-[#1F2937]">{{ newToggleStatus ? 'mengaktifkan' : 'menonaktifkan' }}</span> Tahun Akademik <span class="font-extrabold text-[#1F2937]">{{ tahunToToggle?.tahun_akademik }}</span>?
+              <p v-if="newToggleStatus" class="text-[11px] mt-4 font-semibold bg-amber-50 text-amber-700 p-3 rounded-lg leading-relaxed border border-amber-100">
+                Tahun Akademik yang saat ini aktif akan <span class="font-extrabold text-amber-800">otomatis dinonaktifkan</span>. Hanya ada satu tahun akademik yang diizinkan aktif dalam satu waktu.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="flex items-center justify-center gap-4 mt-8">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              @click="isToggleConfirmOpen = false" 
+              class="h-11 px-8 rounded-lg text-gray-500 font-bold hover:bg-gray-100 transition-all"
+            >
+              Batal
+            </Button>
+            <Button 
+              @click="submitToggleStatus" 
+              :class="newToggleStatus ? 'bg-green-600 hover:bg-green-700 shadow-green-600/20' : 'bg-gray-800 hover:bg-gray-900 shadow-gray-800/20'"
+              class="h-11 px-10 text-white rounded-lg shadow-lg font-bold transition-all"
+            >
+              Ya, {{ newToggleStatus ? 'Aktifkan' : 'Nonaktifkan' }}
             </Button>
           </div>
         </div>

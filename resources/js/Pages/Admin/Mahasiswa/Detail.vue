@@ -98,37 +98,15 @@ const isAllSelected = computed({
     }
 });
 
-// Filter allKelas — exclude kelas saat ini
-const filteredAllKelas = computed(() => {
-    return (props.allKelas ?? []).filter(kelas => kelas.id !== props.namaKelas?.id);
-});
-
-// Kelas sama prodi & jenis — untuk pilihan utama pindah semester/rombel
+// Kelas sama prodi & jenis — satu-satunya pilihan valid untuk pindah kelas
 const kelasSamProdiFiltered = computed(() => {
     return (props.kelasSamProdi ?? []).filter(k => k.id !== props.namaKelas?.id);
 });
 
-// Kelas lain (berbeda prodi/jenis) — pilihan lanjutan
-const kelasLainnya = computed(() => {
-    const samProdiIds = new Set((props.kelasSamProdi ?? []).map(k => k.id));
-    return filteredAllKelas.value.filter(k => !samProdiIds.has(k.id));
-});
-
-// Preview detail kelas yang dipilih sebagai tujuan
+// Preview detail kelas yang dipilih sebagai tujuan (hanya dari kelasSamProdi)
 const selectedKelasDetail = computed(() => {
     if (!targetKelasId.value) return null;
-    return (props.allKelas ?? []).find(k => k.id.toString() === targetKelasId.value.toString());
-});
-
-// Apakah kelas tujuan berbeda prodi atau jenis kelas?
-const isBedaProdi = computed(() => {
-    if (!selectedKelasDetail.value) return false;
-    return selectedKelasDetail.value.id_prodi !== props.namaKelas?.id_prodi;
-});
-
-const isBedaJenis = computed(() => {
-    if (!selectedKelasDetail.value) return false;
-    return selectedKelasDetail.value.jenis_kelas !== props.namaKelas?.jenis_kelas;
+    return (props.kelasSamProdi ?? []).find(k => k.id.toString() === targetKelasId.value.toString());
 });
 
 // Loading state untuk operasi delete
@@ -197,7 +175,8 @@ const bulkMove = () => {
     
     router.post(route('v2.admin.data-mahasiswa.pindah-kelas'), {
         ids: selectedIds.value,
-        kelas_id: targetKelasId.value
+        kelas_id: targetKelasId.value,
+        source_kelas_id: props.namaKelas?.id
     }, {
         onSuccess: () => {
             selectedIds.value = [];
@@ -393,43 +372,27 @@ const submitImport = () => {
                                             <div class="space-y-2">
                                                 <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pilih Kelas Tujuan</Label>
 
-                                                <!-- Jika ada kelas seprodi -->
-                                                <template v-if="kelasSamProdiFiltered.length > 0 || kelasLainnya.length > 0">
+                                                <!-- Hanya kelas seprodi & sejenis -->
+                                                <template v-if="kelasSamProdiFiltered.length > 0">
                                                     <Select v-model="targetKelasId">
                                                         <SelectTrigger class="h-11 rounded-lg border-gray-200">
                                                             <SelectValue placeholder="Pilih kelas tujuan..." />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <!-- Grup: kelas seprodi -->
-                                                            <template v-if="kelasSamProdiFiltered.length > 0">
-                                                                <div class="px-2 py-1.5 text-[10px] font-bold text-[#4B49AC] uppercase tracking-wider bg-indigo-50">
-                                                                    Kelas Seprodi · {{ namaKelas.jenis_kelas }}
+                                                            <div class="px-2 py-1.5 text-[10px] font-bold text-[#4B49AC] uppercase tracking-wider bg-indigo-50">
+                                                                Kelas Seprodi · {{ namaKelas.jenis_kelas }}
+                                                            </div>
+                                                            <SelectItem v-for="kelas in kelasSamProdiFiltered" :key="kelas.id" :value="kelas.id.toString()">
+                                                                <div class="flex items-center gap-2">
+                                                                    <span>{{ kelas.nama_kelas }}</span>
+                                                                    <span class="text-xs text-gray-400">(Sem. {{ kelas.semester?.semester ?? '?' }})</span>
                                                                 </div>
-                                                                <SelectItem v-for="kelas in kelasSamProdiFiltered" :key="kelas.id" :value="kelas.id.toString()">
-                                                                    <div class="flex items-center gap-2">
-                                                                        <span>{{ kelas.nama_kelas }}</span>
-                                                                        <span class="text-xs text-gray-400">(Sem. {{ kelas.semester?.semester ?? '?' }})</span>
-                                                                    </div>
-                                                                </SelectItem>
-                                                            </template>
-
-                                                            <!-- Grup: kelas lainnya -->
-                                                            <template v-if="kelasLainnya.length > 0">
-                                                                <div class="px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-t">
-                                                                    Kelas Lainnya
-                                                                </div>
-                                                                <SelectItem v-for="kelas in kelasLainnya" :key="kelas.id" :value="kelas.id.toString()">
-                                                                    <div class="flex items-center gap-2">
-                                                                        <span>{{ kelas.nama_kelas }}</span>
-                                                                        <span class="text-xs text-gray-400">{{ kelas.prodi?.nama_prodi }}</span>
-                                                                    </div>
-                                                                </SelectItem>
-                                                            </template>
+                                                            </SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </template>
 
-                                                <!-- Empty state: tidak ada kelas lain sama sekali -->
+                                                <!-- Empty state: tidak ada kelas seprodi lain -->
                                                 <template v-else>
                                                     <div class="flex flex-col items-center gap-3 p-6 bg-amber-50 border border-amber-200 rounded-xl text-center">
                                                         <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
@@ -438,8 +401,8 @@ const submitImport = () => {
                                                         <div>
                                                             <p class="text-sm font-bold text-amber-800">Tidak Ada Kelas Tersedia</p>
                                                             <p class="text-xs text-amber-600 mt-1 leading-relaxed">
-                                                                Belum ada kelas lain yang terdaftar di sistem.<br>
-                                                                Tambahkan kelas terlebih dahulu di menu Data Master → Kelas.
+                                                                Belum ada kelas lain dengan prodi dan jenis yang sama<br>
+                                                                (<span class="font-bold">{{ namaKelas.prodi?.nama_prodi }} · {{ namaKelas.jenis_kelas }}</span>).
                                                             </p>
                                                         </div>
                                                     </div>
@@ -457,32 +420,15 @@ const submitImport = () => {
                                                     </div>
 
                                                     <!-- Preview card kelas tujuan -->
-                                                    <div :class="[
-                                                        'p-4 rounded-xl border-2 transition-all',
-                                                        isBedaProdi || isBedaJenis
-                                                            ? 'border-amber-300 bg-amber-50'
-                                                            : 'border-green-200 bg-green-50'
-                                                    ]">
+                                                    <div class="p-4 rounded-xl border-2 border-green-200 bg-green-50 transition-all">
                                                         <div class="flex items-start gap-3">
-                                                            <div :class="[
-                                                                'p-2 rounded-lg shrink-0',
-                                                                isBedaProdi || isBedaJenis ? 'bg-amber-200' : 'bg-green-200'
-                                                            ]">
-                                                                <GraduationCap :class="[
-                                                                    'h-4 w-4',
-                                                                    isBedaProdi || isBedaJenis ? 'text-amber-700' : 'text-green-700'
-                                                                ]" />
+                                                            <div class="p-2 rounded-lg shrink-0 bg-green-200">
+                                                                <GraduationCap class="h-4 w-4 text-green-700" />
                                                             </div>
                                                             <div class="min-w-0 flex-1">
                                                                 <div class="flex items-center gap-2 flex-wrap">
                                                                     <p class="text-sm font-bold text-gray-800">{{ selectedKelasDetail.nama_kelas }}</p>
-                                                                    <span v-if="isBedaProdi" class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded-full">
-                                                                        <AlertTriangle class="h-2.5 w-2.5" /> Beda Prodi
-                                                                    </span>
-                                                                    <span v-if="isBedaJenis" class="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-200 text-orange-800 text-[10px] font-bold rounded-full">
-                                                                        <AlertTriangle class="h-2.5 w-2.5" /> Beda Jenis
-                                                                    </span>
-                                                                    <span v-if="!isBedaProdi && !isBedaJenis" class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-200 text-green-800 text-[10px] font-bold rounded-full">
+                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-200 text-green-800 text-[10px] font-bold rounded-full">
                                                                         <CheckCircle2 class="h-2.5 w-2.5" /> Seprodi
                                                                     </span>
                                                                 </div>
@@ -493,40 +439,19 @@ const submitImport = () => {
                                                         </div>
                                                     </div>
 
-                                                    <!-- Warning jika beda prodi/jenis -->
-                                                    <div v-if="isBedaProdi || isBedaJenis" class="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                                        <AlertTriangle class="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                                                        <p class="text-xs text-amber-700 leading-relaxed">
-                                                            <span class="font-bold">Perhatian:</span>
-                                                            Kelas tujuan berbeda {{ isBedaProdi ? 'program studi' : '' }}{{ isBedaProdi && isBedaJenis ? ' dan ' : '' }}{{ isBedaJenis ? 'jenis kelas' : '' }}.
-                                                            Status KRS mahasiswa akan direset. Pastikan perpindahan ini disengaja.
-                                                        </p>
-                                                    </div>
                                                 </div>
                                             </Transition>
-
-                                            <!-- Info empty kelas seprodi -->
-                                            <div v-if="kelasSamProdiFiltered.length === 0 && (filteredAllKelas.length > 0)" class="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                                <Info class="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                                                <p class="text-xs text-blue-700 leading-relaxed">
-                                                    Tidak ada kelas lain dengan prodi & jenis yang sama (<span class="font-bold">{{ namaKelas.jenis_kelas }}</span>).
-                                                    Pilihan yang tersedia adalah kelas dari prodi atau jenis lain.
-                                                </p>
-                                            </div>
                                         </div>
 
                                         <DialogFooter class="px-6 pb-6 pt-4 bg-gray-50/50 border-t border-gray-100 flex flex-row items-center justify-end gap-3">
                                             <Button type="button" variant="ghost" @click="isMoveDialogOpen = false" class="h-11 px-6 rounded-lg font-semibold text-gray-500">Batal</Button>
                                             <Button
                                                 @click="bulkMove"
-                                                :disabled="!targetKelasId || isMoving || filteredAllKelas.length === 0"
-                                                :class="[
-                                                    'h-11 px-8 text-white rounded-lg shadow-lg font-semibold transition-all',
-                                                    isBedaProdi || isBedaJenis ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-100' : 'bg-[#4B49AC] hover:bg-[#3f3d91] shadow-indigo-100'
-                                                ]"
+                                                :disabled="!targetKelasId || isMoving || kelasSamProdiFiltered.length === 0"
+                                                class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 font-semibold transition-all"
                                             >
                                                 <Loader2 v-if="isMoving" class="w-4 h-4 mr-2 animate-spin" />
-                                                {{ isBedaProdi || isBedaJenis ? 'Tetap Pindahkan' : 'Konfirmasi Pindah' }}
+                                                Konfirmasi Pindah
                                             </Button>
                                         </DialogFooter>
                                     </DialogContent>

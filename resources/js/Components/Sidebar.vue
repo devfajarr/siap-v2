@@ -107,7 +107,14 @@ const menuItems = [
     ]
   },
   { title: 'Mahasiswa', icon: Users, href: '/v2/admin/data-mahasiswa' },
-  { title: 'Jadwal', icon: Calendar, href: '#' },
+  { 
+    title: 'Jadwal', 
+    icon: Calendar,
+    children: [
+      { title: 'Jadwal Mengajar', href: '/v2/admin/jadwal-mengajar' },
+      { title: 'Jadwal Ujian', href: '/v2/admin/jadwal-ujian' },
+    ]
+  },
   { title: 'Pengajuan Edit', icon: History, href: '#' },
   { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '#' },
   { title: 'Data Nilai', icon: Star, href: '#' },
