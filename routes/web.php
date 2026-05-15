@@ -455,5 +455,12 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->name('v2.admin.data-mahasiswa.export');
         Route::get('data-mahasiswa/export-all', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'exportAll'])
             ->name('v2.admin.data-mahasiswa.export-all');
+
+        // Pengajuan Edit Presensi
+        Route::get('pengajuan-edit-presensi', [\App\Http\Controllers\V2\Admin\PengajuanEditPresensiController::class, 'index'])
+            ->name('v2.admin.pengajuan-edit-presensi.index');
+        Route::post('pengajuan-edit-presensi/verify', [\App\Http\Controllers\V2\Admin\PengajuanEditPresensiController::class, 'verify'])
+            ->name('v2.admin.pengajuan-edit-presensi.verify');
     });
 });
+

@@ -115,7 +115,7 @@ const menuItems = [
       { title: 'Jadwal Ujian', href: '/v2/admin/jadwal-ujian' },
     ]
   },
-  { title: 'Pengajuan Edit', icon: History, href: '#' },
+  { title: 'Pengajuan Edit Presensi', icon: History, href: '/v2/admin/pengajuan-edit-presensi' },
   { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '#' },
   { title: 'Data Nilai', icon: Star, href: '#' },
   { title: 'Rekap Nilai', icon: FileText, href: '#' },
