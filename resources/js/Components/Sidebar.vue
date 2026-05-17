@@ -117,10 +117,24 @@ const menuItems = [
   },
   { title: 'Pengajuan Edit Presensi', icon: History, href: '/v2/admin/pengajuan-edit-presensi' },
   { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '/v2/admin/data-perkuliahan' },
-  { title: 'Data Nilai', icon: Star, href: '#' },
-  { title: 'Rekap Nilai', icon: FileText, href: '#' },
-  { title: 'Pembayaran', icon: CreditCard, href: '#' },
-  { title: 'KRS', icon: KrsIcon, href: '#' },
+  { title: 'Data Nilai', icon: Star, href: '/v2/admin/data-nilai' },
+  { 
+    title: 'Rekap Nilai', 
+    icon: FileText, 
+    children: [
+      { title: 'Pengajuan Nilai', href: '/v2/admin/rekap-nilai/pengajuan' },
+      { title: 'Nilai Disetujui', href: '/v2/admin/rekap-nilai/disetujui' },
+    ]
+  },
+  { 
+    title: 'Pembayaran', 
+    icon: CreditCard, 
+    children: [
+      { title: 'Pembayaran Diajukan', href: '/v2/admin/pembayaran/diajukan' },
+      { title: 'Pembayaran Disetujui', href: '/v2/admin/pembayaran/disetujui' },
+    ]
+  },
+  { title: 'KRS', icon: KrsIcon, href: '/v2/admin/krs/kategori' },
   { title: 'Permohonan Surat', icon: Mail, href: '#' },
   { title: 'Informasi Tambahan', icon: PlusCircle, href: '#' },
 ]

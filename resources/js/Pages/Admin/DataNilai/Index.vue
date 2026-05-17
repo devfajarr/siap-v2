@@ -14,12 +14,12 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Data Perkuliahan" />
+    <Head title="Data Nilai" />
 
     <AdminLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Data Perkuliahan
+                Data Nilai
             </h2>
         </template>
 
@@ -41,8 +41,8 @@ defineProps({
                                 <span>Jumlah Mata Kuliah: <span class="font-bold">{{ dosen.total_matkul }}</span></span>
                             </div>
                             <Button as-child variant="default" class="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90">
-                                <Link :href="route('v2.admin.data-perkuliahan.show', dosen.id)">
-                                    Lihat Jadwal
+                                <Link :href="route('v2.admin.data-nilai.show', dosen.id)">
+                                    Lihat Mata Kuliah
                                 </Link>
                             </Button>
                         </CardContent>
@@ -53,9 +53,9 @@ defineProps({
                             <div class="w-16 h-16 bg-[#4B49AC]/10 rounded-full flex items-center justify-center mx-auto mb-4 text-[#4B49AC]">
                                 <FolderSearch class="w-8 h-8 text-[#4B49AC]" />
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Data Jadwal Perkuliahan Kosong</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Data Rekap Nilai Kosong</h3>
                             <p class="text-sm text-gray-500 leading-relaxed">
-                                Belum ada data dosen aktif yang memiliki jadwal perkuliahan terdaftar. Jadwal perkuliahan dapat ditambahkan atau diatur melalui modul Jadwal Mengajar di menu administrasi.
+                                Belum ada data dosen aktif beserta jadwal perkuliahan yang tercatat di sistem. Rekap penilaian akan otomatis tersedia setelah jadwal perkuliahan dan kelas diatur oleh pihak administrasi.
                             </p>
                         </div>
                     </div>

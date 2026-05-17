@@ -466,6 +466,31 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::resource('data-perkuliahan', \App\Http\Controllers\V2\Admin\DataPerkuliahanController::class)
             ->names('v2.admin.data-perkuliahan')
             ->only(['index', 'show']);
+
+        // Data Nilai
+        Route::resource('data-nilai', \App\Http\Controllers\V2\Admin\DataNilaiController::class)
+            ->names('v2.admin.data-nilai')
+            ->only(['index', 'show']);
+
+        // Rekap Nilai
+        Route::prefix('rekap-nilai')->name('v2.admin.rekap-nilai.')->group(function () {
+            Route::get('pengajuan', [\App\Http\Controllers\V2\Admin\RekapNilaiController::class, 'pengajuan'])->name('pengajuan');
+            Route::get('disetujui', [\App\Http\Controllers\V2\Admin\RekapNilaiController::class, 'disetujui'])->name('disetujui');
+        });
+
+        // Pembayaran
+        Route::prefix('pembayaran')->name('v2.admin.pembayaran.')->group(function () {
+            Route::get('diajukan', [\App\Http\Controllers\V2\Admin\PembayaranController::class, 'diajukan'])->name('diajukan');
+            Route::get('disetujui', [\App\Http\Controllers\V2\Admin\PembayaranController::class, 'disetujui'])->name('disetujui');
+            Route::put('{id}', [\App\Http\Controllers\V2\Admin\PembayaranController::class, 'update'])->name('update');
+        });
+
+        // KRS
+        Route::prefix('krs')->name('v2.admin.krs.')->group(function () {
+            Route::get('kategori', [\App\Http\Controllers\V2\Admin\KrsController::class, 'index'])->name('kategori');
+            Route::get('kategori/{id}', [\App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
+            Route::get('kategori/cetak/{id}', [\App\Http\Controllers\V2\Admin\KrsController::class, 'cetak'])->name('cetak');
+        });
     });
 });
 
