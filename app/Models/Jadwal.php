@@ -41,12 +41,12 @@ class Jadwal extends Model
     }
     public function resume()
     {
-        return $this->hasMany(Resume::class);
+        return $this->hasMany(Resume::class, 'jadwals_id');
     }
 
     public function kontrak()
     {
-        return $this->hasMany(Kontrak::class);
+        return $this->hasMany(Kontrak::class, 'jadwals_id');
     }
 
     public function pengajuanPresensi()

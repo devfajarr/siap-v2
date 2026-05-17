@@ -461,6 +461,11 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->name('v2.admin.pengajuan-edit-presensi.index');
         Route::post('pengajuan-edit-presensi/verify', [\App\Http\Controllers\V2\Admin\PengajuanEditPresensiController::class, 'verify'])
             ->name('v2.admin.pengajuan-edit-presensi.verify');
+
+        // Data Perkuliahan
+        Route::resource('data-perkuliahan', \App\Http\Controllers\V2\Admin\DataPerkuliahanController::class)
+            ->names('v2.admin.data-perkuliahan')
+            ->only(['index', 'show']);
     });
 });
 

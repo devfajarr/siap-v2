@@ -116,7 +116,7 @@ const menuItems = [
     ]
   },
   { title: 'Pengajuan Edit Presensi', icon: History, href: '/v2/admin/pengajuan-edit-presensi' },
-  { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '#' },
+  { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '/v2/admin/data-perkuliahan' },
   { title: 'Data Nilai', icon: Star, href: '#' },
   { title: 'Rekap Nilai', icon: FileText, href: '#' },
   { title: 'Pembayaran', icon: CreditCard, href: '#' },
