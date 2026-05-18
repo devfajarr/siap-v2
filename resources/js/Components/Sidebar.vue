@@ -48,7 +48,7 @@ const isMenuActive = (item) => {
 }
 
 const expandActiveMenu = () => {
-  menuItems.forEach(item => {
+  menuItems.value.forEach(item => {
     if (item.children && isMenuActive(item)) {
       if (!expandedMenus.value.includes(item.title)) {
         expandedMenus.value.push(item.title)
@@ -74,70 +74,99 @@ watch(() => page.url, () => {
 })
 
 
-const menuItems = [
-  { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/admin/dashboard' },
-  { 
-    title: 'Data Master', 
-    icon: Folder, 
-    children: [
-      {
-        title: 'Akademik',
-        icon: GraduationCap,
-        children: [
-          { title: 'Mata Kuliah', href: '/v2/admin/data-master/data-matkul' },
+const menuItems = computed(() => {
+  const role = page.props.auth?.user?.role
+  if (role === 'Mahasiswa') {
+    const riwayatChildren = (page.props.auth?.semesters || []).map(s => ({
+      title: s.title,
+      href: s.href
+    }))
 
-          { title: 'Program Studi', href: '/v2/admin/data-master/data-prodi' },
-          { title: 'Semester', href: '/v2/admin/data-master/data-semester' },
-          { title: 'Tahun Akademik', href: '/v2/admin/data-master/tahun-akademik' },
-          { title: 'Kelas', href: '/v2/admin/data-master/data-kelas' },
-          { title: 'Ruangan', href: '/v2/admin/data-master/data-ruangan' },
-        ]
+    return [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/mahasiswa/dashboard' },
+      { title: 'Nilai KHS', icon: Star, href: '/v2/mahasiswa/nilai' },
+      { 
+        title: 'Riwayat Nilai', 
+        icon: Folder, 
+        children: riwayatChildren.length > 0 ? riwayatChildren : [{ title: 'Belum ada riwayat', href: '#' }]
       },
-      {
-        title: 'Kepegawaian',
-        icon: UserCheck,
-        children: [
-          { title: 'Pegawai', href: '/v2/admin/data-master/data-pegawai' },
-          { title: 'Dosen', href: '/v2/admin/data-master/data-dosen' },
-          { title: 'Kaprodi', href: '/v2/admin/data-master/data-kaprodi' },
-          { title: 'Wakil Direktur', href: '/v2/admin/data-master/data-wadir' },
-          { title: 'Direktur', href: '/v2/admin/data-master/data-direktur' },
-        ]
-      }
+      { title: 'KRS & Pembayaran', icon: KrsIcon, href: '/v2/mahasiswa/krs_pembayaran' },
+      { title: 'Permohonan Surat', icon: Mail, href: '/presensi/mahasiswa/permohonan_surat' },
     ]
-  },
-  { title: 'Mahasiswa', icon: Users, href: '/v2/admin/data-mahasiswa' },
-  { 
-    title: 'Jadwal', 
-    icon: Calendar,
-    children: [
-      { title: 'Jadwal Mengajar', href: '/v2/admin/jadwal-mengajar' },
-      { title: 'Jadwal Ujian', href: '/v2/admin/jadwal-ujian' },
-    ]
-  },
-  { title: 'Pengajuan Edit Presensi', icon: History, href: '/v2/admin/pengajuan-edit-presensi' },
-  { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '/v2/admin/data-perkuliahan' },
-  { title: 'Data Nilai', icon: Star, href: '/v2/admin/data-nilai' },
-  { 
-    title: 'Rekap Nilai', 
-    icon: FileText, 
-    children: [
-      { title: 'Pengajuan Nilai', href: '/v2/admin/rekap-nilai/pengajuan' },
-      { title: 'Nilai Disetujui', href: '/v2/admin/rekap-nilai/disetujui' },
-    ]
-  },
-  { 
-    title: 'Pembayaran', 
-    icon: CreditCard, 
-    children: [
-      { title: 'Pembayaran Diajukan', href: '/v2/admin/pembayaran/diajukan' },
-      { title: 'Pembayaran Disetujui', href: '/v2/admin/pembayaran/disetujui' },
-    ]
-  },
-  { title: 'KRS', icon: KrsIcon, href: '/v2/admin/krs/kategori' },
-  { title: 'Permohonan Surat', icon: Mail, href: '#' },
-  { title: 'Informasi Tambahan', icon: PlusCircle, href: '#' },
-]
+  }
+
+  return [
+    { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/admin/dashboard' },
+    { 
+      title: 'Data Master', 
+      icon: Folder, 
+      children: [
+        {
+          title: 'Akademik',
+          icon: GraduationCap,
+          children: [
+            { title: 'Mata Kuliah', href: '/v2/admin/data-master/data-matkul' },
+
+            { title: 'Program Studi', href: '/v2/admin/data-master/data-prodi' },
+            { title: 'Semester', href: '/v2/admin/data-master/data-semester' },
+            { title: 'Tahun Akademik', href: '/v2/admin/data-master/tahun-akademik' },
+            { title: 'Kelas', href: '/v2/admin/data-master/data-kelas' },
+            { title: 'Ruangan', href: '/v2/admin/data-master/data-ruangan' },
+          ]
+        },
+        {
+          title: 'Kepegawaian',
+          icon: UserCheck,
+          children: [
+            { title: 'Pegawai', href: '/v2/admin/data-master/data-pegawai' },
+            { title: 'Dosen', href: '/v2/admin/data-master/data-dosen' },
+            { title: 'Kaprodi', href: '/v2/admin/data-master/data-kaprodi' },
+            { title: 'Wakil Direktur', href: '/v2/admin/data-master/data-wadir' },
+            { title: 'Direktur', href: '/v2/admin/data-master/data-direktur' },
+          ]
+        }
+      ]
+    },
+    { title: 'Mahasiswa', icon: Users, href: '/v2/admin/data-mahasiswa' },
+    { 
+      title: 'Jadwal', 
+      icon: Calendar,
+      children: [
+        { title: 'Jadwal Mengajar', href: '/v2/admin/jadwal-mengajar' },
+        { title: 'Jadwal Ujian', href: '/v2/admin/jadwal-ujian' },
+      ]
+    },
+    { title: 'Pengajuan Edit Presensi', icon: History, href: '/v2/admin/pengajuan-edit-presensi' },
+    { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '/v2/admin/data-perkuliahan' },
+    { title: 'Data Nilai', icon: Star, href: '/v2/admin/data-nilai' },
+    { 
+      title: 'Rekap Nilai', 
+      icon: FileText, 
+      children: [
+        { title: 'Pengajuan Nilai', href: '/v2/admin/rekap-nilai/pengajuan' },
+        { title: 'Nilai Disetujui', href: '/v2/admin/rekap-nilai/disetujui' },
+      ]
+    },
+    { 
+      title: 'Pembayaran', 
+      icon: CreditCard, 
+      children: [
+        { title: 'Pembayaran Diajukan', href: '/v2/admin/pembayaran/diajukan' },
+        { title: 'Pembayaran Disetujui', href: '/v2/admin/pembayaran/disetujui' },
+      ]
+    },
+    { title: 'KRS', icon: KrsIcon, href: '/v2/admin/krs/kategori' },
+    { 
+      title: 'Permohonan Surat', 
+      icon: Mail, 
+      children: [
+        { title: 'Cetak Surat', href: '/v2/admin/permohonan-surat/cetak' },
+        { title: 'Surat Selesai', href: '/v2/admin/permohonan-surat/selesai' },
+      ]
+    },
+    { title: 'Informasi Tambahan', icon: PlusCircle, href: '/v2/admin/informasi-tambahan' },
+  ]
+})
 </script>
 
 <template>

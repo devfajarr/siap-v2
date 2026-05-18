@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
 
         $role = 'Guest';
         $avatar = '/images/user.png';
+        $semesters = [];
 
         if ($user) {
             // Determine Role based on guard or session
@@ -59,6 +60,18 @@ class HandleInertiaRequests extends Middleware
                 if ($user->profile_picture) {
                     $avatar = asset('storage/profile_pictures/' . $user->profile_picture);
                 }
+                $semesters = \App\Models\NilaiHuruf::with('semester')
+                    ->where('mahasiswa_id', $user->id)
+                    ->select('semester_id')
+                    ->groupBy('semester_id')
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'id' => $item->semester->id ?? null,
+                            'title' => 'Semester ' . ($item->semester->semester ?? ''),
+                            'href' => '/v2/mahasiswa/riwayat/' . ($item->semester->id ?? ''),
+                        ];
+                    })->filter(fn($item) => $item['id'] !== null)->values()->toArray();
             }
             else if (auth()->guard('kaprodi')->check()) $role = 'Kaprodi';
             else if (auth()->guard('direktur')->check()) $role = 'Direktur';
@@ -73,6 +86,7 @@ class HandleInertiaRequests extends Middleware
                     'role' => $role,
                     'avatar' => $avatar,
                 ] : null,
+                'semesters' => $semesters,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

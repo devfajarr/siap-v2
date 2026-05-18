@@ -491,6 +491,43 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::get('kategori/{id}', [\App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
             Route::get('kategori/cetak/{id}', [\App\Http\Controllers\V2\Admin\KrsController::class, 'cetak'])->name('cetak');
         });
+
+        // Permohonan Surat
+        Route::prefix('permohonan-surat')->name('v2.admin.permohonan-surat.')->group(function () {
+            Route::get('cetak', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'cetak'])->name('cetak');
+            Route::get('selesai', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'selesai'])->name('selesai');
+            Route::put('{id}/terbitkan', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'terbitkan'])->name('terbitkan');
+            Route::get('{id}/cetak-dokumen', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'cetakDokumen'])->name('cetak-dokumen');
+        });
+
+        // Informasi Tambahan
+        Route::prefix('informasi-tambahan')->name('v2.admin.informasi-tambahan.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'index'])->name('index');
+            Route::post('kalender', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'storeKalender'])->name('store-kalender');
+            Route::post('brosur', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'storeBrosur'])->name('store-brosur');
+            Route::delete('{id}', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    // Mahasiswa Routes
+    Route::middleware('auth:mahasiswa')->prefix('mahasiswa')->name('v2.mahasiswa.')->group(function () {
+        Route::get('dashboard', [\App\Http\Controllers\V2\Mahasiswa\DashboardController::class, 'index'])->name('dashboard');
+
+        // Nilai & KHS
+        Route::prefix('nilai')->name('nilai.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'index'])->name('index');
+        });
+        Route::get('riwayat/{semester_id}', [\App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'riwayat'])->name('riwayat');
+        Route::get('khs/{semester_id}', [\App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'khs'])->name('khs');
+
+        // KRS & Pembayaran
+        Route::prefix('krs_pembayaran')->name('krs-pembayaran.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'index'])->name('index');
+            Route::post('upload', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'uploadPembayaran'])->name('upload');
+            Route::post('pengajuan', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'pengajuanKrs'])->name('pengajuan');
+            Route::put('persetujuan/{id}', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'persetujuanKrs'])->name('persetujuan');
+            Route::get('cetak/{id}', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'cetakKrs'])->name('cetak');
+        });
     });
 });
 
