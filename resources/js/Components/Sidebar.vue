@@ -103,7 +103,8 @@ const menuItems = computed(() => {
       { title: 'Presensi',   icon: ClipboardCheck,  href: '/v2/dosen/data-presensi' },
       { title: 'Kontrak',    icon: BookOpenCheck,   href: '/v2/dosen/kontrak' },
       { title: 'Nilai',      icon: BarChart3,       href: '/v2/dosen/nilai' },
-      { title: 'KRS',        icon: KrsIcon,         href: '#' },
+      { title: 'Akses Dosen Pembimbing', isSeparator: true },
+      { title: 'Validasi KRS', icon: KrsIcon, href: '/v2/dosen/krs' },
     ]
   }
 
@@ -188,8 +189,14 @@ const menuItems = computed(() => {
   >
     <ul class="py-4">
       <li v-for="item in menuItems" :key="item.title" class="mb-1">
+        <!-- Separator -->
+        <div v-if="item.isSeparator" class="px-6 py-4 mt-2 mb-1 text-xs font-bold text-[#8A92A6] uppercase tracking-wider flex items-center">
+          <span v-if="isOpen">{{ item.title }}</span>
+          <hr v-else class="w-full border-[#CDD1E1]" />
+        </div>
+        
         <!-- Parent with Children -->
-        <template v-if="item.children">
+        <template v-else-if="item.children">
           <button 
             @click="toggleMenu(item.title)"
             class="w-full flex items-center gap-4 px-6 py-3 text-[#1F1F1F] hover:bg-[#F5F7FF] transition-all group relative"

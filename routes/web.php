@@ -395,6 +395,11 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::get('/data-presensi/{jadwal_id}/edit/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'edit'])->name('v2.dosen.presensi.edit');
         Route::post('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'store'])->name('v2.dosen.presensi.store');
         Route::put('/data-presensi/{jadwal_id}/update/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'update'])->name('v2.dosen.presensi.update');
+        
+        // Dosen KRS (Validasi KRS DPA)
+        Route::get('/krs', [\App\Http\Controllers\V2\Dosen\KrsController::class, 'index'])->name('v2.dosen.krs.index');
+        Route::get('/krs/{id}/detail', [\App\Http\Controllers\V2\Dosen\KrsController::class, 'detail'])->name('v2.dosen.krs.detail');
+        Route::put('/krs/{id}/approve', [\App\Http\Controllers\V2\Dosen\KrsController::class, 'approve'])->name('v2.dosen.krs.approve');
     });
 
     // Dosen Nilai (V2)
