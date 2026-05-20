@@ -72,6 +72,24 @@ Route::post('/first-login', [AuthController::class, 'processFirstLogin'])
     ->name('first.login')->middleware(['auth:admin,direktur,wakil_direktur,kaprodi,mahasiswa,dosen']);
 Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware(['auth:admin,direktur,wakil_direktur,kaprodi,mahasiswa,dosen'])->name('change.password');
 
+
+// DASHBOARD V2
+Route::prefix('v2')->group(function () {
+    Route::middleware(['auth:dosen'])->group(function () {
+        Route::get('/dosen/kontrak', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'index'])->name('v2.dosen.kontrak.index');
+        Route::get('/dosen/kontrak/create/{id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'create'])->name('v2.dosen.kontrak.create');
+        Route::post('/dosen/kontrak', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'store'])->name('v2.dosen.kontrak.store');
+        Route::get('/dosen/kontrak/edit/{id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'edit'])->name('v2.dosen.kontrak.edit');
+        Route::put('/dosen/kontrak/update/{id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'update'])->name('v2.dosen.kontrak.update');
+        Route::post('/dosen/kontrak/import', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'importWithReplace'])->name('import.kontrak');
+        Route::get('/dosen/kontrak/download-template', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'downloadFormat'])->name('download.format.kontrak');
+    });
+
+    Route::get('/dosen/kontrak/rekap/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'rekap'])
+        ->name('v2.dosen.kontrak.rekap')
+        ->middleware('auth:dosen,wakil_direktur,kaprodi,admin,direktur');
+});
+
 Route::prefix('/presensi')->group(function () {
     // DASHBOARD
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi');
@@ -142,8 +160,8 @@ Route::prefix('/presensi')->group(function () {
     // KONTRAK
     Route::resource('/data-kontrak', KontrakController::class)->middleware('auth:dosen')->except(['show']);;
     Route::get('/data-kontrak/isi-kontrak/{id}', [KontrakController::class, 'create'])->middleware('auth:dosen');
-    Route::post('/data-kontrak/import', [KontrakController::class, 'importWithReplace'])->name('import.kontrak')->middleware('auth:dosen');
-    Route::get('/data-kontrak/download-template', [KontrakController::class, 'downloadFormat'])->name('download.format.kontrak')->middleware('auth:dosen');
+    Route::post('/data-kontrak/import', [KontrakController::class, 'importWithReplace'])->name('import.kontrak.legacy')->middleware('auth:dosen');
+    Route::get('/data-kontrak/download-template', [KontrakController::class, 'downloadFormat'])->name('download.format.kontrak.legacy')->middleware('auth:dosen');
     Route::get('/data-kontrak/rekap/{matkuls_id}/{kelas_id}/{jadwals_id}', [KontrakController::class, 'rekap'])->middleware('auth:dosen,wakil_direktur,kaprodi,admin,direktur');
 
     // PENGAJUAN PRESENSI
@@ -377,6 +395,36 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::get('/data-presensi/{jadwal_id}/edit/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'edit'])->name('v2.dosen.presensi.edit');
         Route::post('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'store'])->name('v2.dosen.presensi.store');
         Route::put('/data-presensi/{jadwal_id}/update/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'update'])->name('v2.dosen.presensi.update');
+    });
+
+    // Dosen Nilai (V2)
+    Route::middleware('auth:dosen')->prefix('dosen/nilai')->name('v2.dosen.nilai.')->group(function () {
+        Route::get('/',                                     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'index'])->name('index');
+        Route::get('/{jadwal_id}',                         [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'show'])->name('show');
+
+        // Tugas
+        Route::post('/{jadwal_id}/tugas',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeTugas'])->name('tugas.store');
+        Route::put('/{jadwal_id}/tugas/{tugas_ke}',        [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateTugas'])->name('tugas.update');
+        Route::delete('/{jadwal_id}/tugas/{tugas_ke}',     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'destroyTugas'])->name('tugas.destroy');
+
+        // UTS
+        Route::post('/{jadwal_id}/uts',                    [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeUts'])->name('uts.store');
+        Route::put('/{jadwal_id}/uts',                     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateUts'])->name('uts.update');
+
+        // UAS
+        Route::post('/{jadwal_id}/uas',                    [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeUas'])->name('uas.store');
+        Route::put('/{jadwal_id}/uas',                     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateUas'])->name('uas.update');
+
+        // Etika
+        Route::post('/{jadwal_id}/etika',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeEtika'])->name('etika.store');
+        Route::put('/{jadwal_id}/etika',                   [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateEtika'])->name('etika.update');
+
+        // Keaktifan
+        Route::post('/{jadwal_id}/aktif',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeAktif'])->name('aktif.store');
+        Route::put('/{jadwal_id}/aktif',                   [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateAktif'])->name('aktif.update');
+
+        // Pengajuan Rekap Nilai
+        Route::post('/{jadwal_id}/rekap',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'pengajuanRekap'])->name('rekap.store');
     });
 
     Route::get('/profile', [\App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');

@@ -17,7 +17,9 @@ import {
   PlusCircle,
   ChevronDown,
   GraduationCap,
-  UserCheck
+  UserCheck,
+  BarChart3,
+  BookOpenCheck,
 } from 'lucide-vue-next'
 
 defineProps({
@@ -97,11 +99,11 @@ const menuItems = computed(() => {
 
   if (role === 'Dosen') {
     return [
-      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/dosen/dashboard' },
-      { title: 'Presensi', icon: ClipboardCheck, href: '/v2/dosen/data-presensi' },
-      { title: 'Kontrak', icon: ClipboardCheck, href: '#' },
-      { title: 'Nilai', icon: Star, href: '#' },
-      { title: 'KRS', icon: KrsIcon, href: '#' },
+      { title: 'Dashboard',  icon: LayoutDashboard, href: '/v2/dosen/dashboard' },
+      { title: 'Presensi',   icon: ClipboardCheck,  href: '/v2/dosen/data-presensi' },
+      { title: 'Kontrak',    icon: BookOpenCheck,   href: '/v2/dosen/kontrak' },
+      { title: 'Nilai',      icon: BarChart3,       href: '/v2/dosen/nilai' },
+      { title: 'KRS',        icon: KrsIcon,         href: '#' },
     ]
   }
 

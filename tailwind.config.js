@@ -34,6 +34,11 @@ export default {
           DEFAULT: "#FF4747",
           foreground: "#FFFFFF",
         },
+        background: "#FFFFFF",
+        foreground: "#0F172A",
+        border: "#E2E8F0",
+        input: "#E2E8F0",
+        ring: "#4B49AC",
       },
       fontFamily: {
         nunito: ["Nunito", "sans-serif"],

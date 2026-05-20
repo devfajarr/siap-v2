@@ -131,6 +131,7 @@ class PresensiController extends Controller
         $pertemuan = $pertemuan ? $pertemuan + 1 : 1;
         
         $mahasiswas = Mahasiswa::where('kelas_id', $jadwal->kelas->id)
+            ->where('status_krs', 1)
             ->orderBy('nama_lengkap', 'asc')
             ->get();
             
@@ -180,6 +181,7 @@ class PresensiController extends Controller
             ->first();
 
         $mahasiswas = Mahasiswa::where('kelas_id', $jadwal->kelas->id)
+            ->where('status_krs', 1)
             ->orderBy('nama_lengkap', 'asc')
             ->get();
             
