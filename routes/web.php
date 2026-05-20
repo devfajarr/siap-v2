@@ -367,7 +367,20 @@ use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
 
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
+    Route::get('/dosen/dashboard', [\App\Http\Controllers\V2\Dosen\DashboardController::class, 'index'])->name('v2.dosen.dashboard');
+
+    // Dosen Presensi
+    Route::middleware('auth:dosen')->prefix('dosen')->group(function () {
+        Route::get('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'index'])->name('v2.dosen.presensi.index');
+        Route::post('/data-presensi/request-edit', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'requestEdit'])->name('v2.dosen.presensi.request-edit');
+        Route::get('/data-presensi/create/{id}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'create'])->name('v2.dosen.presensi.create');
+        Route::get('/data-presensi/{jadwal_id}/edit/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'edit'])->name('v2.dosen.presensi.edit');
+        Route::post('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'store'])->name('v2.dosen.presensi.store');
+        Route::put('/data-presensi/{jadwal_id}/update/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'update'])->name('v2.dosen.presensi.update');
+    });
+
     Route::get('/profile', [\App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');
+
 
     // Admin Data Master
     Route::middleware('auth:admin')->prefix('admin/data-master')->group(function () {

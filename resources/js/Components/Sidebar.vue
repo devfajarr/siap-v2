@@ -95,6 +95,16 @@ const menuItems = computed(() => {
     ]
   }
 
+  if (role === 'Dosen') {
+    return [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/dosen/dashboard' },
+      { title: 'Presensi', icon: ClipboardCheck, href: '/v2/dosen/data-presensi' },
+      { title: 'Kontrak', icon: ClipboardCheck, href: '#' },
+      { title: 'Nilai', icon: Star, href: '#' },
+      { title: 'KRS', icon: KrsIcon, href: '#' },
+    ]
+  }
+
   return [
     { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/admin/dashboard' },
     { 

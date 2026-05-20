@@ -50,7 +50,7 @@ class KrsController extends Controller
     {
         $kelas = Kelas::with(['prodi', 'semester'])->findOrFail($id);
 
-        $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi'])
+        $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik'])
             ->where('kelas_id', $id)
             ->orderBy('nim', 'asc')
             ->get();
