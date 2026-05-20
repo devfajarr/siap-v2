@@ -52,15 +52,15 @@ class NilaiMahasiswaController extends Controller
             ];
         });
 
-        $semesters = NilaiHuruf::where('mahasiswa_id', $this->userId)
-            ->select('semester_id')
-            ->with('semester')
-            ->groupBy('semester_id')
-            ->get();
-
         $mahasiswa = Mahasiswa::with('kelas.semester')
             ->where('id', $this->userId)
             ->first();
+
+        // New Logic: Fetch semesters based on current semester level
+        $currentSemesterLevel = $mahasiswa->kelas->semester->semester ?? 0;
+        $semesters = Semester::where('semester', '<=', $currentSemesterLevel)
+            ->orderBy('semester', 'asc')
+            ->get();
 
         $sem = $mahasiswa->kelas->semester->semester;
 
@@ -106,16 +106,20 @@ class NilaiMahasiswaController extends Controller
             ]];
         });
 
-
-        $semesters = NilaiHuruf::where('mahasiswa_id', $this->userId)
-            ->select('semester_id')
-            ->with('semester')
-            ->groupBy('semester_id')
-            ->get();
-
         $mahasiswa = Mahasiswa::with('kelas.semester')
             ->where('id', $this->userId)
             ->first();
+
+        // Security check
+        if ($semesterRiwayatKhs->semester > ($mahasiswa->kelas->semester->semester ?? 0)) {
+            return redirect()->back()->with('error', 'Anda belum mencapai semester ini.');
+        }
+
+        // New Logic: Fetch semesters based on current semester level
+        $currentSemesterLevel = $mahasiswa->kelas->semester->semester ?? 0;
+        $semesters = Semester::where('semester', '<=', $currentSemesterLevel)
+            ->orderBy('semester', 'asc')
+            ->get();
 
         $riwayat = true;
         return view("pages.mahasiswa.nilai.index", compact("combinedData", "semesters", 'riwayat', 'semesterRiwayatKhs'));

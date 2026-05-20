@@ -91,7 +91,7 @@ const menuItems = computed(() => {
         children: riwayatChildren.length > 0 ? riwayatChildren : [{ title: 'Belum ada riwayat', href: '#' }]
       },
       { title: 'KRS & Pembayaran', icon: KrsIcon, href: '/v2/mahasiswa/krs_pembayaran' },
-      { title: 'Permohonan Surat', icon: Mail, href: '/presensi/mahasiswa/permohonan_surat' },
+      { title: 'Permohonan Surat', icon: Mail, href: '/v2/mahasiswa/permohonan-surat' },
     ]
   }
 

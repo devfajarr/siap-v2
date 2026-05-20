@@ -101,20 +101,49 @@
             .</p>
 
         <p style="margin-top:-20px">Adapun Mahasiswa yang kami maksud adalah:</p>
-        <table class="info-table" style="margin-left: 50px">
-            <tr>
-                <td>Nama</td>
-                <td>: {{ $permohonan->mahasiswa->nama_lengkap }}</td>
-            </tr>
-            <tr>
-                <td>NIM</td>
-                <td>: {{ $permohonan->mahasiswa->nim }}</td>
-            </tr>
-            <tr>
-                <td>Program Studi</td>
-                <td>: {{ $permohonan->mahasiswa->kelas->prodi->nama_prodi }}</td>
-            </tr>
-        </table>
+        @if(!empty($anggotaTim) && count($anggotaTim) > 0)
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px;" border="1">
+                <thead>
+                    <tr>
+                        <th style="padding: 5px 10px; text-align: center; width: 5%;">No</th>
+                        <th style="padding: 5px 10px; text-align: left; width: 35%;">Nama Lengkap</th>
+                        <th style="padding: 5px 10px; text-align: center; width: 25%;">NIM</th>
+                        <th style="padding: 5px 10px; text-align: left; width: 35%;">Program Studi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 5px 10px; text-align: center;">1</td>
+                        <td style="padding: 5px 10px;">{{ $permohonan->mahasiswa->nama_lengkap }}</td>
+                        <td style="padding: 5px 10px; text-align: center;">{{ $permohonan->mahasiswa->nim }}</td>
+                        <td style="padding: 5px 10px;">{{ $permohonan->mahasiswa->kelas->prodi->nama_prodi }}</td>
+                    </tr>
+                    @foreach($anggotaTim as $idx => $anggota)
+                    <tr>
+                        <td style="padding: 5px 10px; text-align: center;">{{ $idx + 2 }}</td>
+                        <td style="padding: 5px 10px;">{{ $anggota->nama_lengkap }}</td>
+                        <td style="padding: 5px 10px; text-align: center;">{{ $anggota->nim }}</td>
+                        <td style="padding: 5px 10px;">{{ $anggota->kelas ? ($anggota->kelas->prodi ? $anggota->kelas->prodi->nama_prodi : '-') : '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <table class="info-table" style="margin-left: 50px">
+                <tr>
+                    <td>Nama</td>
+                    <td>: {{ $permohonan->mahasiswa->nama_lengkap }}</td>
+                </tr>
+                <tr>
+                    <td>NIM</td>
+                    <td>: {{ $permohonan->mahasiswa->nim }}</td>
+                </tr>
+                <tr>
+                    <td>Program Studi</td>
+                    <td>: {{ $permohonan->mahasiswa->kelas->prodi->nama_prodi }}</td>
+                </tr>
+            </table>
+        @endif
 
         <p style="text-align: justify">Demikian permohonan ini kami sampaikan, untuk selanjutnya kami menunggu konfirmasi dari Bapak/Ibu. Atas perhatian dan kerjasamanya kami ucapkan terima kasih.</p>
     </div>

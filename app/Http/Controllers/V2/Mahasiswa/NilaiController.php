@@ -62,6 +62,12 @@ class NilaiController extends Controller
             return redirect()->route('v2.mahasiswa.nilai.index');
         }
 
+        // Security check: ensure student can only access semesters they have reached
+        $targetSemester = Semester::findOrFail($semester_id);
+        if ($targetSemester->semester > ($kelas->semester->semester ?? 0)) {
+            return redirect()->route('v2.mahasiswa.nilai.index')->with('error', 'Anda belum mencapai semester ini.');
+        }
+
         return $this->renderNilaiView($mahasiswa, $kelas, $semester_id, true);
     }
 
@@ -136,6 +142,11 @@ class NilaiController extends Controller
         $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester', 'pembimbingAkademik'])->findOrFail($user->id);
         $kelas = $mahasiswa->kelas;
         $targetSemester = Semester::findOrFail($semester_id);
+
+        // Security check: ensure student can only access semesters they have reached
+        if ($targetSemester->semester > ($kelas->semester->semester ?? 0)) {
+            return redirect()->route('v2.mahasiswa.nilai.index')->with('error', 'Anda belum mencapai semester ini.');
+        }
 
         $ipss = NilaiHuruf::with('matkul')
             ->where('mahasiswa_id', $mahasiswa->id)

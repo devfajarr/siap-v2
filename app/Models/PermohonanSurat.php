@@ -18,5 +18,11 @@ class PermohonanSurat extends Model
     }
     protected $casts = [
         'data_diminta' => 'array',
+        'anggota_tim' => 'array',
     ];
+
+    public function getPangkatAtauGolonganAttribute()
+    {
+        return $this->attributes['pangkat_golongan'] ?? '-';
+    }
 }

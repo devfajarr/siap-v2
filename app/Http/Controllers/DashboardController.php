@@ -181,13 +181,11 @@ class DashboardController extends Controller
                 ->where('mahasiswas_id', auth()->user()->id)
                 ->get();
 
-            $semesters = NilaiHuruf::where('mahasiswa_id', $this->userId)
-                ->select('semester_id')
-                ->with('semester')
-                ->groupBy('semester_id')
+            // New Logic: Fetch semesters based on current semester level
+            $currentSemesterLevel = $mahasiswaUser->kelas->semester->semester ?? 0;
+            $semesters = \App\Models\Semester::where('semester', '<=', $currentSemesterLevel)
+                ->orderBy('semester', 'asc')
                 ->get();
-
-
 
             return view('pages.dashboard.index', compact('totalKehadiran', 'totalMatakuliah', 'jadwalsMahasiswa', 'semesters', 'absensHariIni'));
 

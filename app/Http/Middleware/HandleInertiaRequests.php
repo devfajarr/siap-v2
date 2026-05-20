@@ -60,18 +60,21 @@ class HandleInertiaRequests extends Middleware
                 if ($user->profile_picture) {
                     $avatar = asset('storage/profile_pictures/' . $user->profile_picture);
                 }
-                $semesters = \App\Models\NilaiHuruf::with('semester')
-                    ->where('mahasiswa_id', $user->id)
-                    ->select('semester_id')
-                    ->groupBy('semester_id')
+                
+                // Fetch semesters based on student's current semester level
+                $mahasiswa = \App\Models\Mahasiswa::with('kelas.semester')->find($user->id);
+                $currentSemesterLevel = $mahasiswa->kelas->semester->semester ?? 0;
+
+                $semesters = \App\Models\Semester::where('semester', '<=', $currentSemesterLevel)
+                    ->orderBy('semester', 'asc')
                     ->get()
-                    ->map(function ($item) {
+                    ->map(function ($semester) {
                         return [
-                            'id' => $item->semester->id ?? null,
-                            'title' => 'Semester ' . ($item->semester->semester ?? ''),
-                            'href' => '/v2/mahasiswa/riwayat/' . ($item->semester->id ?? ''),
+                            'id' => $semester->id,
+                            'title' => 'Semester ' . $semester->semester,
+                            'href' => '/v2/mahasiswa/riwayat/' . $semester->id,
                         ];
-                    })->filter(fn($item) => $item['id'] !== null)->values()->toArray();
+                    })->toArray();
             }
             else if (auth()->guard('kaprodi')->check()) $role = 'Kaprodi';
             else if (auth()->guard('direktur')->check()) $role = 'Direktur';

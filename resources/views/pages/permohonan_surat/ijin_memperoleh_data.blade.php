@@ -102,11 +102,40 @@
 
         <p style="text-indent: 40px;text-align:justify">Dengan ini kami mohon kepada Bapak/Ibu, kiranya berkenan memberikan ijin kepada mahasiswa kami untuk melakukan observasi serta berkenan memberikan data pendukung untuk kelengkapan penyusunan Laporan {{ $permohonan->jenis_permohonan == 'Ijin Memperoleh Data PKL' ? 'Praktek Kerja Lapangan (PKL)' : 'Tugas Akhir (TA)' }}. Laporan tersebut merupakan salah satu syarat kelulusan jenjang {{ $permohonan->mahasiswa->kelas->prodi->jenjang == 'D3' ? 'Diploma III' : 'Diploma IV' }} guna mendapatkan sebutan gelar {{ $permohonan->mahasiswa->kelas->prodi->jenjang == 'D3' ? 'Ahli Madya (A.Md)' : 'Sarjana Terapan (S.Tr.)' }}. Adapun mahasiswa yang kami maksud adalah:</p>
         
-        <table>
-            <tr><td style="width: 150px;">Nama</td><td>: {{ $permohonan->mahasiswa->nama_lengkap }}</td></tr>
-            <tr><td>NIM</td><td>: {{ $permohonan->mahasiswa->nim }}</td></tr>
-            <tr><td>Program Studi</td><td>: {{ $permohonan->mahasiswa->kelas->prodi->jenjang == 'D3' ? 'D-III' : 'D-IV' }} {{ $permohonan->mahasiswa->kelas->prodi->nama_prodi }}</td></tr>
-        </table>
+        @if(!empty($anggotaTim) && count($anggotaTim) > 0)
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px;" border="1">
+                <thead>
+                    <tr>
+                        <th style="padding: 5px 10px; text-align: center; width: 5%;">No</th>
+                        <th style="padding: 5px 10px; text-align: left; width: 35%;">Nama Lengkap</th>
+                        <th style="padding: 5px 10px; text-align: center; width: 25%;">NIM</th>
+                        <th style="padding: 5px 10px; text-align: left; width: 35%;">Program Studi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 5px 10px; text-align: center;">1</td>
+                        <td style="padding: 5px 10px;">{{ $permohonan->mahasiswa->nama_lengkap }}</td>
+                        <td style="padding: 5px 10px; text-align: center;">{{ $permohonan->mahasiswa->nim }}</td>
+                        <td style="padding: 5px 10px;">{{ $permohonan->mahasiswa->kelas->prodi->jenjang == 'D3' ? 'D-III' : 'D-IV' }} {{ $permohonan->mahasiswa->kelas->prodi->nama_prodi }}</td>
+                    </tr>
+                    @foreach($anggotaTim as $idx => $anggota)
+                    <tr>
+                        <td style="padding: 5px 10px; text-align: center;">{{ $idx + 2 }}</td>
+                        <td style="padding: 5px 10px;">{{ $anggota->nama_lengkap }}</td>
+                        <td style="padding: 5px 10px; text-align: center;">{{ $anggota->nim }}</td>
+                        <td style="padding: 5px 10px;">{{ $anggota->kelas ? ($anggota->kelas->prodi ? ($anggota->kelas->prodi->jenjang == 'D3' ? 'D-III' : 'D-IV') . ' ' . $anggota->kelas->prodi->nama_prodi : '-') : '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <table>
+                <tr><td style="width: 150px;">Nama</td><td>: {{ $permohonan->mahasiswa->nama_lengkap }}</td></tr>
+                <tr><td>NIM</td><td>: {{ $permohonan->mahasiswa->nim }}</td></tr>
+                <tr><td>Program Studi</td><td>: {{ $permohonan->mahasiswa->kelas->prodi->jenjang == 'D3' ? 'D-III' : 'D-IV' }} {{ $permohonan->mahasiswa->kelas->prodi->nama_prodi }}</td></tr>
+            </table>
+        @endif
 
         <p style="text-align: justify;text-indent:40px">Demikian permohonan ini kami sampaikan, atas perhatian Bapak/Ibu kami ucapkan terima kasih.</p>
         

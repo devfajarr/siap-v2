@@ -528,6 +528,14 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::put('persetujuan/{id}', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'persetujuanKrs'])->name('persetujuan');
             Route::get('cetak/{id}', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'cetakKrs'])->name('cetak');
         });
+
+        // Permohonan Surat Mahasiswa
+        Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'store'])->name('store');
+            Route::put('{id}', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'update'])->name('update');
+            Route::delete('{id}', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'destroy'])->name('destroy');
+        });
     });
 });
 

@@ -341,9 +341,9 @@
                     <ul class="nav flex-column sub-menu">
                         @forelse ($semesters as $semester)
                             <li
-                                class="nav-item {{ Request::is('presensi/mahasiswa/riwayat/' . $semester->semester->id) ? 'active' : '' }}">
-                                <a class="nav-link" href="/presensi/mahasiswa/riwayat/{{ $semester->semester->id }}">
-                                    Semester {{ $semester->semester->semester }}
+                                class="nav-item {{ Request::is('presensi/mahasiswa/riwayat/' . $semester->id) ? 'active' : '' }}">
+                                <a class="nav-link" href="/presensi/mahasiswa/riwayat/{{ $semester->id }}">
+                                    Semester {{ $semester->semester }}
                                 </a>
                             </li>
                         @empty

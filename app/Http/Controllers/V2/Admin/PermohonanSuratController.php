@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\PermohonanSurat;
+use App\Models\Mahasiswa;
 use App\Models\Direktur;
 use App\Models\Wadir;
 use App\Models\TahunAkademik;
@@ -136,6 +137,13 @@ class PermohonanSuratController extends Controller
             'mahasiswa.kelas.semester'
         ])->findOrFail($id);
 
+        $anggotaTim = null;
+        if (!empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
+            $anggotaTim = Mahasiswa::with(['kelas.prodi', 'kelas.semester'])
+                ->whereIn('id', $permohonan->anggota_tim)
+                ->get();
+        }
+
         // Fallback objek default jika data master aktif belum diatur di database
         $direktur = Direktur::where('status', 1)->first() ?? (object)['nama' => 'Direktur (Belum Diatur)'];
         $wadir = Wadir::where('status', 1)->where('no', 1)->first() ?? (object)['nama' => 'Wakil Direktur I (Belum Diatur)'];
@@ -151,7 +159,7 @@ class PermohonanSuratController extends Controller
         } elseif ($permohonan->jenis_permohonan == 'Keterangan Aktif Kuliah') {
             return view('pages.permohonan_surat.aktif_kuliah', compact('permohonan', 'direktur', 'tahunAkademik'));
         } elseif ($permohonan->jenis_permohonan == 'Ijin PKL') {
-            return view('pages.permohonan_surat.ijin_pkl', compact('permohonan', 'direktur', 'tahunAkademik'));
+            return view('pages.permohonan_surat.ijin_pkl', compact('permohonan', 'direktur', 'tahunAkademik', 'anggotaTim'));
         } elseif ($permohonan->jenis_permohonan == 'Pindah Kelas') {
             return view('pages.permohonan_surat.pindah_kelas', compact('permohonan', 'direktur', 'tahunAkademik', 'kelas_baru'));
         } elseif ($permohonan->jenis_permohonan == 'Mengundurkan Diri') {
@@ -159,7 +167,7 @@ class PermohonanSuratController extends Controller
         } elseif ($permohonan->jenis_permohonan == 'Cuti Kuliah') {
             return view('pages.permohonan_surat.cuti_kuliah', compact('permohonan', 'wadir', 'tahunAkademik'));
         } elseif ($permohonan->jenis_permohonan == 'Ijin Memperoleh Data PKL' || $permohonan->jenis_permohonan == 'Ijin Memperoleh Data TA') {
-            return view('pages.permohonan_surat.ijin_memperoleh_data', compact('permohonan', 'direktur', 'tahunAkademik'));
+            return view('pages.permohonan_surat.ijin_memperoleh_data', compact('permohonan', 'direktur', 'tahunAkademik', 'anggotaTim'));
         }
 
         return abort(404, 'Template cetak untuk jenis permohonan ini tidak ditemukan.');
