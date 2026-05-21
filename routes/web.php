@@ -413,6 +413,8 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         // Kaprodi Data Perkuliahan
         Route::get('/data-perkuliahan', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'index'])->name('data-perkuliahan.index');
         Route::get('/data-perkuliahan/{id}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'show'])->name('data-perkuliahan.show');
+        Route::get('/data-perkuliahan/presensi-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'cetakPresensi'])->name('data-perkuliahan.presensi-cetak');
+        Route::get('/data-perkuliahan/bap-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'cetakBap'])->name('data-perkuliahan.bap-cetak');
 
         Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
             Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDiajukan'])->name('diajukan');

@@ -7,6 +7,9 @@ use App\Models\Dosen;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
 use App\Models\TahunAkademik;
+use App\Models\Absen;
+use App\Models\Resume;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -138,5 +141,99 @@ class DataPerkuliahanController extends Controller
             'jadwals' => $formattedJadwals,
             'tahunAkademik' => $tahun
         ]);
+    }
+
+    /**
+     * Mencetak presensi mahasiswa berdasarkan rentang pertemuan (V1 Duplicate for V2).
+     */
+    public function cetakPresensi($matkul_id, $kelas_id, $jadwal_id, $rentang)
+    {
+        $pertemuan = $rentang === '1-7' ? [1, 2, 3, 4, 5, 6, 7] : [8, 9, 10, 11, 12, 13, 14];
+
+        $absens = Absen::with([
+            'dosen' => function ($query) {
+                $query->withTrashed();
+            },
+            'kelas.semester' => function ($query) {
+                $query->withTrashed();
+            },
+            'kelas' => function ($query) {
+                $query->withTrashed();
+            },
+            'matkul' => function ($query) {
+                $query->withTrashed();
+            },
+            'prodi' => function ($query) {
+                $query->withTrashed();
+            },
+            'mahasiswa' => function ($query) {
+                $query->withTrashed();
+            },
+            'jadwal' => function ($query) {
+                $query->withTrashed();
+            }
+        ])
+            ->where('jadwals_id', $jadwal_id)
+            ->where('matkuls_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->whereIn('pertemuan', $pertemuan)
+            ->get();
+
+        $tahunAkademik = TahunAkademik::where('status', 1)->get();
+        $dosenPengampu = Dosen::where('id', $absens->first()->dosens_id)->first();
+        $kaprodi = Kaprodi::where('prodis_id', $absens->first()->prodis_id)->first();
+
+        $viewName = $rentang === '1-7' 
+            ? 'pages.v2.kaprodi.data-perkuliahan.cek1to7' 
+            : 'pages.v2.kaprodi.data-perkuliahan.cek8to14';
+
+        return view($viewName, compact('absens', 'tahunAkademik', 'dosenPengampu', 'kaprodi'));
+    }
+
+    /**
+     * Mencetak Berita Acara Perkuliahan (BAP) berdasarkan rentang pertemuan (V1 Duplicate for V2).
+     */
+    public function cetakBap($matkuls_id, $kelas_id, $jadwal_id, $rentang)
+    {
+        $pertemuanRange = $rentang === '1-7' ? [1, 7] : [8, 14];
+
+        $beritas = Resume::with([
+            'dosen' => function ($query) {
+                $query->withTrashed();
+            },
+            'matkul' => function ($query) {
+                $query->withTrashed();
+            },
+            'kelas.prodi' => function ($query) {
+                $query->withTrashed();
+            },
+            'kelas' => function ($query) {
+                $query->withTrashed();
+            },
+            'kelas.semester' => function ($query) {
+                $query->withTrashed();
+            },
+            'jadwal' => function ($query) {
+                $query->withTrashed();
+            }
+        ])
+            ->where('matkuls_id', $matkuls_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('jadwals_id', $jadwal_id)
+            ->whereBetween('pertemuan', $pertemuanRange)
+            ->get();
+
+        $semester = Semester::where('status', 1)->first();
+        $sem = "GANJIL";
+        if ($semester) {
+            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+        }
+        $tahunAkademik = TahunAkademik::where('status', 1)->get();
+
+        $viewName = $rentang === '1-7' 
+            ? 'pages.v2.kaprodi.data-perkuliahan.bap-cek1to7' 
+            : 'pages.v2.kaprodi.data-perkuliahan.bap-cek8to14';
+
+        return view($viewName, compact('beritas', 'tahunAkademik', 'sem'));
     }
 }

@@ -12,6 +12,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { 
     ChevronLeft, 
     Download, 
@@ -198,39 +204,67 @@ const getProgressVariant = (current, total = 14) => {
                                         
                                         <!-- Pertemuan Max (Presensi) -->
                                         <TableCell class="text-center">
-                                            <div class="flex flex-col items-center gap-1">
-                                                <span class="text-sm font-black" :class="jadwal.pertemuan_max >= 14 ? 'text-emerald-600' : 'text-gray-900'">
-                                                    {{ jadwal.pertemuan_max }}
-                                                </span>
-                                                <div class="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div class="h-full rounded-full transition-all duration-500" 
-                                                        :class="jadwal.pertemuan_max >= 14 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : (jadwal.pertemuan_max >= 7 ? 'bg-amber-400' : 'bg-rose-500')"
-                                                        :style="{ width: `${Math.min((jadwal.pertemuan_max / 14) * 100, 100)}%` }">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger as-child>
+                                                    <div class="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform" :class="jadwal.pertemuan_max < 1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''">
+                                                        <span class="text-sm font-black" :class="jadwal.pertemuan_max >= 14 ? 'text-emerald-600' : 'text-gray-900'">
+                                                            {{ jadwal.pertemuan_max }}
+                                                        </span>
+                                                        <div class="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full rounded-full transition-all duration-500" 
+                                                                :class="jadwal.pertemuan_max >= 14 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : (jadwal.pertemuan_max >= 7 ? 'bg-amber-400' : 'bg-rose-500')"
+                                                                :style="{ width: `${Math.min((jadwal.pertemuan_max / 14) * 100, 100)}%` }">
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent v-if="jadwal.pertemuan_max >= 1">
+                                                    <DropdownMenuItem v-if="jadwal.pertemuan_max >= 1" as-child>
+                                                        <a :href="`/v2/kaprodi/data-perkuliahan/presensi-cetak/${jadwal.matkuls_id}/${jadwal.kelas_id}/${jadwal.id}/1-7`" target="_blank" class="w-full cursor-pointer">Pertemuan 1-7</a>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem v-if="jadwal.pertemuan_max >= 8" as-child>
+                                                        <a :href="`/v2/kaprodi/data-perkuliahan/presensi-cetak/${jadwal.matkuls_id}/${jadwal.kelas_id}/${jadwal.id}/8-14`" target="_blank" class="w-full cursor-pointer">Pertemuan 8-14</a>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
 
                                         <!-- Berita Max (BAP) -->
                                         <TableCell class="text-center">
-                                            <div class="flex flex-col items-center gap-1">
-                                                <span class="text-sm font-black" :class="jadwal.berita_max >= 14 ? 'text-blue-600' : 'text-gray-900'">
-                                                    {{ jadwal.berita_max }}
-                                                </span>
-                                                <div class="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div class="h-full rounded-full transition-all duration-500" 
-                                                        :class="jadwal.berita_max >= 14 ? 'bg-blue-500' : (jadwal.berita_max >= 7 ? 'bg-indigo-400' : 'bg-rose-400')"
-                                                        :style="{ width: `${Math.min((jadwal.berita_max / 14) * 100, 100)}%` }">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger as-child>
+                                                    <div class="flex flex-col items-center gap-1 cursor-pointer hover:scale-105 transition-transform" :class="jadwal.berita_max < 1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''">
+                                                        <span class="text-sm font-black" :class="jadwal.berita_max >= 14 ? 'text-blue-600' : 'text-gray-900'">
+                                                            {{ jadwal.berita_max }}
+                                                        </span>
+                                                        <div class="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full rounded-full transition-all duration-500" 
+                                                                :class="jadwal.berita_max >= 14 ? 'bg-blue-500' : (jadwal.berita_max >= 7 ? 'bg-indigo-400' : 'bg-rose-400')"
+                                                                :style="{ width: `${Math.min((jadwal.berita_max / 14) * 100, 100)}%` }">
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent v-if="jadwal.berita_max >= 1">
+                                                    <DropdownMenuItem v-if="jadwal.berita_max >= 1" as-child>
+                                                        <a :href="`/v2/kaprodi/data-perkuliahan/bap-cetak/${jadwal.matkuls_id}/${jadwal.kelas_id}/${jadwal.id}/1-7`" target="_blank" class="w-full cursor-pointer">Pertemuan 1-7</a>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem v-if="jadwal.berita_max >= 8" as-child>
+                                                        <a :href="`/v2/kaprodi/data-perkuliahan/bap-cetak/${jadwal.matkuls_id}/${jadwal.kelas_id}/${jadwal.id}/8-14`" target="_blank" class="w-full cursor-pointer">Pertemuan 8-14</a>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
 
                                         <!-- Kontrak Max -->
                                         <TableCell class="text-center">
-                                            <div v-if="jadwal.kontrak_max > 0" class="flex items-center justify-center text-emerald-500" title="Kontrak Tersedia">
+                                            <a v-if="jadwal.kontrak_max > 0" 
+                                               :href="`/v2/dosen/kontrak/rekap/${jadwal.matkuls_id}/${jadwal.kelas_id}/${jadwal.id}`" 
+                                               target="_blank" 
+                                               class="inline-flex items-center justify-center text-emerald-500 hover:text-emerald-700 hover:scale-110 transition-transform" 
+                                               title="Lihat Kontrak">
                                                 <CheckCircle2 class="w-5 h-5" />
-                                            </div>
+                                            </a>
                                             <div v-else class="flex items-center justify-center text-gray-300" title="Belum Terisi">
                                                 <History class="w-5 h-5" />
                                             </div>
