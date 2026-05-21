@@ -386,6 +386,51 @@ use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
     Route::get('/dosen/dashboard', [\App\Http\Controllers\V2\Dosen\DashboardController::class, 'index'])->name('v2.dosen.dashboard');
+    Route::get('/kaprodi/dashboard', [\App\Http\Controllers\V2\Kaprodi\DashboardController::class, 'index'])->name('v2.kaprodi.dashboard');
+
+    // Kaprodi Monitoring
+    Route::middleware('auth:kaprodi')->prefix('kaprodi')->name('v2.kaprodi.')->group(function () {
+        Route::prefix('monitoring')->name('monitoring.')->group(function () {
+            Route::get('matkul', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'matkul'])->name('matkul.index');
+            Route::get('matkul/{semester_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'matkulDetail'])->name('matkul.detail');
+            
+            Route::get('perkuliahan', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'perkuliahan'])->name('perkuliahan.index');
+            Route::get('perkuliahan/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'perkuliahanDetail'])->name('perkuliahan.detail');
+            Route::get('perkuliahan/presensi/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'presensiCek'])->name('perkuliahan.presensi-cek');
+
+            Route::get('nilai', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilai'])->name('nilai.index');
+            Route::get('nilai/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
+        });
+
+        // Kaprodi Approval
+        Route::prefix('rekap-presensi')->name('rekap-presensi.')->group(function () {
+            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDiajukan'])->name('diajukan');
+            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDisetujui'])->name('disetujui');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiApprove'])->name('approve');
+        });
+
+        // Kaprodi Data Perkuliahan
+        Route::get('/data-perkuliahan', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'index'])->name('data-perkuliahan.index');
+        Route::get('/data-perkuliahan/{id}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'show'])->name('data-perkuliahan.show');
+
+        Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
+            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDiajukan'])->name('diajukan');
+            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDisetujui'])->name('disetujui');
+        });
+
+        Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
+            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakDiajukan'])->name('diajukan');
+            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakDisetujui'])->name('disetujui');
+        });
+
+        Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {
+            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'suratDiajukan'])->name('diajukan');
+            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'suratDisetujui'])->name('disetujui');
+            Route::post('approve', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'permohonanSuratApprove'])->name('approve');
+            Route::delete('reject/{id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'permohonanSuratReject'])->name('reject');
+        });
+    });
 
     // Dosen Presensi
     Route::middleware('auth:dosen')->prefix('dosen')->group(function () {

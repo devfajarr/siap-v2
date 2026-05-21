@@ -293,6 +293,14 @@ const formatDate = (dateStr) => {
     const date = new Date(dateStr)
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
+
+const showRejectionDetail = ref(false)
+const rejectionDetail = ref(null)
+
+const openRejectionDetail = (item) => {
+    rejectionDetail.value = item
+    showRejectionDetail.value = true
+}
 </script>
 
 <template>
@@ -408,18 +416,30 @@ const formatDate = (dateStr) => {
                                             {{ formatDate(item.created_at) }}
                                         </TableCell>
                                         <TableCell class="text-center py-4">
-                                            <Badge v-if="item.setuju_kaprodi === 1" variant="secondary" class="bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold px-3 py-1 rounded-md">
+                                            <Badge v-if="item.setuju_kaprodi === 1" variant="secondary" class="bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
                                                 <CheckCircle2 class="w-3.5 h-3.5 mr-1" /> Disetujui
                                             </Badge>
-                                            <Badge v-else variant="secondary" class="bg-amber-100 text-amber-800 border border-amber-200 font-semibold px-3 py-1 rounded-md">
+                                            <div v-else-if="item.setuju_kaprodi === 2" class="flex flex-col items-center gap-1">
+                                                <Badge variant="secondary" class="bg-rose-100 text-rose-800 border border-rose-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
+                                                    <XCircle class="w-3.5 h-3.5 mr-1" /> Ditolak
+                                                </Badge>
+                                                <button 
+                                                    v-if="item.keterangan_ditolak" 
+                                                    @click="openRejectionDetail(item)"
+                                                    class="text-[10px] text-rose-600 hover:text-rose-800 font-bold underline decoration-rose-300 decoration-1 underline-offset-2 block mt-1 max-w-[120px] text-center leading-tight transition-colors"
+                                                >
+                                                    Lihat Alasan Detail
+                                                </button>
+                                            </div>
+                                            <Badge v-else variant="secondary" class="bg-amber-100 text-amber-800 border border-amber-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
                                                 <Clock class="w-3.5 h-3.5 mr-1 animate-spin" /> Menunggu
                                             </Badge>
                                         </TableCell>
                                         <TableCell class="text-center py-4">
-                                            <Badge v-if="item.status === 1" variant="secondary" class="bg-indigo-100 text-[#4B49AC] border border-indigo-200 font-semibold px-3 py-1 rounded-md">
+                                            <Badge v-if="item.status === 1" variant="secondary" class="bg-indigo-100 text-[#4B49AC] border border-indigo-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
                                                 Selesai & Tercetak
                                             </Badge>
-                                            <Badge v-else variant="secondary" class="bg-gray-100 text-gray-600 border border-gray-200 font-semibold px-3 py-1 rounded-md">
+                                            <Badge v-else variant="secondary" class="bg-gray-100 text-gray-600 border border-gray-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
                                                 Proses Admin
                                             </Badge>
                                         </TableCell>
@@ -446,6 +466,9 @@ const formatDate = (dateStr) => {
                                                     </Button>
                                                     <span v-if="item.setuju_kaprodi === 1 || item.status === 1" class="text-xs text-gray-400 italic">
                                                         Terkunci (Telah Disetujui)
+                                                    </span>
+                                                    <span v-else-if="item.setuju_kaprodi === 2" class="text-xs text-rose-400 italic">
+                                                        Ditolak
                                                     </span>
                                                 </template>
                                                 <template v-else>
@@ -874,6 +897,42 @@ const formatDate = (dateStr) => {
         </Sheet>
 
         <!-- Dialog Detail Anggota Tim -->
+        <!-- Dialog Detail Penolakan -->
+        <Dialog v-model:open="showRejectionDetail">
+            <DialogContent class="sm:max-w-md bg-white p-0 overflow-hidden rounded-lg border border-gray-200 shadow-xl [&>button]:rounded-lg [&>button]:top-4 [&>button]:right-4">
+                <DialogHeader class="bg-rose-600 text-white p-6">
+                    <DialogTitle class="text-white text-xl font-bold flex items-center gap-2">
+                        <XCircle class="w-6 h-6" /> Detail Penolakan
+                    </DialogTitle>
+                    <DialogDesc class="text-rose-100 text-xs mt-1">
+                        Informasi lengkap alasan penolakan dari Kaprodi
+                    </DialogDesc>
+                </DialogHeader>
+
+                <div class="p-6 space-y-4">
+                    <div class="space-y-3">
+                        <div class="text-xs font-bold uppercase text-gray-500 tracking-wider">Jenis Permohonan</div>
+                        <div class="font-bold text-gray-900 text-base">
+                            {{ rejectionDetail?.jenis_permohonan?.replace('Ijin', 'Izin') || '-' }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-gray-100">
+                        <div class="text-xs font-bold uppercase text-gray-500 tracking-wider">Alasan Penolakan</div>
+                        <div class="p-4 bg-rose-50 border border-rose-100 rounded-lg text-rose-800 text-sm italic leading-relaxed whitespace-pre-line">
+                            "{{ rejectionDetail?.keterangan_ditolak || 'Tidak ada alasan spesifik yang dicantumkan.' }}"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 pt-0 bg-gray-50 flex justify-end">
+                    <Button @click="showRejectionDetail = false" class="bg-rose-600 hover:bg-rose-700 text-white rounded-lg px-6 font-bold text-sm">
+                        Tutup
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
         <Dialog v-model:open="showDetailAnggotaModal">
             <DialogContent class="sm:max-w-md bg-white p-0 overflow-hidden rounded-lg border border-gray-200 shadow-xl [&>button]:rounded-lg [&>button]:top-4 [&>button]:right-4">
                 <DialogHeader class="bg-[#4B49AC] text-white p-6">

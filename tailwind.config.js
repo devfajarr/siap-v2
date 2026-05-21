@@ -34,6 +34,10 @@ export default {
           DEFAULT: "#FF4747",
           foreground: "#FFFFFF",
         },
+        destructive: {
+          DEFAULT: "#FF4747",
+          foreground: "#FFFFFF",
+        },
         background: "#FFFFFF",
         foreground: "#0F172A",
         border: "#E2E8F0",

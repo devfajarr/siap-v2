@@ -108,6 +108,40 @@ const menuItems = computed(() => {
     ]
   }
 
+  if (role === 'Kaprodi') {
+    return [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/kaprodi/dashboard' },
+      { title: 'Data Matkul', icon: BookOpenCheck, href: '/v2/kaprodi/monitoring/matkul' },
+      { title: 'Permohonan Surat', icon: Mail, href: '/v2/kaprodi/permohonan-surat/diajukan' },
+      { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '/v2/kaprodi/data-perkuliahan' },
+      { title: 'Data Nilai', icon: Star, href: '/v2/kaprodi/monitoring/nilai' },
+      { 
+        title: 'Rekap Presensi', 
+        icon: ClipboardCheck, 
+        children: [
+          { title: 'Diajukan', href: '/v2/kaprodi/rekap-presensi/diajukan' },
+          { title: 'Disetujui', href: '/v2/kaprodi/rekap-presensi/disetujui' },
+        ]
+      },
+      { 
+        title: 'Rekap Berita Acara', 
+        icon: FileText, 
+        children: [
+          { title: 'Diajukan', href: '/v2/kaprodi/rekap-berita/diajukan' },
+          { title: 'Disetujui', href: '/v2/kaprodi/rekap-berita/disetujui' },
+        ]
+      },
+      { 
+        title: 'Rekap Kontrak Kuliah', 
+        icon: BookOpenCheck, 
+        children: [
+          { title: 'Diajukan', href: '/v2/kaprodi/rekap-kontrak/diajukan' },
+          { title: 'Disetujui', href: '/v2/kaprodi/rekap-kontrak/disetujui' },
+        ]
+      },
+    ]
+  }
+
   return [
     { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/admin/dashboard' },
     { 
