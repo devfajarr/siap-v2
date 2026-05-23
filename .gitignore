@@ -17,3 +17,7 @@ yarn-error.log
 /.idea
 /.vscode
 .agents
+GEMINI.md
+.gemini/
+.mcp.json
+components.json
