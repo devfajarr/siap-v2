@@ -400,12 +400,12 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
 
             Route::get('nilai', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilai'])->name('nilai.index');
             Route::get('nilai/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
+            Route::get('nilai/cek/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilaiCek'])->name('nilai.cek');
         });
 
         // Kaprodi Approval
         Route::prefix('rekap-presensi')->name('rekap-presensi.')->group(function () {
-            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDiajukan'])->name('diajukan');
-            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDisetujui'])->name('disetujui');
+            Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiIndex'])->name('index');
             Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDetail'])->name('detail');
             Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiApprove'])->name('approve');
         });
@@ -417,13 +417,11 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::get('/data-perkuliahan/bap-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'cetakBap'])->name('data-perkuliahan.bap-cetak');
 
         Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
-            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDiajukan'])->name('diajukan');
-            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDisetujui'])->name('disetujui');
+            Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaIndex'])->name('index');
         });
 
         Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
-            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakDiajukan'])->name('diajukan');
-            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakDisetujui'])->name('disetujui');
+            Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakIndex'])->name('index');
         });
 
         Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {

@@ -118,26 +118,17 @@ const menuItems = computed(() => {
       { 
         title: 'Rekap Presensi', 
         icon: ClipboardCheck, 
-        children: [
-          { title: 'Diajukan', href: '/v2/kaprodi/rekap-presensi/diajukan' },
-          { title: 'Disetujui', href: '/v2/kaprodi/rekap-presensi/disetujui' },
-        ]
+        href: '/v2/kaprodi/rekap-presensi'
       },
       { 
         title: 'Rekap Berita Acara', 
         icon: FileText, 
-        children: [
-          { title: 'Diajukan', href: '/v2/kaprodi/rekap-berita/diajukan' },
-          { title: 'Disetujui', href: '/v2/kaprodi/rekap-berita/disetujui' },
-        ]
+        href: '/v2/kaprodi/rekap-berita'
       },
       { 
         title: 'Rekap Kontrak Kuliah', 
         icon: BookOpenCheck, 
-        children: [
-          { title: 'Diajukan', href: '/v2/kaprodi/rekap-kontrak/diajukan' },
-          { title: 'Disetujui', href: '/v2/kaprodi/rekap-kontrak/disetujui' },
-        ]
+        href: '/v2/kaprodi/rekap-kontrak'
       },
     ]
   }

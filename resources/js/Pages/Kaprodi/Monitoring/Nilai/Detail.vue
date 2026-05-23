@@ -62,11 +62,22 @@ defineProps({
                   <TableCell class="font-medium">{{ jadwal.matkul?.nama_matkul }}</TableCell>
                   <TableCell>{{ jadwal.dosen?.nama }}</TableCell>
                   <TableCell class="text-center">
-                    <Button variant="outline" size="sm" class="h-8 gap-1.5" disabled>
-                      <Eye class="w-4 h-4" />
-                      Lihat Nilai
-                    </Button>
-                    <div class="text-[10px] text-gray-400 mt-1 italic">Fitur detail nilai sedang dalam pengembangan</div>
+                    <Link
+                      v-if="jadwal.absen_max_pertemuan > 0"
+                      :href="route('v2.kaprodi.monitoring.nilai.cek', { matkul_id: jadwal.matkuls_id, kelas_id: kelas.id, jadwal_id: jadwal.id })"
+                    >
+                      <Button variant="outline" size="sm" class="h-8 gap-1.5 hover:bg-[#4B49AC] hover:text-white transition-all duration-200 shadow-sm">
+                        <Eye class="w-4 h-4" />
+                        Lihat Nilai
+                      </Button>
+                    </Link>
+                    <div v-else>
+                      <Button variant="outline" size="sm" class="h-8 gap-1.5 cursor-not-allowed opacity-50" disabled>
+                        <Eye class="w-4 h-4" />
+                        Lihat Nilai
+                      </Button>
+                      <div class="text-[10px] text-gray-400 mt-1 italic">Belum ada data presensi</div>
+                    </div>
                   </TableCell>
                 </TableRow>
                 <TableRow v-if="jadwals.length === 0">

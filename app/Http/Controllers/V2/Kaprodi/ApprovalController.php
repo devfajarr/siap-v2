@@ -13,6 +13,7 @@ use App\Models\PengajuanRekapBerita;
 use App\Models\PengajuanRekapNilai;
 use App\Models\PermohonanSurat;
 use App\Models\Kontrak;
+use App\Models\Kelas;
 use App\Notifications\PengajuanPresensiNotification;
 use App\Notifications\PengajuanKontrakNotification;
 use App\Notifications\PengajuanResumeNotification;
@@ -25,12 +26,16 @@ use Inertia\Inertia;
 class ApprovalController extends Controller
 {
     // --- PRE SENSI ---
-    public function presensiDiajukan()
+    public function presensiIndex()
     {
         $user = Auth::guard('kaprodi')->user();
         $prodiId = $user->prodis_id;
 
-        $presensis = PengajuanRekapPresensi::with(['matkul', 'kelas.prodi', 'jadwal.dosen'])
+        $diajukan = PengajuanRekapPresensi::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('status', 0)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
                 $query->where('id', $prodiId);
@@ -38,18 +43,11 @@ class ApprovalController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Kaprodi/Approval/Presensi/Index', [
-            'presensis' => $presensis,
-            'title' => 'Pengajuan Rekap Presensi'
-        ]);
-    }
-
-    public function presensiDisetujui()
-    {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
-
-        $presensis = PengajuanRekapPresensi::with(['matkul', 'kelas.prodi', 'jadwal.dosen'])
+        $disetujui = PengajuanRekapPresensi::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('status', 1)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
                 $query->where('id', $prodiId);
@@ -58,16 +56,28 @@ class ApprovalController extends Controller
             ->get();
 
         return Inertia::render('Kaprodi/Approval/Presensi/Index', [
-            'presensis' => $presensis,
-            'title' => 'Rekap Presensi Disetujui'
+            'diajukanList' => $diajukan,
+            'disetujuiList' => $disetujui,
+            'title' => 'Rekap Presensi Mahasiswa'
         ]);
     }
 
     public function presensiDetail($pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
+        $user = Auth::guard('kaprodi')->user();
+        $kelas = Kelas::findOrFail($kelas_id);
+        if ($kelas->id_prodi !== $user->prodis_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
 
-        $absens = Absen::with(['mahasiswa', 'kelas', 'matkul', 'dosen'])
+        $absens = Absen::with([
+            'mahasiswa' => fn($q) => $q->withTrashed(),
+            'kelas' => fn($q) => $q->withTrashed(),
+            'matkul' => fn($q) => $q->withTrashed(),
+            'dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
             ->where('jadwals_id', $jadwal_id)
@@ -87,6 +97,12 @@ class ApprovalController extends Controller
 
     public function presensiApprove(Request $request, $pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
+        $user = Auth::guard('kaprodi')->user();
+        $kelas = Kelas::findOrFail($kelas_id);
+        if ($kelas->id_prodi !== $user->prodis_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
         
         $absenRecords = Absen::where('matkuls_id', $matkul_id)
@@ -123,12 +139,16 @@ class ApprovalController extends Controller
     }
 
     // --- BERITA ACARA ---
-    public function beritaDiajukan()
+    public function beritaIndex()
     {
         $user = Auth::guard('kaprodi')->user();
         $prodiId = $user->prodis_id;
 
-        $beritas = PengajuanRekapBerita::with(['matkul', 'kelas.prodi', 'jadwal.dosen'])
+        $diajukan = PengajuanRekapBerita::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('status', 0)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
                 $query->where('id', $prodiId);
@@ -136,18 +156,11 @@ class ApprovalController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Kaprodi/Approval/Berita/Index', [
-            'beritas' => $beritas,
-            'title' => 'Pengajuan Rekap Berita Acara'
-        ]);
-    }
-
-    public function beritaDisetujui()
-    {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
-
-        $beritas = PengajuanRekapBerita::with(['matkul', 'kelas.prodi', 'jadwal.dosen'])
+        $disetujui = PengajuanRekapBerita::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('status', 1)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
                 $query->where('id', $prodiId);
@@ -156,18 +169,23 @@ class ApprovalController extends Controller
             ->get();
 
         return Inertia::render('Kaprodi/Approval/Berita/Index', [
-            'beritas' => $beritas,
-            'title' => 'Rekap Berita Acara Disetujui'
+            'diajukanList' => $diajukan,
+            'disetujuiList' => $disetujui,
+            'title' => 'Rekap Berita Acara Perkuliahan'
         ]);
     }
 
     // --- KONTRAK ---
-    public function kontrakDiajukan()
+    public function kontrakIndex()
     {
         $user = Auth::guard('kaprodi')->user();
         $prodiId = $user->prodis_id;
 
-        $kontraks = PengajuanRekapkontrak::with(['matkul', 'kelas.prodi', 'jadwal.dosen'])
+        $diajukan = PengajuanRekapkontrak::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('status', 0)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
                 $query->where('id', $prodiId);
@@ -175,18 +193,11 @@ class ApprovalController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Kaprodi/Approval/Kontrak/Index', [
-            'kontraks' => $kontraks,
-            'title' => 'Pengajuan Rekap Kontrak'
-        ]);
-    }
-
-    public function kontrakDisetujui()
-    {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
-
-        $kontraks = PengajuanRekapkontrak::with(['matkul', 'kelas.prodi', 'jadwal.dosen'])
+        $disetujui = PengajuanRekapkontrak::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
             ->where('status', 1)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
                 $query->where('id', $prodiId);
@@ -195,8 +206,9 @@ class ApprovalController extends Controller
             ->get();
 
         return Inertia::render('Kaprodi/Approval/Kontrak/Index', [
-            'kontraks' => $kontraks,
-            'title' => 'Rekap Kontrak Disetujui'
+            'diajukanList' => $diajukan,
+            'disetujuiList' => $disetujui,
+            'title' => 'Rekap Kontrak Kuliah'
         ]);
     }
 

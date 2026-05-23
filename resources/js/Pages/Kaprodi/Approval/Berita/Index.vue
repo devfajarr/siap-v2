@@ -1,7 +1,8 @@
 <script setup>
+import { ref, computed } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card'
+import { Card, CardContent } from '@/Components/ui/card'
 import {
   Table,
   TableBody,
@@ -14,8 +15,12 @@ import { Badge } from '@/Components/ui/badge'
 import { Button } from '@/Components/ui/button'
 import { Eye, Clock, CheckCircle2 } from 'lucide-vue-next'
 
-defineProps({
-  beritas: {
+const props = defineProps({
+  diajukanList: {
+    type: Array,
+    required: true
+  },
+  disetujuiList: {
     type: Array,
     required: true
   },
@@ -23,6 +28,12 @@ defineProps({
     type: String,
     required: true
   }
+})
+
+const activeTab = ref('diajukan')
+
+const currentList = computed(() => {
+  return activeTab.value === 'diajukan' ? props.diajukanList : props.disetujuiList
 })
 </script>
 
@@ -40,20 +51,20 @@ defineProps({
 
       <!-- Navigation Tabs -->
       <div class="flex items-center gap-4 border-b">
-        <Link 
-          :href="route('v2.kaprodi.rekap-berita.diajukan')"
-          class="px-4 py-2 text-sm font-medium transition-colors border-b-2"
-          :class="[route().current('v2.kaprodi.rekap-berita.diajukan') ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700']"
+        <button 
+          @click="activeTab = 'diajukan'"
+          class="px-4 py-2 text-sm font-medium transition-colors border-b-2 focus:outline-none"
+          :class="[activeTab === 'diajukan' ? 'border-primary text-primary font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700']"
         >
           Diajukan
-        </Link>
-        <Link 
-          :href="route('v2.kaprodi.rekap-berita.disetujui')"
-          class="px-4 py-2 text-sm font-medium transition-colors border-b-2"
-          :class="[route().current('v2.kaprodi.rekap-berita.disetujui') ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700']"
+        </button>
+        <button 
+          @click="activeTab = 'disetujui'"
+          class="px-4 py-2 text-sm font-medium transition-colors border-b-2 focus:outline-none"
+          :class="[activeTab === 'disetujui' ? 'border-primary text-primary font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700']"
         >
           Disetujui
-        </Link>
+        </button>
       </div>
 
       <Card class="border-none shadow-sm">
@@ -71,7 +82,7 @@ defineProps({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow v-for="item in beritas" :key="item.id">
+                <TableRow v-for="item in currentList" :key="item.id">
                   <TableCell class="font-medium">{{ item.matkul?.nama_matkul }}</TableCell>
                   <TableCell>{{ item.kelas?.nama_kelas }}</TableCell>
                   <TableCell>{{ item.jadwal?.dosen?.nama }}</TableCell>
@@ -92,7 +103,7 @@ defineProps({
                     </Button>
                   </TableCell>
                 </TableRow>
-                <TableRow v-if="beritas.length === 0">
+                <TableRow v-if="currentList.length === 0">
                   <TableCell colspan="6" class="h-32 text-center text-gray-500">
                     Tidak ada pengajuan rekap berita acara.
                   </TableCell>
