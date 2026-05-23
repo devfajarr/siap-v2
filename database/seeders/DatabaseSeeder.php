@@ -341,5 +341,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        $this->call(AcademicStaffSeeder::class);
     }
 }
