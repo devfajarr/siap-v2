@@ -21,7 +21,7 @@ const user = computed(() => page.props.auth?.user)
 const role = computed(() => user.value?.role)
 
 const isSupportedRole = computed(() => {
-  return ['Dosen', 'Kaprodi', 'Wadir', 'Direktur'].includes(role.value)
+  return ['Dosen', 'Kaprodi', 'Wadir', 'Direktur', 'Mahasiswa'].includes(role.value)
 })
 
 const lastNotifiedMessageId = ref(null)
@@ -69,12 +69,22 @@ const sendBrowserNotification = (msg) => {
 const handleItemClick = (msg) => {
   let targetUrl = ''
   
-  if (role.value === 'Dosen') {
-    targetUrl = route('v2.dosen.presensi.index') + `?open_chat=${msg.jadwal_id}`
-  } else if (role.value === 'Kaprodi') {
-    targetUrl = route('v2.kaprodi.monitoring.perkuliahan.detail', msg.kelas_id) + `?open_chat=${msg.jadwal_id}`
-  } else if (role.value === 'Direktur' || role.value === 'Wadir') {
-    targetUrl = route('v2.direktur.monitoring.perkuliahan.detail', msg.kelas_id) + `?open_chat=${msg.jadwal_id}`
+  if (msg.jadwal_id === null) {
+    if (role.value === 'Dosen') {
+      const studentId = msg.sender_type === 'App\\Models\\Mahasiswa' ? msg.sender_id : msg.receiver_id;
+      const studentName = msg.sender?.nama_lengkap || msg.sender?.nama || '';
+      targetUrl = route('v2.dosen.krs.index') + `?open_guidance=${studentId}&student_name=${encodeURIComponent(studentName)}`
+    } else if (role.value === 'Mahasiswa') {
+      targetUrl = '/v2/mahasiswa/dashboard?open_guidance=true'
+    }
+  } else {
+    if (role.value === 'Dosen') {
+      targetUrl = route('v2.dosen.presensi.index') + `?open_chat=${msg.jadwal_id}`
+    } else if (role.value === 'Kaprodi') {
+      targetUrl = route('v2.kaprodi.monitoring.perkuliahan.detail', msg.kelas_id) + `?open_chat=${msg.jadwal_id}`
+    } else if (role.value === 'Direktur' || role.value === 'Wadir') {
+      targetUrl = route('v2.direktur.monitoring.perkuliahan.detail', msg.kelas_id) + `?open_chat=${msg.jadwal_id}`
+    }
   }
   
   if (targetUrl) {
@@ -89,6 +99,8 @@ const openMainPage = () => {
     router.visit(route('v2.kaprodi.monitoring.perkuliahan.index'))
   } else if (role.value === 'Direktur' || role.value === 'Wadir') {
     router.visit(route('v2.direktur.monitoring.perkuliahan.index'))
+  } else if (role.value === 'Mahasiswa') {
+    router.visit('/v2/mahasiswa/dashboard')
   }
 }
 
@@ -162,7 +174,7 @@ onUnmounted(() => {
 
         <div class="max-h-[350px] overflow-y-auto overflow-x-hidden py-2 custom-scrollbar bg-white">
           <div v-if="unreadMessages.length === 0" class="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-slate-350">
+            <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-slate-400">
               <MessageSquare class="w-5 h-5" />
             </div>
             <p class="text-xs font-bold text-slate-700">Tidak ada pesan baru</p>
@@ -177,13 +189,13 @@ onUnmounted(() => {
           >
             <!-- Avatar placeholder -->
             <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-semibold text-xs shrink-0 uppercase">
-              {{ msg.sender?.nama?.substring(0, 2) || 'PI' }}
+              {{ (msg.sender?.nama_lengkap || msg.sender?.nama || 'User').substring(0, 2) }}
             </div>
             
             <div class="flex-1 min-w-0">
               <div class="flex justify-between items-start mb-0.5">
                 <span class="text-xs font-extrabold text-slate-700">
-                  {{ msg.sender?.nama || 'Pimpinan' }}
+                  {{ msg.sender?.nama_lengkap || msg.sender?.nama || 'User' }}
                 </span>
                 <span class="text-[9px] text-slate-400 shrink-0 ml-2 font-medium flex items-center gap-1">
                   <Clock class="w-3 h-3" />
@@ -192,7 +204,12 @@ onUnmounted(() => {
               </div>
               
               <div class="text-[10px] font-bold text-[#4B49AC] leading-tight mb-1">
-                {{ msg.jadwal?.matkul?.nama_matkul }} - {{ msg.kelas?.nama_kelas }}
+                <template v-if="msg.jadwal_id">
+                  {{ msg.jadwal?.matkul?.nama_matkul }} - {{ msg.kelas?.nama_kelas }}
+                </template>
+                <template v-else>
+                  Konsultasi Akademik (Bimbingan DPA)
+                </template>
               </div>
               
               <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed bg-slate-50 p-2 rounded-lg mt-1 italic">

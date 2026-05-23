@@ -4,6 +4,7 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -20,15 +21,18 @@ class MessageRead implements ShouldBroadcast
 
     public $readerType;
 
+    public $studentId;
+
     /**
      * Create a new event instance.
      */
-    public function __construct($messageIds, $jadwalId, $readerId, $readerType)
+    public function __construct($messageIds, $jadwalId, $readerId, $readerType, $studentId = null)
     {
         $this->messageIds = $messageIds;
         $this->jadwalId = $jadwalId;
         $this->readerId = $readerId;
         $this->readerType = $readerType;
+        $this->studentId = $studentId;
     }
 
     /**
@@ -38,8 +42,14 @@ class MessageRead implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        if ($this->jadwalId) {
+            return [
+                new PresenceChannel('chat.'.$this->jadwalId),
+            ];
+        }
+
         return [
-            new PresenceChannel('chat.'.$this->jadwalId),
+            new PresenceChannel('guidance.'.$this->studentId),
         ];
     }
 

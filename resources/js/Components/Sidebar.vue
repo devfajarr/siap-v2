@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { usePage, Link } from '@inertiajs/vue3'
+import axios from 'axios'
 
 import { 
   LayoutDashboard, 
@@ -20,6 +21,7 @@ import {
   UserCheck,
   BarChart3,
   BookOpenCheck,
+  MessageSquare,
 } from 'lucide-vue-next'
 
 defineProps({
@@ -77,6 +79,28 @@ watch(() => page.url, () => {
   expandActiveMenu()
 })
 
+// ─── Dosen Unread Guidance Badge ───────────────────────────────
+const dosenUnreadGuidance = ref(0)
+let guidancePollTimer = null
+
+const fetchDosenUnreadGuidance = async () => {
+  const role = page.props.auth?.user?.role
+  if (role !== 'Dosen') return
+  try {
+    const res = await axios.get('/presensi/pemberitahuan/contacts-guidance')
+    dosenUnreadGuidance.value = res.data.reduce((sum, c) => sum + (c.unread_count || 0), 0)
+  } catch {}
+}
+
+onMounted(() => {
+  fetchDosenUnreadGuidance()
+  guidancePollTimer = setInterval(fetchDosenUnreadGuidance, 30000)
+})
+
+onUnmounted(() => {
+  if (guidancePollTimer) clearInterval(guidancePollTimer)
+})
+
 
 const menuItems = computed(() => {
   const role = page.props.auth?.user?.role
@@ -96,6 +120,7 @@ const menuItems = computed(() => {
       },
       { title: 'KRS & Pembayaran', icon: KrsIcon, href: '/v2/mahasiswa/krs_pembayaran' },
       { title: 'Permohonan Surat', icon: Mail, href: '/v2/mahasiswa/permohonan-surat' },
+      { title: 'Konsultasi DPA', icon: MessageSquare, href: '/v2/mahasiswa/dashboard?open_guidance=true' },
     ]
   }
 
@@ -107,6 +132,7 @@ const menuItems = computed(() => {
       { title: 'Nilai',      icon: BarChart3,       href: '/v2/dosen/nilai' },
       { title: 'Akses Dosen Pembimbing', isSeparator: true },
       { title: 'Validasi KRS', icon: KrsIcon, href: '/v2/dosen/krs' },
+      { title: 'Bimbingan Mahasiswa', icon: MessageSquare, href: '/v2/dosen/bimbingan', badge: dosenUnreadGuidance },
     ]
   }
 

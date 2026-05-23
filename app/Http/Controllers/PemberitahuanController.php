@@ -8,6 +8,7 @@ use App\Models\Direktur;
 use App\Models\Dosen;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
+use App\Models\Mahasiswa;
 use App\Models\Message;
 use App\Models\Wadir;
 use App\Notifications\MessageSentNotification;
@@ -363,13 +364,14 @@ class PemberitahuanController extends Controller
     public function getUnreadMessageCount(Request $request)
     {
         $modelNamespace = $this->getModelNamespaceFromRole($this->role);
+        $unreadCount = 0;
         if ($this->role == 'direktur' || $this->role == 'wakil_direktur' || $this->role == 'kaprodi') {
             $unreadCount = Message::where('receiver_id', $this->userId)
                 ->where('sender_id', $request->dosen_id)
                 ->where('receiver_type', $modelNamespace)
                 ->where('read', false)
                 ->count();
-        } elseif ($this->role == 'dosen') {
+        } elseif ($this->role == 'dosen' || $this->role == 'mahasiswa') {
             $unreadCount = Message::where('receiver_id', $this->userId)
                 ->where('receiver_type', $modelNamespace)
                 ->where('read', false)
@@ -455,6 +457,273 @@ class PemberitahuanController extends Controller
             $request->jadwal_id,
             $this->userId,
             $modelNamespace
+        ))->toOthers();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    public function getGuidanceContacts()
+    {
+        $role = $this->role;
+        $userId = $this->userId;
+
+        if ($role === 'mahasiswa') {
+            $student = Mahasiswa::find($userId);
+            if (! $student || ! $student->dosen_pembimbing_id) {
+                return response()->json([]);
+            }
+
+            $dpa = Dosen::find($student->dosen_pembimbing_id);
+            if (! $dpa) {
+                return response()->json([]);
+            }
+
+            $hasMessages = Message::whereNull('jadwal_id')
+                ->where(function ($q) use ($userId, $dpa) {
+                    $q->where(function ($sub) use ($userId, $dpa) {
+                        $sub->where('sender_id', $userId)
+                            ->where('sender_type', 'App\Models\Mahasiswa')
+                            ->where('receiver_id', $dpa->id)
+                            ->where('receiver_type', 'App\Models\Dosen');
+                    })->orWhere(function ($sub) use ($userId, $dpa) {
+                        $sub->where('receiver_id', $userId)
+                            ->where('receiver_type', 'App\Models\Mahasiswa')
+                            ->where('sender_id', $dpa->id)
+                            ->where('sender_type', 'App\Models\Dosen');
+                    });
+                })->exists();
+
+            return response()->json([[
+                'id' => $dpa->id,
+                'type' => 'App\Models\Dosen',
+                'nama' => $dpa->nama,
+                'role_label' => 'Dosen Pembimbing Akademik',
+                'has_messages' => $hasMessages,
+            ]]);
+        }
+
+        if ($role === 'dosen') {
+            $students = Mahasiswa::with('kelas')->where('dosen_pembimbing_id', $userId)->get();
+            $contacts = [];
+
+            foreach ($students as $student) {
+                $hasMessages = Message::whereNull('jadwal_id')
+                    ->where(function ($q) use ($userId, $student) {
+                        $q->where(function ($sub) use ($userId, $student) {
+                            $sub->where('sender_id', $student->id)
+                                ->where('sender_type', 'App\Models\Mahasiswa')
+                                ->where('receiver_id', $userId)
+                                ->where('receiver_type', 'App\Models\Dosen');
+                        })->orWhere(function ($sub) use ($userId, $student) {
+                            $sub->where('receiver_id', $student->id)
+                                ->where('receiver_type', 'App\Models\Mahasiswa')
+                                ->where('sender_id', $userId)
+                                ->where('sender_type', 'App\Models\Dosen');
+                        });
+                    })->exists();
+
+                $unreadCount = Message::whereNull('jadwal_id')
+                    ->where('sender_id', $student->id)
+                    ->where('sender_type', 'App\Models\Mahasiswa')
+                    ->where('receiver_id', $userId)
+                    ->where('receiver_type', 'App\Models\Dosen')
+                    ->where('read', false)
+                    ->count();
+
+                $contacts[] = [
+                    'id' => $student->id,
+                    'type' => 'App\Models\Mahasiswa',
+                    'nama' => $student->nama_lengkap,
+                    'nim' => $student->nim ?? '',
+                    'kelas' => $student->kelas->nama_kelas ?? '',
+                    'role_label' => 'Mahasiswa Bimbingan',
+                    'has_messages' => $hasMessages,
+                    'unread_count' => $unreadCount,
+                ];
+            }
+
+            return response()->json($contacts);
+        }
+
+        return response()->json([]);
+    }
+
+    public function getGuidanceMessages(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|integer',
+        ]);
+
+        $studentId = $request->student_id;
+        $dpaId = $this->role === 'dosen' ? $this->userId : null;
+
+        if ($this->role === 'mahasiswa') {
+            if ((int) $this->userId !== (int) $studentId) {
+                abort(403, 'Unauthorized.');
+            }
+            $student = Mahasiswa::find($studentId);
+            $dpaId = $student ? $student->dosen_pembimbing_id : null;
+        }
+
+        if (! $dpaId) {
+            return response()->json([]);
+        }
+
+        $messages = Message::whereNull('jadwal_id')
+            ->where(function ($q) use ($studentId, $dpaId) {
+                $q->where(function ($sub) use ($studentId, $dpaId) {
+                    $sub->where('sender_id', $studentId)
+                        ->where('sender_type', 'App\Models\Mahasiswa')
+                        ->where('receiver_id', $dpaId)
+                        ->where('receiver_type', 'App\Models\Dosen');
+                })->orWhere(function ($sub) use ($studentId, $dpaId) {
+                    $sub->where('receiver_id', $studentId)
+                        ->where('receiver_type', 'App\Models\Mahasiswa')
+                        ->where('sender_id', $dpaId)
+                        ->where('sender_type', 'App\Models\Dosen');
+                });
+            })
+            ->orderBy('sent_at', 'asc')
+            ->get();
+
+        $this->markGuidanceMessagesAsRead($messages, $studentId, $dpaId);
+
+        return response()->json($messages);
+    }
+
+    protected function markGuidanceMessagesAsRead($messages, $studentId, $dpaId)
+    {
+        $modelNamespace = $this->getModelNamespaceFromRole($this->role);
+
+        $unreadMessages = $messages->where('read', false)
+            ->where('receiver_id', $this->userId)
+            ->where('receiver_type', $modelNamespace);
+
+        foreach ($unreadMessages as $message) {
+            $message->update([
+                'read' => true,
+                'read_at' => now(),
+            ]);
+        }
+
+        if ($unreadMessages->isNotEmpty()) {
+            broadcast(new MessageRead(
+                $unreadMessages->pluck('id')->toArray(),
+                null,
+                $this->userId,
+                $modelNamespace,
+                $studentId
+            ))->toOthers();
+        }
+    }
+
+    public function sendGuidanceMessage(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string',
+            'student_id' => 'required|integer',
+        ]);
+
+        $studentId = $request->student_id;
+        $dpaId = null;
+
+        if ($this->role === 'mahasiswa') {
+            if ((int) $this->userId !== (int) $studentId) {
+                abort(403, 'Unauthorized.');
+            }
+            $student = Mahasiswa::find($studentId);
+            $dpaId = $student ? $student->dosen_pembimbing_id : null;
+            $senderType = 'App\Models\Mahasiswa';
+            $receiverType = 'App\Models\Dosen';
+            $senderId = $studentId;
+            $receiverId = $dpaId;
+        } elseif ($this->role === 'dosen') {
+            $dpaId = $this->userId;
+            $student = Mahasiswa::findOrFail($studentId);
+            if ((int) $student->dosen_pembimbing_id !== (int) $dpaId) {
+                abort(403, 'Unauthorized.');
+            }
+            $senderType = 'App\Models\Dosen';
+            $receiverType = 'App\Models\Mahasiswa';
+            $senderId = $dpaId;
+            $receiverId = $studentId;
+        } else {
+            abort(403, 'Unauthorized.');
+        }
+
+        if (! $dpaId) {
+            return response()->json(['message' => 'Dosen Pembimbing tidak ditemukan.'], 400);
+        }
+
+        $lastMessage = Message::whereNull('jadwal_id')
+            ->where(function ($q) use ($studentId, $dpaId) {
+                $q->where(function ($sub) use ($studentId, $dpaId) {
+                    $sub->where('sender_id', $studentId)
+                        ->where('sender_type', 'App\Models\Mahasiswa')
+                        ->where('receiver_id', $dpaId)
+                        ->where('receiver_type', 'App\Models\Dosen');
+                })->orWhere(function ($sub) use ($studentId, $dpaId) {
+                    $sub->where('receiver_id', $studentId)
+                        ->where('receiver_type', 'App\Models\Mahasiswa')
+                        ->where('sender_id', $dpaId)
+                        ->where('sender_type', 'App\Models\Dosen');
+                });
+            })
+            ->orderBy('sent_at', 'desc')
+            ->first();
+
+        $parentId = $lastMessage ? $lastMessage->id : null;
+
+        $message = Message::create([
+            'sender_id' => $senderId,
+            'sender_type' => $senderType,
+            'receiver_id' => $receiverId,
+            'receiver_type' => $receiverType,
+            'message' => $request->message,
+            'sent_at' => now(),
+            'parent_id' => $parentId,
+        ]);
+
+        $message->load('sender');
+
+        $receiverModel = $receiverType;
+        $receiver = $receiverModel::find($receiverId);
+        if ($receiver) {
+            $receiver->notify(new MessageSentNotification($message));
+        }
+
+        broadcast(new MessageSent($message))->toOthers();
+
+        return response()->json([
+            'message' => 'Pesan berhasil dikirim!',
+            'data' => $message,
+        ]);
+    }
+
+    public function markGuidanceAsRead(Request $request)
+    {
+        $request->validate([
+            'message_ids' => 'required|array',
+            'student_id' => 'required|integer',
+        ]);
+
+        $modelNamespace = $this->getModelNamespaceFromRole($this->role);
+
+        Message::whereIn('id', $request->message_ids)
+            ->where('receiver_id', $this->userId)
+            ->where('receiver_type', $modelNamespace)
+            ->where('read', false)
+            ->update([
+                'read' => true,
+                'read_at' => now(),
+            ]);
+
+        broadcast(new MessageRead(
+            $request->message_ids,
+            null,
+            $this->userId,
+            $modelNamespace,
+            $request->student_id
         ))->toOthers();
 
         return response()->json(['status' => 'success']);

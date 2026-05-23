@@ -30,8 +30,18 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        if ($this->message->jadwal_id) {
+            return [
+                new PresenceChannel('chat.'.$this->message->jadwal_id),
+            ];
+        }
+
+        $studentId = $this->message->sender_type === 'App\Models\Mahasiswa'
+            ? $this->message->sender_id
+            : $this->message->receiver_id;
+
         return [
-            new PresenceChannel('chat.'.$this->message->jadwal_id),
+            new PresenceChannel('guidance.'.$studentId),
         ];
     }
 

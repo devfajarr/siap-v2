@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/Components/ui/button'
 import { Badge } from '@/Components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/Components/ui/dialog'
-import { Eye, Loader2, CheckCircle2 } from 'lucide-vue-next'
+import { Eye, Loader2, CheckCircle2, MessageSquare } from 'lucide-vue-next'
 import axios from 'axios'
+import GuidanceChatDialog from '@/Components/Chat/GuidanceChatDialog.vue'
 
 const props = defineProps({
     krss: Array,
@@ -25,6 +26,33 @@ const selectedKrs = ref(null)
 const selectedMatkuls = ref([])
 const isLoadingDetail = ref(false)
 const isApproving = ref(false)
+
+const isChatOpen = ref(false)
+const chatStudentId = ref(null)
+const chatStudentName = ref('')
+
+const openChat = (studentId, studentName) => {
+    chatStudentId.value = studentId
+    chatStudentName.value = studentName
+    isChatOpen.value = true
+}
+
+watch(() => page.url, (newUrl) => {
+    const urlParams = new URLSearchParams(newUrl.split('?')[1] || '')
+    const openGuidance = urlParams.get('open_guidance')
+    const studentName = urlParams.get('student_name')
+    if (openGuidance) {
+        chatStudentId.value = openGuidance
+        chatStudentName.value = studentName ? decodeURIComponent(studentName) : 'Mahasiswa'
+        isChatOpen.value = true
+        
+        // Clean up URL parameters using window history to keep state in sync without page reload
+        const url = new URL(window.location.origin + newUrl)
+        url.searchParams.delete('open_guidance')
+        url.searchParams.delete('student_name')
+        window.history.replaceState({}, document.title, url.pathname + url.search)
+    }
+}, { immediate: true })
 
 const handleTabChange = (val) => {
     router.get(
@@ -120,10 +148,16 @@ const approveKrs = () => {
                                                 <Badge variant="secondary" class="bg-yellow-100 text-yellow-800 border-yellow-200">Menunggu</Badge>
                                             </TableCell>
                                             <TableCell class="text-right">
-                                                <Button size="sm" @click="showDetail(krs)" class="bg-[#4B49AC] hover:bg-[#3A3888] text-white">
-                                                    <Eye class="w-4 h-4 mr-2" />
-                                                    Tinjau
-                                                </Button>
+                                                <div class="flex justify-end gap-2">
+                                                    <Button size="sm" variant="outline" @click="openChat(krs.mahasiswa_id, krs.nama_mahasiswa)" class="border-[#4B49AC] text-[#4B49AC] hover:bg-[#4B49AC]/5">
+                                                        <MessageSquare class="w-4 h-4 mr-2" />
+                                                        Chat
+                                                    </Button>
+                                                    <Button size="sm" @click="showDetail(krs)" class="bg-[#4B49AC] hover:bg-[#3A3888] text-white">
+                                                        <Eye class="w-4 h-4 mr-2" />
+                                                        Tinjau
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                         <TableRow v-if="krss.length === 0">
@@ -172,10 +206,16 @@ const approveKrs = () => {
                                                 <Badge variant="secondary" class="bg-green-100 text-green-800 border-green-200">Disetujui</Badge>
                                             </TableCell>
                                             <TableCell class="text-right">
-                                                <Button size="sm" variant="outline" @click="showDetail(krs)">
-                                                    <Eye class="w-4 h-4 mr-2" />
-                                                    Detail
-                                                </Button>
+                                                <div class="flex justify-end gap-2">
+                                                    <Button size="sm" variant="outline" @click="openChat(krs.mahasiswa_id, krs.nama_mahasiswa)" class="border-[#4B49AC] text-[#4B49AC] hover:bg-[#4B49AC]/5">
+                                                        <MessageSquare class="w-4 h-4 mr-2" />
+                                                        Chat
+                                                    </Button>
+                                                    <Button size="sm" variant="outline" @click="showDetail(krs)">
+                                                        <Eye class="w-4 h-4 mr-2" />
+                                                        Detail
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                         <TableRow v-if="krss.length === 0">
@@ -248,22 +288,43 @@ const approveKrs = () => {
                     </div>
                 </div>
 
-                <DialogFooter class="px-6 py-4 border-t bg-gray-50">
-                    <Button variant="outline" @click="isDetailModalOpen = false" :disabled="form.processing">
-                        Tutup
-                    </Button>
-                    <Button 
-                        v-if="selectedKrs && selectedKrs.status_krs == 0" 
-                        class="bg-[#4B49AC] hover:bg-[#3A3888] text-white" 
-                        @click="approveKrs" 
-                        :disabled="form.processing || isLoadingDetail"
-                    >
-                        <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
-                        <CheckCircle2 v-else class="w-4 h-4 mr-2" />
-                        Validasi KRS
-                    </Button>
+                <DialogFooter class="px-6 py-4 border-t bg-gray-50 flex justify-between items-center w-full">
+                    <div>
+                        <Button 
+                            v-if="selectedKrs"
+                            variant="outline" 
+                            @click="openChat(selectedKrs.mahasiswa_id, selectedKrs.nama_mahasiswa); isDetailModalOpen = false" 
+                            class="border-[#4B49AC] text-[#4B49AC] hover:bg-[#4B49AC]/5"
+                        >
+                            <MessageSquare class="w-4 h-4 mr-2" />
+                            Chat Mahasiswa
+                        </Button>
+                    </div>
+                    <div class="flex gap-2">
+                        <Button variant="outline" @click="isDetailModalOpen = false" :disabled="form.processing">
+                            Tutup
+                        </Button>
+                        <Button 
+                            v-if="selectedKrs && selectedKrs.status_krs == 0" 
+                            class="bg-[#4B49AC] hover:bg-[#3A3888] text-white" 
+                            @click="approveKrs" 
+                            :disabled="form.processing || isLoadingDetail"
+                        >
+                            <Loader2 v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
+                            <CheckCircle2 v-else class="w-4 h-4 mr-2" />
+                            Validasi KRS
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <!-- Guidance Chat Dialog -->
+        <GuidanceChatDialog
+            v-if="chatStudentId"
+            v-model:open="isChatOpen"
+            :student-id="chatStudentId"
+            :student-name="chatStudentName"
+        />
     </AdminLayout>
 </template>

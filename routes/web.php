@@ -321,7 +321,7 @@ Route::prefix('/presensi')->group(function () {
     });
 
     // PEMBERITAHUAN / CHAT
-    Route::prefix('/pemberitahuan')->middleware('auth:wakil_direktur,direktur,dosen,kaprodi')->group(function () {
+    Route::prefix('/pemberitahuan')->middleware('auth:wakil_direktur,direktur,dosen,kaprodi,mahasiswa')->group(function () {
         Route::post('/send', [PemberitahuanController::class, 'sendMessage'])
             ->name('send.message');
         Route::get('/show', [PemberitahuanController::class, 'getMessages'])
@@ -339,6 +339,16 @@ Route::prefix('/presensi')->group(function () {
             ->name('get.contacts.dosen');
         Route::post('/mark-as-read', [PemberitahuanController::class, 'markAsReadManual'])
             ->name('mark.as.read');
+
+        // Bimbingan Akademik / Perwalian (Mahasiswa <-> DPA)
+        Route::get('/contacts-guidance', [PemberitahuanController::class, 'getGuidanceContacts'])
+            ->name('get.contacts.guidance');
+        Route::get('/show-guidance', [PemberitahuanController::class, 'getGuidanceMessages'])
+            ->name('get.messages.guidance');
+        Route::post('/send-guidance', [PemberitahuanController::class, 'sendGuidanceMessage'])
+            ->name('send.message.guidance');
+        Route::post('/mark-guidance-read', [PemberitahuanController::class, 'markGuidanceAsRead'])
+            ->name('mark.read.guidance');
     });
 
     // NOTIFIKASI
@@ -376,6 +386,7 @@ use App\Http\Controllers\V2\Admin\InformasiTambahanController;
 use App\Http\Controllers\V2\Admin\JadwalMengajarController;
 use App\Http\Controllers\V2\Admin\PembayaranController;
 use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
+use App\Http\Controllers\V2\Dosen\BimbinganController;
 use App\Http\Controllers\V2\Dosen\KrsController;
 use App\Http\Controllers\V2\Kaprodi\ApprovalController;
 use App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController;
@@ -483,6 +494,9 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::get('/krs', [KrsController::class, 'index'])->name('v2.dosen.krs.index');
         Route::get('/krs/{id}/detail', [KrsController::class, 'detail'])->name('v2.dosen.krs.detail');
         Route::put('/krs/{id}/approve', [KrsController::class, 'approve'])->name('v2.dosen.krs.approve');
+
+        // Dosen Bimbingan Akademik
+        Route::get('/bimbingan', [BimbinganController::class, 'index'])->name('v2.dosen.bimbingan.index');
     });
 
     // Dosen Nilai (V2)

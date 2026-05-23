@@ -5,10 +5,8 @@ namespace App\Notifications;
 use App\Models\Kelas;
 use App\Models\Matkul;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Session;
 
 class MessageSentNotification extends Notification
 {
@@ -18,6 +16,7 @@ class MessageSentNotification extends Notification
      * Create a new notification instance.
      */
     protected $message;
+
     public function __construct($message)
     {
         $this->message = $message;
@@ -39,8 +38,9 @@ class MessageSentNotification extends Notification
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
-    {   $kelas = Kelas::findOrFail($this->message->kelas_id);
-        $matkul = Matkul::find($this->message->matkul_id);
+    {
+        $kelas = $this->message->kelas_id ? Kelas::find($this->message->kelas_id) : null;
+        $matkul = $this->message->matkul_id ? Matkul::find($this->message->matkul_id) : null;
         $dari = '';
         if ($this->message->sender_type == 'App\Models\Direktur') {
             $dari = 'Direktur';
@@ -49,23 +49,36 @@ class MessageSentNotification extends Notification
         } elseif ($this->message->sender_type == 'App\Models\Kaprodi') {
             $dari = 'Kaprodi';
         }
+
+        // Bimbingan Akademik / Perwalian (DPA)
+        if (is_null($this->message->jadwal_id)) {
+            return [
+                'sender_name' => $this->getSenderName(),
+                'notification_type' => 'bimbingan',
+                'message_content' => $this->message->message,
+                'class' => '-',
+                'matkul' => '-',
+                'title' => 'Pesan Bimbingan Akademik',
+            ];
+        }
+
         if (Session::get('user.role') == 'direktur' || Session::get('user.role') == 'wakil_direktur' || Session::get('user.role') == 'kaprodi') {
             return [
                 'sender_name' => $this->getSenderName(),
                 'notification_type' => 'pemberitahuan',
                 'message_content' => $this->message->message,
-                'class'=>$kelas->nama_kelas,
-                'matkul' => $matkul->nama_matkul,
-                'title' => 'Pemberitahuan dari ' . $dari
+                'class' => $kelas->nama_kelas ?? '-',
+                'matkul' => $matkul->nama_matkul ?? '-',
+                'title' => 'Pemberitahuan dari '.$dari,
             ];
         } else {
             return [
                 'sender_name' => $this->getSenderName(),
                 'notification_type' => 'pemberitahuan',
                 'message_content' => $this->message->message,
-                'class'=>$kelas->nama_kelas,
-                'matkul' => $matkul->nama_matkul,
-                'title' => 'Membalas Pemberitahuan'
+                'class' => $kelas->nama_kelas ?? '-',
+                'matkul' => $matkul->nama_matkul ?? '-',
+                'title' => 'Membalas Pemberitahuan',
             ];
         }
     }
@@ -75,6 +88,6 @@ class MessageSentNotification extends Notification
         $senderType = $this->message->sender_type;
         $sender = $senderType::find($this->message->sender_id);
 
-        return $sender->name ?? $sender->nama ?? 'Pengirim';
+        return $sender->nama_lengkap ?? $sender->name ?? $sender->nama ?? 'Pengirim';
     }
 }

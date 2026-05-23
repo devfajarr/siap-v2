@@ -15,7 +15,10 @@ import {
   School, 
   BookOpen, 
   ClipboardCheck,
-  CalendarDays
+  CalendarDays,
+  MessageSquare,
+  ChevronRight,
+  MessageCircle,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -26,6 +29,10 @@ const props = defineProps({
   jadwalHariIni: {
     type: Array,
     required: true
+  },
+  bimbinganUnread: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -122,6 +129,55 @@ const cards = [
                 </TableRow>
               </TableBody>
             </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Pesan Bimbingan -->
+      <Card class="border-none shadow-sm">
+        <CardHeader class="flex flex-row items-center justify-between pb-2">
+          <div class="flex items-center gap-2">
+            <MessageSquare class="w-5 h-5 text-primary" />
+            <CardTitle class="text-lg font-bold">Pesan Bimbingan Baru</CardTitle>
+          </div>
+          <Link
+            href="/v2/dosen/bimbingan"
+            class="text-sm font-semibold text-primary flex items-center gap-1 hover:underline"
+          >
+            Lihat Semua <ChevronRight class="w-4 h-4" />
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div v-if="bimbinganUnread.length === 0" class="flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-slate-100">
+            <MessageCircle class="w-10 h-10 mb-3 text-slate-300" />
+            <p class="text-sm font-semibold">Tidak ada pesan baru</p>
+            <p class="text-xs mt-1">Semua pesan konsultasi bimbingan akademik sudah Anda baca.</p>
+          </div>
+          <div v-else class="space-y-3 mt-2">
+            <Link
+              v-for="student in bimbinganUnread"
+              :key="student.id"
+              href="/v2/dosen/bimbingan"
+              class="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors group shadow-sm"
+            >
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-[#4B49AC]/10 text-[#4B49AC] flex items-center justify-center font-bold text-sm">
+                  {{ student.nama.substring(0, 2).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-slate-800">{{ student.nama }}</p>
+                  <p class="text-xs text-slate-500 mt-0.5">{{ student.nim }} · {{ student.kelas }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="bg-red-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center justify-center min-w-[24px]">
+                  {{ student.unread_count }}
+                </span>
+                <div class="text-[#4B49AC] opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ChevronRight class="w-5 h-5" />
+                </div>
+              </div>
+            </Link>
           </div>
         </CardContent>
       </Card>

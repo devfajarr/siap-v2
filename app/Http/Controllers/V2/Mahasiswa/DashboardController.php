@@ -2,32 +2,40 @@
 
 namespace App\Http\Controllers\V2\Mahasiswa;
 
-use Carbon\Carbon;
-use App\Models\Absen;
-use App\Models\Kelas;
-use App\Models\Jadwal;
-use App\Models\Matkul;
-use App\Models\Mahasiswa;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Absen;
+use App\Models\Jadwal;
+use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
     /**
      * Menampilkan halaman utama dashboard mahasiswa V2.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $user = auth()->guard('mahasiswa')->user();
-        
-        $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester'])->findOrFail($user->id);
+
+        $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester', 'pembimbingAkademik'])->findOrFail($user->id);
         $kelas = $mahasiswa->kelas;
 
-        if (!$kelas) {
+        $mahasiswaData = [
+            'nama_lengkap' => $mahasiswa->nama_lengkap,
+            'nim' => $mahasiswa->nim,
+            'prodi' => $kelas->prodi->nama_prodi ?? '-',
+            'semester' => $kelas->semester->semester ?? '-',
+            'nama_kelas' => $kelas->nama_kelas ?? '-',
+            'dpa_name' => $mahasiswa->pembimbingAkademik->nama ?? '-',
+        ];
+
+        if (! $kelas) {
             return Inertia::render('Mahasiswa/Dashboard/Index', [
-                'mahasiswa' => $mahasiswa,
+                'mahasiswa' => $mahasiswaData,
                 'totalKehadiran' => 0,
                 'totalMatakuliah' => 0,
                 'statusKrs' => $mahasiswa->status_krs == 1 ? 'Sudah' : 'Belum',
@@ -63,6 +71,7 @@ class DashboardController extends Controller
 
         $jadwalsFormatted = $jadwalsMahasiswa->map(function ($jadwal) use ($absensHariIni) {
             $absen = $absensHariIni->where('jadwals_id', $jadwal->id)->first();
+
             return [
                 'id' => $jadwal->id,
                 'kelas' => $jadwal->kelas->nama_kelas ?? '-',
@@ -77,13 +86,7 @@ class DashboardController extends Controller
         });
 
         return Inertia::render('Mahasiswa/Dashboard/Index', [
-            'mahasiswa' => [
-                'nama_lengkap' => $mahasiswa->nama_lengkap,
-                'nim' => $mahasiswa->nim,
-                'prodi' => $kelas->prodi->nama_prodi ?? '-',
-                'semester' => $kelas->semester->semester ?? '-',
-                'nama_kelas' => $kelas->nama_kelas ?? '-',
-            ],
+            'mahasiswa' => $mahasiswaData,
             'totalKehadiran' => $totalKehadiran,
             'totalMatakuliah' => $totalMatakuliah,
             'statusKrs' => $mahasiswa->status_krs == 1 ? 'Sudah' : 'Belum',

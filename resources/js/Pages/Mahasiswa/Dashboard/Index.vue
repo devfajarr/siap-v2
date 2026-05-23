@@ -1,5 +1,6 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { 
   GraduationCap, 
@@ -12,10 +13,12 @@ import {
   AlertCircle, 
   Check,
   XCircle,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from 'lucide-vue-next'
+import GuidanceChatDialog from '@/Components/Chat/GuidanceChatDialog.vue'
 
-defineProps({
+const props = defineProps({
   mahasiswa: {
     type: Object,
     required: true
@@ -37,6 +40,23 @@ defineProps({
     default: () => []
   }
 })
+
+const page = usePage()
+const isChatOpen = ref(false)
+const studentId = computed(() => page.props.auth?.user?.id)
+
+watch(() => page.url, (newUrl) => {
+    const urlParams = new URLSearchParams(newUrl.split('?')[1] || '')
+    const openGuidance = urlParams.get('open_guidance')
+    if (openGuidance) {
+        isChatOpen.value = true
+        
+        // Clean up URL parameters using window history to keep state in sync without page reload
+        const url = new URL(window.location.origin + newUrl)
+        url.searchParams.delete('open_guidance')
+        window.history.replaceState({}, document.title, url.pathname + url.search)
+    }
+}, { immediate: true })
 </script>
 
 <template>
@@ -52,14 +72,31 @@ defineProps({
 
         <div class="relative z-10 flex flex-col gap-5 sm:gap-6">
           <!-- Text Content -->
-          <div class="space-y-2">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
-              <Sparkles class="w-3.5 h-3.5" /> Portal Mahasiswa V2
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
+                <Sparkles class="w-3.5 h-3.5" /> Portal Mahasiswa V2
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight leading-snug">Selamat Datang, {{ mahasiswa.nama_lengkap }}</h1>
+              <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+                Pantau informasi akademik, kehadiran perkuliahan, dan jadwal kuliah harian Anda dalam satu dashboard terpadu.
+              </p>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight leading-snug">Selamat Datang, {{ mahasiswa.nama_lengkap }}</h1>
-            <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
-              Pantau informasi akademik, kehadiran perkuliahan, dan jadwal kuliah harian Anda dalam satu dashboard terpadu.
-            </p>
+            
+            <!-- DPA Section -->
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-md text-xs font-medium border border-white/10">
+                <User class="w-3.5 h-3.5 text-indigo-200" />
+                <span>DPA: <strong class="text-white">{{ mahasiswa.dpa_name }}</strong></span>
+              </div>
+              <button 
+                @click="isChatOpen = true"
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white text-[#4B49AC] hover:bg-indigo-50 text-xs font-bold transition-all shadow-md active:scale-95 border border-white/10"
+              >
+                <MessageSquare class="w-3.5 h-3.5" />
+                <span>Konsultasi DPA</span>
+              </button>
+            </div>
           </div>
 
           <!-- Student Info — Grid 3 kolom dengan divider vertikal -->
@@ -219,5 +256,24 @@ defineProps({
         </div>
       </div>
     </div>
+
+    <!-- Floating Chat DPA Button (FAB) -->
+    <div class="fixed bottom-6 right-6 z-50">
+      <button 
+        @click="isChatOpen = true"
+        class="flex items-center gap-2 bg-[#4B49AC] hover:bg-[#3A3888] text-white px-5 py-3 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 group font-bold text-sm border border-white/10"
+      >
+        <MessageSquare class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+        <span>Chat DPA</span>
+      </button>
+    </div>
+
+    <!-- Guidance Chat Dialog -->
+    <GuidanceChatDialog
+      v-if="studentId"
+      v-model:open="isChatOpen"
+      :student-id="studentId"
+      :dpa-name="mahasiswa.dpa_name"
+    />
   </AdminLayout>
 </template>
