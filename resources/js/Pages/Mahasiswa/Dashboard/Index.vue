@@ -45,44 +45,43 @@ defineProps({
   <AdminLayout>
     <div class="space-y-6">
       <!-- Welcome Banner -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4B49AC] to-[#6b69d6] p-8 text-white shadow-xl">
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4B49AC] to-[#6b69d6] p-5 sm:p-8 text-white shadow-xl">
         <div class="absolute right-0 top-0 opacity-10 translate-x-8 -translate-y-8 pointer-events-none hidden md:block">
           <GraduationCap class="w-72 h-72" />
         </div>
-        
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+        <div class="relative z-10 flex flex-col gap-5 sm:gap-6">
+          <!-- Text Content -->
           <div class="space-y-2">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
               <Sparkles class="w-3.5 h-3.5" /> Portal Mahasiswa V2
             </div>
-            <h1 class="text-3xl font-bold tracking-tight">Selamat Datang, {{ mahasiswa.nama_lengkap }}</h1>
-            <p class="text-indigo-100 max-w-xl text-sm md:text-base">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight leading-snug">Selamat Datang, {{ mahasiswa.nama_lengkap }}</h1>
+            <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
               Pantau informasi akademik, kehadiran perkuliahan, dan jadwal kuliah harian Anda dalam satu dashboard terpadu.
             </p>
           </div>
 
-          <!-- Student Quick Badges -->
-          <div class="flex flex-wrap gap-3 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 self-start md:self-auto">
-            <div>
-              <div class="text-xs text-indigo-200">NIM</div>
-              <div class="font-bold">{{ mahasiswa.nim }}</div>
+          <!-- Student Info — Grid 3 kolom dengan divider vertikal -->
+          <div class="grid grid-cols-3 divide-x divide-white/20 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+            <div class="px-3 sm:px-5 py-3">
+              <p class="text-[10px] sm:text-xs text-indigo-200 uppercase tracking-wider font-medium">NIM</p>
+              <p class="font-bold text-sm sm:text-base mt-0.5 truncate">{{ mahasiswa.nim }}</p>
             </div>
-            <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
-            <div>
-              <div class="text-xs text-indigo-200">Prodi / Kelas</div>
-              <div class="font-bold">{{ mahasiswa.prodi }} - {{ mahasiswa.nama_kelas }}</div>
+            <div class="px-3 sm:px-5 py-3">
+              <p class="text-[10px] sm:text-xs text-indigo-200 uppercase tracking-wider font-medium">Prodi / Kelas</p>
+              <p class="font-bold text-sm sm:text-base mt-0.5 truncate">{{ mahasiswa.prodi }} - {{ mahasiswa.nama_kelas }}</p>
             </div>
-            <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
-            <div>
-              <div class="text-xs text-indigo-200">Semester</div>
-              <div class="font-bold">{{ mahasiswa.semester }}</div>
+            <div class="px-3 sm:px-5 py-3">
+              <p class="text-[10px] sm:text-xs text-indigo-200 uppercase tracking-wider font-medium">Semester</p>
+              <p class="font-bold text-sm sm:text-base mt-0.5">{{ mahasiswa.semester }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Metrics Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         <!-- Kehadiran Card -->
         <div class="bg-white p-6 rounded-xl border border-[#CDD1E1] shadow-sm flex items-center justify-between">
           <div class="space-y-1">

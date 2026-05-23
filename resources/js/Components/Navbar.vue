@@ -32,7 +32,7 @@ const switchProdi = (prodiId) => {
 </script>
 
 <template>
-  <nav class="fixed top-0 left-0 right-0 h-[70px] bg-white border-b border-[#CDD1E1] px-6 flex items-center justify-between z-50">
+  <nav class="fixed top-0 left-0 right-0 h-[70px] bg-white border-b border-[#CDD1E1] px-3 sm:px-6 flex items-center justify-between z-50">
     <!-- Brand -->
     <div class="flex items-center gap-4">
       <Link :href="dashboardUrl" class="flex items-center">
@@ -48,14 +48,14 @@ const switchProdi = (prodiId) => {
     </div>
 
     <!-- Right Side -->
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-2 sm:gap-4">
       <!-- Prodi Switcher for Kaprodi -->
       <div v-if="user?.role === 'Kaprodi' && activeProdi" class="flex items-center">
         <div v-if="prodis.length > 1">
           <DropdownMenuRoot>
-            <DropdownMenuTrigger class="flex items-center gap-2 px-3 py-2 bg-[#4B49AC]/10 hover:bg-[#4B49AC]/20 text-[#4B49AC] rounded-xl text-xs font-bold transition-all outline-none cursor-pointer border border-[#4B49AC]/20">
-              <span>Prodi: {{ activeProdi.nama_prodi }}</span>
-              <ChevronDown class="w-3.5 h-3.5" />
+            <DropdownMenuTrigger class="flex items-center gap-1.5 px-2 sm:px-3 py-2 bg-[#4B49AC]/10 hover:bg-[#4B49AC]/20 text-[#4B49AC] rounded-xl text-xs font-bold transition-all outline-none cursor-pointer border border-[#4B49AC]/20 max-w-[160px] sm:max-w-none">
+              <span class="truncate"><span class="hidden sm:inline">Prodi: </span>{{ activeProdi.nama_prodi }}</span>
+              <ChevronDown class="w-3.5 h-3.5 shrink-0" />
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
               <DropdownMenuContent class="z-[100] min-w-[220px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 mt-2 animate-in fade-in zoom-in duration-200" align="end" :side-offset="5">
@@ -75,8 +75,8 @@ const switchProdi = (prodiId) => {
             </DropdownMenuPortal>
           </DropdownMenuRoot>
         </div>
-        <div v-else class="px-3 py-2 bg-gray-50 text-gray-500 rounded-xl text-xs font-medium border border-gray-100">
-          Prodi: {{ activeProdi.nama_prodi }}
+        <div v-else class="px-2 sm:px-3 py-2 bg-gray-50 text-gray-500 rounded-xl text-xs font-medium border border-gray-100 max-w-[120px] sm:max-w-none truncate">
+          <span class="hidden sm:inline">Prodi: </span>{{ activeProdi.nama_prodi }}
         </div>
       </div>
 

@@ -26,6 +26,8 @@ defineProps({
   isOpen: Boolean
 })
 
+defineEmits(['close'])
+
 const page = usePage()
 const expandedMenus = ref([])
 
@@ -219,9 +221,22 @@ const menuItems = computed(() => {
 </script>
 
 <template>
-  <aside 
-    class="fixed left-0 top-[70px] bottom-0 bg-white border-r border-[#CDD1E1] transition-all duration-300 z-40 overflow-y-auto"
-    :class="[isOpen ? 'w-[260px]' : 'w-[70px]']"
+  <!-- Backdrop overlay (mobile only) -->
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 bg-black/40 z-30 lg:hidden"
+    @click="$emit('close')"
+  />
+
+  <aside
+    class="fixed left-0 top-[70px] bottom-0 bg-white border-r border-[#CDD1E1] z-40 overflow-y-auto transition-all duration-300"
+    :class="[
+      // Desktop: icon-only collapse behavior
+      isOpen ? 'lg:w-[260px]' : 'lg:w-[70px]',
+      // Mobile: drawer slide in/out (always 260px wide)
+      'w-[260px]',
+      isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+    ]"
   >
     <ul class="py-4">
       <li v-for="item in menuItems" :key="item.title" class="mb-1">

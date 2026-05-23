@@ -66,6 +66,7 @@ class PermohonanSuratController extends Controller
             'Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA'
         ])
         ->where('tahun_akademik', $tahunAkademikFormatted)
+        ->where('setuju_kaprodi', '!=', 2)
         ->get();
 
         $terdaftarIds = [];
@@ -144,6 +145,7 @@ class PermohonanSuratController extends Controller
             // 1. Validasi apakah pengusul sudah terdaftar di pengajuan aktif tahun ini
             $activeSubmissions = PermohonanSurat::whereIn('jenis_permohonan', ['Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA'])
                 ->where('tahun_akademik', $tahunAjuan)
+                ->where('setuju_kaprodi', '!=', 2)
                 ->get();
 
             $allActiveIds = [];
@@ -362,6 +364,7 @@ class PermohonanSuratController extends Controller
             $otherSubmissions = PermohonanSurat::whereIn('jenis_permohonan', ['Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA'])
                 ->where('tahun_akademik', $permohonan->tahun_akademik)
                 ->where('id', '!=', $id)
+                ->where('setuju_kaprodi', '!=', 2)
                 ->get();
 
             $allOtherActiveIds = [];

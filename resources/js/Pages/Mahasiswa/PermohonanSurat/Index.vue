@@ -436,7 +436,10 @@ const openRejectionDetail = (item) => {
                                             </Badge>
                                         </TableCell>
                                         <TableCell class="text-center py-4">
-                                            <Badge v-if="item.status === 1" variant="secondary" class="bg-indigo-100 text-[#4B49AC] border border-indigo-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
+                                            <Badge v-if="item.setuju_kaprodi === 2" variant="secondary" class="bg-rose-50 text-rose-600 border border-rose-100 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
+                                                Tidak Diproses
+                                            </Badge>
+                                            <Badge v-else-if="item.status === 1" variant="secondary" class="bg-indigo-100 text-[#4B49AC] border border-indigo-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">
                                                 Selesai & Tercetak
                                             </Badge>
                                             <Badge v-else variant="secondary" class="bg-gray-100 text-gray-600 border border-gray-200 font-semibold px-3 py-1 rounded-md pointer-events-none shadow-none">

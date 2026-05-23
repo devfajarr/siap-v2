@@ -81,7 +81,7 @@ const cards = [
     <div class="space-y-6">
       <!-- Header -->
       <div>
-        <h1 class="text-2xl font-bold text-[#1F2937]">Dashboard Kaprodi</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-[#1F2937]">Dashboard Kaprodi</h1>
         <p class="text-[#6B7280]">Selamat datang! Berikut ringkasan kegiatan akademik Program Studi {{ prodi }}.</p>
       </div>
 
@@ -108,7 +108,7 @@ const cards = [
         <CardHeader class="flex flex-row items-center justify-between pb-2">
           <div class="flex items-center gap-2">
             <CalendarDays class="w-5 h-5 text-primary" />
-            <CardTitle class="text-lg font-bold">Jadwal Perkuliahan Hari Ini - {{ prodi }}</CardTitle>
+            <CardTitle class="text-sm sm:text-lg font-bold">Jadwal Perkuliahan Hari Ini - {{ prodi }}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>

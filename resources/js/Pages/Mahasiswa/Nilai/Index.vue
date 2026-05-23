@@ -68,7 +68,7 @@ const getGradeBadgeClass = (grade) => {
             <ChevronRight class="w-4 h-4" />
             <span class="text-gray-700 font-semibold">{{ isRiwayat ? 'Riwayat Nilai' : 'Nilai KHS Aktif' }}</span>
           </div>
-          <h1 class="text-2xl font-bold text-[#1F1F1F]">
+          <h1 class="text-xl sm:text-2xl font-bold text-[#1F1F1F]">
             {{ isRiwayat ? 'Riwayat Hasil Studi' : 'Kartu Hasil Studi (KHS)' }}
           </h1>
           <p class="text-sm text-gray-500">
@@ -77,19 +77,19 @@ const getGradeBadgeClass = (grade) => {
         </div>
 
         <!-- Action Button -->
-        <div>
-          <a 
-            v-if="summary.can_print && summary.semester_id" 
-            :href="`/v2/mahasiswa/khs/${summary.semester_id}`" 
+        <div class="w-full md:w-auto">
+          <a
+            v-if="summary.can_print && summary.semester_id"
+            :href="`/v2/mahasiswa/khs/${summary.semester_id}`"
             target="_blank"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all"
+            class="flex items-center justify-center gap-2 w-full md:w-auto px-5 py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all"
           >
             <Printer class="w-4 h-4" /> Cetak Dokumen KHS
           </a>
-          <button 
+          <button
             v-else
             disabled
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-200 text-gray-400 text-sm font-bold cursor-not-allowed"
+            class="flex items-center justify-center gap-2 w-full md:w-auto px-5 py-2.5 rounded-xl bg-gray-200 text-gray-400 text-sm font-bold cursor-not-allowed"
             title="Belum ada matakuliah yang dinilai pada semester ini"
           >
             <Printer class="w-4 h-4" /> Cetak KHS (Belum Tersedia)
@@ -98,7 +98,7 @@ const getGradeBadgeClass = (grade) => {
       </div>
 
       <!-- Info & Metrik Card -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <!-- Student Info Banner -->
         <div class="md:col-span-2 bg-gradient-to-br from-[#4B49AC] to-[#5957c2] p-6 rounded-2xl text-white shadow-md flex items-center gap-6 relative overflow-hidden">
           <div class="absolute right-0 top-0 opacity-10 translate-x-4 -translate-y-4 pointer-events-none">
@@ -149,30 +149,32 @@ const getGradeBadgeClass = (grade) => {
 
       <!-- Main Table Card -->
       <div class="bg-white rounded-2xl border border-[#CDD1E1] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-[#CDD1E1] flex items-center justify-between bg-gray-50/50">
-          <div class="flex items-center gap-3">
-            <div class="p-2 rounded-lg bg-[#4B49AC] text-white">
+        <div class="px-4 sm:px-6 py-4 border-b border-[#CDD1E1] flex items-center justify-between gap-3 bg-gray-50/50">
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div class="p-2 rounded-lg bg-[#4B49AC] text-white shrink-0">
               <Award class="w-5 h-5" />
             </div>
-            <h2 class="font-bold text-lg text-[#1F1F1F]">Rincian Nilai Matakuliah</h2>
+            <h2 class="font-bold text-sm sm:text-lg text-[#1F1F1F] truncate">Rincian Nilai Matakuliah</h2>
           </div>
-          <div>
-            <span 
+          <div class="shrink-0">
+            <span
               v-if="summary.matkul_dinilai === summary.total_matkul && summary.total_matkul > 0"
-              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300"
+              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-300"
             >
-              <CheckCircle2 class="w-3.5 h-3.5" /> Penilaian Lengkap
+              <CheckCircle2 class="w-3.5 h-3.5 shrink-0" />
+              <span class="hidden sm:inline">Penilaian Lengkap</span>
             </span>
-            <span 
+            <span
               v-else
-              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold border border-amber-300"
+              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold border border-amber-300"
             >
-              <Clock class="w-3.5 h-3.5" /> Penilaian Dalam Proses
+              <Clock class="w-3.5 h-3.5 shrink-0" />
+              <span class="hidden sm:inline">Dalam Proses</span>
             </span>
           </div>
         </div>
 
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <div v-if="matkuls.length === 0" class="py-12 text-center space-y-3">
             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto text-gray-400">
               <FileText class="w-8 h-8" />

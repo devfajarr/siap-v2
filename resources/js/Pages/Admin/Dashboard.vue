@@ -91,14 +91,14 @@ const cards = [
     <div class="space-y-6">
       <!-- Header -->
       <div>
-        <h1 class="text-2xl font-bold text-[#1F2937]">Dashboard Admin</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-[#1F2937]">Dashboard Admin</h1>
         <p class="text-[#6B7280]">Statistik sistem informasi akademik saat ini.</p>
       </div>
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card v-for="card in cards" :key="card.title" class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
-          <CardContent class="p-6">
+          <CardContent class="p-4 sm:p-6">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-[#6B7280]">{{ card.title }}</p>
@@ -114,7 +114,7 @@ const cards = [
 
         <!-- Notification Toggle Card -->
         <Card class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
-          <CardContent class="p-6">
+          <CardContent class="p-4 sm:p-6">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-[#6B7280]">Notifikasi Harian</p>

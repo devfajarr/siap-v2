@@ -61,14 +61,14 @@ const cards = [
     <div class="space-y-6">
       <!-- Header -->
       <div>
-        <h1 class="text-2xl font-bold text-[#1F2937]">Dashboard Dosen</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-[#1F2937]">Dashboard Dosen</h1>
         <p class="text-[#6B7280]">Selamat datang kembali! Berikut ringkasan kegiatan mengajar Anda.</p>
       </div>
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card v-for="card in cards" :key="card.title" class="border-none shadow-md overflow-hidden">
-          <CardContent class="p-6">
+          <CardContent class="p-4 sm:p-6">
             <div class="flex items-center justify-between">
               <div class="space-y-2">
                 <p class="text-sm font-medium text-primary">{{ card.title }}</p>
@@ -92,7 +92,7 @@ const cards = [
           </div>
         </CardHeader>
         <CardContent>
-          <div class="rounded-md border">
+          <div class="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

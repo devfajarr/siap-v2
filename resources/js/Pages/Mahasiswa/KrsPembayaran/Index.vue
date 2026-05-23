@@ -122,32 +122,12 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
             <ChevronRight class="w-4 h-4" />
             <span class="text-gray-700 font-semibold">KRS & Pembayaran</span>
           </div>
-          <h1 class="text-2xl font-bold text-[#1F1F1F]">
+          <h1 class="text-xl sm:text-2xl font-bold text-[#1F1F1F]">
             Kartu Rencana Studi & Pembayaran
           </h1>
-          <p class="text-sm text-gray-500">
+          <p class="text-xs sm:text-sm text-gray-500">
             Unggah bukti pembayaran semester dan verifikasi pengajuan rencana studi (KRS)
           </p>
-        </div>
-
-        <!-- Action Cetak KRS -->
-        <div>
-          <a 
-            v-if="krs && krs.setuju_mahasiswa === 1 && krs.setuju_pa === 1" 
-            :href="`/v2/mahasiswa/krs_pembayaran/cetak/${krs.id}`" 
-            target="_blank"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#4B49AC] hover:bg-[#3a3888] text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
-          >
-            <Printer class="w-4 h-4" /> Cetak KRS Resmi
-          </a>
-          <button 
-            v-else
-            disabled
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-200 text-gray-400 text-sm font-bold cursor-not-allowed"
-            title="KRS resmi dapat dicetak setelah disetujui oleh Pembimbing Akademik"
-          >
-            <Printer class="w-4 h-4" /> Cetak KRS (Menunggu Verifikasi)
-          </button>
         </div>
       </div>
 
@@ -164,20 +144,20 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
       </div>
 
       <!-- Student Info Banner -->
-      <div class="bg-gradient-to-br from-[#4B49AC] to-[#5957c2] p-6 rounded-lg text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div class="bg-gradient-to-br from-[#4B49AC] to-[#5957c2] p-4 sm:p-6 rounded-lg text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div class="absolute right-0 top-0 opacity-10 translate-x-4 -translate-y-4 pointer-events-none">
           <GraduationCap class="w-64 h-64" />
         </div>
         <div class="space-y-1 relative z-10">
           <div class="text-xs uppercase font-semibold text-indigo-200 tracking-wider">Identitas Mahasiswa</div>
-          <h2 class="text-xl font-bold">{{ mahasiswa.nama_lengkap }}</h2>
-          <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-indigo-100 pt-2 border-t border-white/20">
+          <h2 class="text-lg sm:text-xl font-bold">{{ mahasiswa.nama_lengkap }}</h2>
+          <div class="flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-1 text-xs sm:text-sm text-indigo-100 pt-2 border-t border-white/20">
             <div><span class="font-semibold text-white">NIM:</span> {{ mahasiswa.nim }}</div>
             <div><span class="font-semibold text-white">Prodi:</span> {{ mahasiswa.prodi }}</div>
             <div><span class="font-semibold text-white">Semester:</span> {{ mahasiswa.semester }}</div>
           </div>
         </div>
-        <div class="relative z-10 bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20 max-w-sm">
+        <div class="relative z-10 bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20 w-full md:max-w-sm">
           <div class="text-xs text-indigo-200">Dosen Pembimbing Akademik:</div>
           <div class="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
             <ShieldCheck class="w-4 h-4 text-emerald-400" />
@@ -190,21 +170,21 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         <!-- Kolom Kiri: Status Pembayaran & Upload Bukti -->
-        <div class="bg-white p-6 rounded-lg border border-[#CDD1E1] shadow-sm flex flex-col justify-between space-y-6">
+        <div class="bg-white p-4 sm:p-6 rounded-lg border border-[#CDD1E1] shadow-sm flex flex-col justify-between space-y-6">
           <div>
-            <div class="flex items-center justify-between border-b pb-4 mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 mb-4">
               <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-lg bg-indigo-50 text-[#4B49AC]">
+                <div class="p-2.5 rounded-lg bg-indigo-50 text-[#4B49AC] shrink-0">
                   <CreditCard class="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 class="font-bold text-lg text-[#1F1F1F]">Status Pembayaran</h2>
+                  <h2 class="font-bold text-base sm:text-lg text-[#1F1F1F]">Status Pembayaran</h2>
                   <p class="text-xs text-gray-500">Bukti pembayaran semester berjalan</p>
                 </div>
               </div>
 
               <!-- Badge Status Pembayaran -->
-              <div>
+              <div class="shrink-0 self-start sm:self-auto">
                 <div v-if="!pembayaran" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5">
                   <AlertTriangle class="w-3.5 h-3.5" /> Belum Diunggah
                 </div>
@@ -285,17 +265,17 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
                     v-if="previewUrl"
                     type="button"
                     @click="clearFile"
-                    class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold text-sm transition-all"
+                    class="flex-1 px-3 sm:px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold text-xs sm:text-sm transition-all"
                   >
                     Batal Pilih
                   </button>
                   <button 
                     type="submit"
                     :disabled="!uploadForm.file || uploadForm.processing"
-                    class="flex-1 px-4 py-2.5 rounded-lg bg-[#4B49AC] hover:bg-[#3a3888] disabled:bg-gray-300 text-white font-bold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    class="flex-1 px-3 sm:px-4 py-2.5 rounded-lg bg-[#4B49AC] hover:bg-[#3a3888] disabled:bg-gray-300 text-white font-bold text-xs sm:text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5 sm:gap-2"
                   >
                     <span v-if="uploadForm.processing" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    <UploadCloud class="w-4 h-4" /> Unggah Pembayaran
+                    <UploadCloud class="w-4 h-4 shrink-0" /> Unggah Pembayaran
                   </button>
                 </div>
               </form>
@@ -303,20 +283,20 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
             
             <div v-else-if="pembayaran?.bukti_pembayaran" class="space-y-3">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">File Bukti Pembayaran Terverifikasi</label>
-              <div class="p-4 rounded-lg border bg-gray-50 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="p-2 rounded-lg bg-indigo-100 text-[#4B49AC]">
+              <div class="p-4 rounded-lg border bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="p-2 rounded-lg bg-indigo-100 text-[#4B49AC] shrink-0">
                     <FileText class="w-5 h-5" />
                   </div>
-                  <div>
-                    <div class="text-sm font-semibold text-gray-800">Bukti_Pembayaran_Semester.jpg</div>
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-gray-800 truncate">Bukti_Pembayaran_Semester.jpg</div>
                     <div class="text-xs text-gray-500">Diunggah: {{ pembayaran.created_at }}</div>
                   </div>
                 </div>
                 <a 
                   :href="`/storage/${pembayaran.bukti_pembayaran}`" 
                   target="_blank"
-                  class="text-xs font-bold text-[#4B49AC] hover:underline"
+                  class="text-xs font-bold text-[#4B49AC] hover:underline shrink-0 self-start sm:self-auto pl-11 sm:pl-0"
                 >
                   Lihat File
                 </a>
@@ -327,21 +307,21 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
         </div>
 
         <!-- Kolom Kanan: Status KRS & Persetujuan -->
-        <div class="bg-white p-6 rounded-lg border border-[#CDD1E1] shadow-sm flex flex-col justify-between space-y-6">
+        <div class="bg-white p-4 sm:p-6 rounded-lg border border-[#CDD1E1] shadow-sm flex flex-col justify-between space-y-6">
           <div>
-            <div class="flex items-center justify-between border-b pb-4 mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 mb-4">
               <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-600">
+                <div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
                   <FileText class="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 class="font-bold text-lg text-[#1F1F1F]">Persetujuan & Verifikasi KRS</h2>
+                  <h2 class="font-bold text-base sm:text-lg text-[#1F1F1F]">Persetujuan & Verifikasi KRS</h2>
                   <p class="text-xs text-gray-500">Rencana studi untuk semester aktif saat ini</p>
                 </div>
               </div>
 
               <!-- Badge Status KRS -->
-              <div>
+              <div class="shrink-0 self-start sm:self-auto">
                 <div v-if="!krs" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 border border-gray-200 text-xs font-bold flex items-center gap-1.5">
                   <Clock class="w-3.5 h-3.5" /> Belum Diproses
                 </div>
@@ -463,22 +443,22 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
 
       <!-- Main Table Card: Daftar Mata Kuliah Paket -->
       <div class="bg-white rounded-lg border border-[#CDD1E1] shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-[#CDD1E1] flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50">
+        <div class="p-4 sm:p-6 border-b border-[#CDD1E1] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
           <div class="flex items-center gap-3">
-            <div class="p-2 rounded-lg bg-[#4B49AC] text-white">
+            <div class="p-2 rounded-lg bg-[#4B49AC] text-white shrink-0">
               <BookOpen class="w-5 h-5" />
             </div>
             <div>
-              <h2 class="font-bold text-lg text-[#1F1F1F]">Mata Kuliah Paket Semester</h2>
+              <h2 class="font-bold text-base sm:text-lg text-[#1F1F1F]">Mata Kuliah Paket Semester</h2>
               <p class="text-xs text-gray-500">Daftar matakuliah yang terdaftar untuk semester berjalan</p>
             </div>
           </div>
-          <div class="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100 text-sm font-bold text-[#4B49AC]">
+          <div class="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100 text-sm font-bold text-[#4B49AC] self-start sm:self-auto">
             Total Beban: {{ totalSks }} SKS
           </div>
         </div>
 
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <div v-if="matkuls.length === 0" class="py-12 text-center space-y-3">
             <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto text-gray-400">
               <FileText class="w-8 h-8" />
@@ -493,12 +473,12 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
             <table class="w-full border-collapse">
               <thead>
                 <tr class="border-b border-gray-200 bg-gray-50/75 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
-                  <th class="py-3.5 px-4 rounded-l-lg w-16">No</th>
-                  <th class="py-3.5 px-4 w-36">Kode</th>
-                  <th class="py-3.5 px-4">Nama Mata Kuliah</th>
-                  <th class="py-3.5 px-4 text-center w-28">Teori (T)</th>
-                  <th class="py-3.5 px-4 text-center w-28">Praktek (P)</th>
-                  <th class="py-3.5 px-4 text-center rounded-r-lg w-28">Jumlah SKS</th>
+                  <th class="py-3 px-2 sm:py-3.5 sm:px-4 rounded-l-lg w-16">No</th>
+                  <th class="py-3 px-2 sm:py-3.5 sm:px-4 w-36">Kode</th>
+                  <th class="py-3 px-2 sm:py-3.5 sm:px-4">Nama Mata Kuliah</th>
+                  <th class="py-3 px-2 sm:py-3.5 sm:px-4 text-center w-28">Teori (T)</th>
+                  <th class="py-3 px-2 sm:py-3.5 sm:px-4 text-center w-28">Praktek (P)</th>
+                  <th class="py-3 px-2 sm:py-3.5 sm:px-4 text-center rounded-r-lg w-28">Jumlah SKS</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
@@ -507,20 +487,20 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
                   :key="item.id"
                   class="hover:bg-[#F5F7FF]/50 transition-colors"
                 >
-                  <td class="py-4 px-4 text-sm text-gray-600">{{ index + 1 }}</td>
-                  <td class="py-4 px-4 text-sm font-bold text-[#4B49AC] font-mono">{{ item.kode }}</td>
-                  <td class="py-4 px-4 text-sm font-semibold text-[#1F1F1F]">{{ item.nama_matkul }}</td>
-                  <td class="py-4 px-4 text-sm text-center text-gray-600">{{ item.teori }} SKS</td>
-                  <td class="py-4 px-4 text-sm text-center text-gray-600">{{ item.praktek }} SKS</td>
-                  <td class="py-4 px-4 text-sm text-center font-bold text-gray-800 bg-gray-50/50">{{ item.sks }} SKS</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-sm text-gray-600">{{ index + 1 }}</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-sm font-bold text-[#4B49AC] font-mono">{{ item.kode }}</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-sm font-semibold text-[#1F1F1F]">{{ item.nama_matkul }}</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-sm text-center text-gray-600">{{ item.teori }} SKS</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-sm text-center text-gray-600">{{ item.praktek }} SKS</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-sm text-center font-bold text-gray-800 bg-gray-50/50">{{ item.sks }} SKS</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr class="bg-gray-50/75 font-bold border-t-2 border-gray-200 text-gray-800">
-                  <td colspan="3" class="py-4 px-4 text-right">Total Keseluruhan SKS:</td>
-                  <td class="py-4 px-4 text-center">{{ matkuls.reduce((sum, item) => sum + item.teori, 0) }} SKS</td>
-                  <td class="py-4 px-4 text-center">{{ matkuls.reduce((sum, item) => sum + item.praktek, 0) }} SKS</td>
-                  <td class="py-4 px-4 text-center text-[#4B49AC] text-base">{{ totalSks }} SKS</td>
+                  <td colspan="3" class="py-3 px-2 sm:py-4 sm:px-4 text-right">Total Keseluruhan SKS:</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-center">{{ matkuls.reduce((sum, item) => sum + item.teori, 0) }} SKS</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-center">{{ matkuls.reduce((sum, item) => sum + item.praktek, 0) }} SKS</td>
+                  <td class="py-3 px-2 sm:py-4 sm:px-4 text-center text-[#4B49AC] text-base">{{ totalSks }} SKS</td>
                 </tr>
               </tfoot>
             </table>
@@ -556,11 +536,11 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
           </div>
         </div>
 
-        <DialogFooter class="p-6 pt-0 gap-3 flex flex-row">
+        <DialogFooter class="p-6 pt-0 gap-3 flex flex-col-reverse sm:flex-row">
           <button 
             type="button" 
             @click="showConfirmModal = false"
-            class="px-6 py-2.5 rounded-lg border border-gray-300 font-bold text-sm text-gray-700 hover:bg-gray-100 transition-all text-center cursor-pointer flex-shrink-0"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-gray-300 font-bold text-sm text-gray-700 hover:bg-gray-100 transition-all text-center cursor-pointer"
           >
             Batal
           </button>
@@ -568,7 +548,7 @@ const totalSks = computed(() => props.matkuls.reduce((sum, item) => sum + item.s
             type="button" 
             @click="tandatanganiKRS"
             :disabled="persetujuanForm.processing"
-            class="flex-1 px-6 py-2.5 rounded-lg bg-[#4B49AC] hover:bg-[#3a3888] disabled:bg-gray-300 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 text-center cursor-pointer whitespace-nowrap"
+            class="w-full sm:flex-1 px-6 py-2.5 rounded-lg bg-[#4B49AC] hover:bg-[#3a3888] disabled:bg-gray-300 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 text-center cursor-pointer whitespace-nowrap"
           >
             <span v-if="persetujuanForm.processing" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             <ShieldCheck class="w-4 h-4 flex-shrink-0" /> Ya, Tandatangani & Serahkan
