@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import ChatDialog from '@/Components/Chat/ChatDialog.vue'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
 import { Badge } from '@/Components/ui/badge'
@@ -35,7 +36,8 @@ import {
   ChevronRight,
   Sparkles,
   PlusCircle,
-  GraduationCap
+  GraduationCap,
+  MessageSquare
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -101,6 +103,15 @@ const submitRequest = () => {
   })
 }
 
+// Chat Dialog State
+const isChatOpen = ref(false)
+const chatJadwal = ref(null)
+
+const openChatDialog = (jadwal) => {
+  chatJadwal.value = jadwal
+  isChatOpen.value = true
+}
+
 // Generate meeting options (1 to current max)
 const getMeetingOptions = (currentMax) => {
   const options = []
@@ -109,6 +120,17 @@ const getMeetingOptions = (currentMax) => {
   }
   return options
 }
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const openChatJadwalId = urlParams.get('open_chat')
+  if (openChatJadwalId) {
+    const jadwal = props.jadwals.find(j => j.id == openChatJadwalId)
+    if (jadwal) {
+      openChatDialog(jadwal)
+    }
+  }
+})
 </script>
 
 <template>
@@ -306,6 +328,17 @@ const getMeetingOptions = (currentMax) => {
                   <AlertCircle class="w-3.5 h-3.5 text-slate-400" />
                   Ajukan Edit Pertemuan Lalu
                 </Button>
+
+                <!-- Diskusi Akademik Button -->
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  class="w-full text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50 flex items-center justify-center gap-1.5 mt-1 font-semibold"
+                  @click="openChatDialog(jadwal)"
+                >
+                  <MessageSquare class="w-3.5 h-3.5" />
+                  Diskusi Akademik
+                </Button>
               </div>
 
               <!-- Approved Edits List -->
@@ -403,6 +436,16 @@ const getMeetingOptions = (currentMax) => {
         </div>
       </DialogContent>
     </Dialog>
+
+    <!-- Chat Dialog Component -->
+    <ChatDialog
+      v-if="chatJadwal"
+      v-model:open="isChatOpen"
+      :jadwal-id="chatJadwal.id"
+      :matkul-name="chatJadwal.matkul"
+      :kelas-name="chatJadwal.kelas"
+      :dosen-name="chatJadwal.dosen"
+    />
 
     <!-- Toast Notification -->
     <transition name="toast">

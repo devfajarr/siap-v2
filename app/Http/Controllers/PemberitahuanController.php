@@ -208,6 +208,78 @@ class PemberitahuanController extends Controller
         return response()->json($messages);
     }
 
+    public function getJadwalContactsDosen(Request $request)
+    {
+        $request->validate([
+            'jadwal_id' => 'required|exists:jadwals,id'
+        ]);
+
+        $jadwal = Jadwal::with('kelas', 'matkul')->findOrFail($request->jadwal_id);
+
+        $messages = Message::where('jadwal_id', $request->jadwal_id)
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('sender_id', $this->userId)
+                      ->where('sender_type', 'App\Models\Dosen');
+                })->orWhere(function ($q) {
+                    $q->where('receiver_id', $this->userId)
+                      ->where('receiver_type', 'App\Models\Dosen');
+                });
+            })
+            ->get();
+
+        $contacts = [];
+
+        $prodiId = $jadwal->matkul->prodi_id ?? ($jadwal->kelas->id_prodi ?? null);
+        if ($prodiId) {
+            $kaprodis = \App\Models\Kaprodi::whereHas('prodis', function ($q) use ($prodiId) {
+                $q->where('prodi_id', $prodiId);
+            })->get();
+
+            foreach ($kaprodis as $kaprodi) {
+                $contacts["App\\Models\\Kaprodi_" . $kaprodi->id] = [
+                    'id' => $kaprodi->id,
+                    'type' => 'App\Models\Kaprodi',
+                    'nama' => $kaprodi->nama,
+                    'role_label' => 'Kaprodi',
+                    'has_messages' => false
+                ];
+            }
+        }
+
+        foreach ($messages as $message) {
+            $isSenderDosen = ($message->sender_type === 'App\Models\Dosen');
+            $contactId = $isSenderDosen ? $message->receiver_id : $message->sender_id;
+            $contactType = $isSenderDosen ? $message->receiver_type : $message->sender_type;
+
+            $roleLabel = 'Pimpinan';
+            if ($contactType === 'App\Models\Kaprodi') $roleLabel = 'Kaprodi';
+            elseif ($contactType === 'App\Models\Wadir') $roleLabel = 'Wakil Direktur';
+            elseif ($contactType === 'App\Models\Direktur') $roleLabel = 'Direktur';
+
+            $key = $contactType . "_" . $contactId;
+
+            if (!isset($contacts[$key])) {
+                $contactModel = $contactType;
+                $contactUser = $contactModel::find($contactId);
+                if ($contactUser) {
+                    $contacts[$key] = [
+                        'id' => $contactId,
+                        'type' => $contactType,
+                        'nama' => $contactUser->nama,
+                        'role_label' => $roleLabel,
+                        'has_messages' => true
+                    ];
+                }
+            } else {
+                $contacts[$key]['has_messages'] = true;
+            }
+        }
+
+        return response()->json(array_values($contacts));
+    }
+
+
 
     protected function markMessagesAsRead($messages)
     {

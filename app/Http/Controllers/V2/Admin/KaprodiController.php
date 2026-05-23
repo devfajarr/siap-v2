@@ -22,12 +22,12 @@ class KaprodiController extends Controller
     {
         $search = $request->input('search');
 
-        $kaprodis = Kaprodi::with(['prodi', 'dosen'])
+        $kaprodis = Kaprodi::with(['prodis', 'dosen'])
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nama', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhereHas('prodi', function ($pq) use ($search) {
+                        ->orWhereHas('prodis', function ($pq) use ($search) {
                             $pq->where('nama_prodi', 'like', "%{$search}%");
                         });
                 });
@@ -70,16 +70,17 @@ class KaprodiController extends Controller
             $password = Hash::make($request->password);
         }
 
-        Kaprodi::create([
+        $kaprodi = Kaprodi::create([
             'nama' => $dosen->nama,
             'dosens_id' => $request->dosens_id,
-            'prodis_id' => $request->prodis_id,
             'no_telephone' => $dosen->no_telephone,
             'email' => $dosen->email,
             'status' => 1,
             'password' => $password,
             'is_first_login' => ($request->password_mode === 'custom')
         ]);
+
+        $kaprodi->prodis()->sync($request->prodis_id);
 
         return redirect()->back()->with('success', 'Kaprodi berhasil ditambahkan.');
     }
@@ -93,7 +94,6 @@ class KaprodiController extends Controller
         $updateData = [
             'nama' => $dosen->nama,
             'dosens_id' => $request->dosens_id,
-            'prodis_id' => $request->prodis_id,
             'email' => $dosen->email,
             'no_telephone' => $dosen->no_telephone,
             'status' => $request->status,
@@ -109,6 +109,7 @@ class KaprodiController extends Controller
         }
 
         $kaprodi->update($updateData);
+        $kaprodi->prodis()->sync($request->prodis_id);
 
         return redirect()->back()->with('success', 'Data Kaprodi berhasil diperbarui.');
     }

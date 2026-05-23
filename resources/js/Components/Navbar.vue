@@ -3,6 +3,7 @@ import { Link, usePage, router } from '@inertiajs/vue3'
 import { Menu, ChevronDown } from 'lucide-vue-next'
 import NavbarProfile from '@/Components/NavbarProfile.vue'
 import NotificationDropdown from '@/Components/NotificationDropdown.vue'
+import ChatDropdown from '@/Components/ChatDropdown.vue'
 import { computed } from 'vue'
 import { 
   DropdownMenuRoot, 
@@ -79,6 +80,9 @@ const switchProdi = (prodiId) => {
           <span class="hidden sm:inline">Prodi: </span>{{ activeProdi.nama_prodi }}
         </div>
       </div>
+
+      <!-- Chat Messages -->
+      <ChatDropdown />
 
       <!-- Notifications -->
       <NotificationDropdown />

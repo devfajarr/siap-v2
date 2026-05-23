@@ -349,6 +349,8 @@ Route::prefix('/presensi')->group(function () {
             'getUnreadMessageCountByContact'
         ])
             ->name('get.unread.count.by.contact');
+        Route::get('/contacts-dosen', [PemberitahuanController::class, 'getJadwalContactsDosen'])
+            ->name('get.contacts.dosen');
     });
 
     // NOTIFIKASI

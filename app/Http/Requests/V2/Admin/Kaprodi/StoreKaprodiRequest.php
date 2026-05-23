@@ -4,6 +4,7 @@ namespace App\Http\Requests\V2\Admin\Kaprodi;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class StoreKaprodiRequest extends FormRequest
 {
@@ -27,9 +28,17 @@ class StoreKaprodiRequest extends FormRequest
             'prodis_id' => [
                 'required',
                 'exists:prodi,id',
-                Rule::unique('kaprodi')->where(function ($query) {
-                    return $query->where('dosens_id', $this->dosens_id);
-                })
+                function ($attribute, $value, $fail) {
+                    $exists = DB::table('kaprodi_prodi')
+                        ->join('kaprodi', 'kaprodi_prodi.kaprodi_id', '=', 'kaprodi.id')
+                        ->where('kaprodi.dosens_id', $this->dosens_id)
+                        ->where('kaprodi_prodi.prodi_id', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Dosen ini sudah menjabat sebagai Kaprodi di prodi tersebut.');
+                    }
+                }
             ],
             'password_mode' => 'required|in:dosen,existing,custom',
             'password' => 'required_if:password_mode,custom|nullable|min:6'

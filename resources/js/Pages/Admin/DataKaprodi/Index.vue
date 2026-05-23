@@ -132,7 +132,7 @@ const isDuplicateAdd = computed(() => {
   if (!form.dosens_id || !form.prodis_id) return false
   return props.kaprodis.data.some(k => 
     String(k.dosens_id) === String(form.dosens_id) && 
-    String(k.prodis_id) === String(form.prodis_id)
+    k.prodis && k.prodis.some(p => String(p.id) === String(form.prodis_id))
   )
 })
 
@@ -141,7 +141,7 @@ const isDuplicateEdit = computed(() => {
   return props.kaprodis.data.some(k => 
     String(k.id) !== String(editForm.id) &&
     String(k.dosens_id) === String(editForm.dosens_id) && 
-    String(k.prodis_id) === String(editForm.prodis_id)
+    k.prodis && k.prodis.some(p => String(p.id) === String(editForm.prodis_id))
   )
 })
 
@@ -156,7 +156,7 @@ const openEditModal = (kaprodi) => {
   selectedKaprodi.value = kaprodi
   editForm.id = kaprodi.id
   editForm.dosens_id = String(kaprodi.dosens_id)
-  editForm.prodis_id = String(kaprodi.prodis_id)
+  editForm.prodis_id = kaprodi.prodis && kaprodi.prodis.length > 0 ? String(kaprodi.prodis[0].id) : ''
   editForm.status = kaprodi.status
   editForm.password = ''
   isEditModalOpen.value = true
@@ -264,9 +264,12 @@ const clearFilters = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                  {{ kaprodi.prodi?.nama_prodi || '-' }}
-                </span>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="prodi in kaprodi.prodis" :key="prodi.id" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                    {{ prodi.nama_prodi }}
+                  </span>
+                  <span v-if="!kaprodi.prodis || kaprodi.prodis.length === 0" class="text-gray-400">-</span>
+                </div>
               </TableCell>
               <TableCell class="text-[#4B5563]">{{ kaprodi.no_telephone }}</TableCell>
               <TableCell>

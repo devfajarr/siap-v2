@@ -15,7 +15,6 @@ import {
   ClipboardList,
   Save,
   CheckCircle2,
-  ListCollapse,
   AlertCircle
 } from 'lucide-vue-next'
 

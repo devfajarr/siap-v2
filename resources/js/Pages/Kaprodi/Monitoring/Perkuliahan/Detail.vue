@@ -1,6 +1,8 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import ChatDialog from '@/Components/Chat/ChatDialog.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card'
 import {
   Table,
@@ -11,7 +13,7 @@ import {
   TableRow,
 } from '@/Components/ui/table'
 import { Button } from '@/Components/ui/button'
-import { ChevronLeft, ClipboardList } from 'lucide-vue-next'
+import { ChevronLeft, ClipboardList, MessageSquare } from 'lucide-vue-next'
 
 defineProps({
   kelas: {
@@ -21,6 +23,25 @@ defineProps({
   jadwals: {
     type: Array,
     required: true
+  }
+})
+
+const isChatOpen = ref(false)
+const chatJadwal = ref(null)
+
+const openChatDialog = (jadwal) => {
+  chatJadwal.value = jadwal
+  isChatOpen.value = true
+}
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const openChatJadwalId = urlParams.get('open_chat')
+  if (openChatJadwalId) {
+    const jadwal = props.jadwals.find(j => j.id == openChatJadwalId)
+    if (jadwal) {
+      openChatDialog(jadwal)
+    }
   }
 })
 </script>
@@ -93,6 +114,15 @@ defineProps({
                           P 8-14
                         </Button>
                       </Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        class="h-8 text-xs bg-[#4B49AC]/10 text-[#4B49AC] border-[#4B49AC]/20 hover:bg-[#4B49AC]/20 flex items-center gap-1 font-semibold shadow-none"
+                        @click="openChatDialog(jadwal)"
+                      >
+                        <MessageSquare class="w-3.5 h-3.5" />
+                        Chat Dosen
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -107,5 +137,15 @@ defineProps({
         </CardContent>
       </Card>
     </div>
+
+    <!-- Chat Dialog Component -->
+    <ChatDialog
+      v-if="chatJadwal"
+      v-model:open="isChatOpen"
+      :jadwal-id="chatJadwal.id"
+      :matkul-name="chatJadwal.matkul?.nama_matkul"
+      :kelas-name="kelas.nama_kelas"
+      :dosen-name="chatJadwal.dosen?.nama"
+    />
   </AdminLayout>
 </template>
