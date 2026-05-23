@@ -81,6 +81,17 @@ class HandleInertiaRequests extends Middleware
             else if (auth()->guard('wakil_direktur')->check()) $role = 'Wakil Direktur';
         }
 
+        $prodis = [];
+        $activeProdiId = null;
+        if ($user && $role === 'Kaprodi') {
+            $prodiIds = session('user.prodiIds', []);
+            $activeProdiId = session('user.activeProdiId');
+            $prodis = \App\Models\Prodi::whereIn('id', $prodiIds)
+                ->select('id', 'nama_prodi')
+                ->get()
+                ->toArray();
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -88,6 +99,8 @@ class HandleInertiaRequests extends Middleware
                     'nama' => $user->nama ?? $user->nama_lengkap ?? $user->name,
                     'role' => $role,
                     'avatar' => $avatar,
+                    'prodis' => $prodis,
+                    'activeProdiId' => $activeProdiId,
                 ] : null,
                 'semesters' => $semesters,
             ],

@@ -434,6 +434,8 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::post('approve', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'permohonanSuratApprove'])->name('approve');
             Route::delete('reject/{id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'permohonanSuratReject'])->name('reject');
         });
+
+        Route::post('switch-prodi', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'switchProdi'])->name('switch-prodi');
     });
 
     // Direktur & Wadir V2 Routes

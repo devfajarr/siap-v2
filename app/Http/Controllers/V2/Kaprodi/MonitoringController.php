@@ -34,7 +34,7 @@ class MonitoringController extends Controller
     public function matkulDetail($semester_id)
     {
         $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
         $semester = Semester::findOrFail($semester_id);
         
         $matkuls = Matkul::with(['prodi', 'semester'])
@@ -51,7 +51,7 @@ class MonitoringController extends Controller
     public function perkuliahan()
     {
         $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $kelas = Kelas::where('id_prodi', $prodiId)->with('semester')->get();
 
@@ -63,6 +63,9 @@ class MonitoringController extends Controller
     public function perkuliahanDetail($kelas_id)
     {
         $kelas = Kelas::with('semester', 'prodi')->findOrFail($kelas_id);
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+            abort(403, 'Unauthorized action.');
+        }
         $jadwals = Jadwal::with(['matkul', 'dosen', 'ruangan'])
             ->where('kelas_id', $kelas_id)
             ->get();
@@ -75,6 +78,11 @@ class MonitoringController extends Controller
 
     public function presensiCek($matkul_id, $kelas_id, $jadwal_id, $rentang)
     {
+        $kelas = Kelas::findOrFail($kelas_id);
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $range = $rentang === '1-7' ? range(1, 7) : range(8, 14);
         
         $jadwal = Jadwal::with(['matkul', 'kelas', 'dosen'])->findOrFail($jadwal_id);
@@ -97,7 +105,7 @@ class MonitoringController extends Controller
     public function nilai()
     {
         $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $kelas = Kelas::where('id_prodi', $prodiId)->with('semester')->get();
 
@@ -112,7 +120,7 @@ class MonitoringController extends Controller
         $kelas = Kelas::with('semester', 'prodi')->findOrFail($kelas_id);
         
         // Security check
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -134,7 +142,7 @@ class MonitoringController extends Controller
         
         // 1. Secure & load class with relations
         $kelas = Kelas::with('semester', 'prodi')->findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -205,7 +213,9 @@ class MonitoringController extends Controller
             ->keyBy('mahasiswa_id');
 
         $wadir = Wadir::where('no', 1)->first();
-        $kaprodi = Kaprodi::where('prodis_id', $kelas->id_prodi)->first();
+        $kaprodi = Kaprodi::whereHas('prodis', function ($q) use ($kelas) {
+            $q->where('id', $kelas->id_prodi);
+        })->first();
 
         // 5. Pre-calculate values on backend for student lists to ensure clean view rendering
         $totalKehadiranSemuaMahasiswa = 0;

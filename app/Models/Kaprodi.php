@@ -15,9 +15,9 @@ class Kaprodi extends Authenticatable
 
     protected $table = 'kaprodi';
 
-    public function prodi()
+    public function prodis()
     {
-        return $this->belongsTo(Prodi::class, 'prodis_id');
+        return $this->belongsToMany(Prodi::class, 'kaprodi_prodi', 'kaprodi_id', 'prodi_id');
     }
 
     public function dosen(){

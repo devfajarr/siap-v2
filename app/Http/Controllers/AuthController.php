@@ -44,7 +44,7 @@ class AuthController extends Controller
             $user = Wadir::where('email', $request->username)->first();
             $guard = 'wakil_direktur';
         } elseif ($role === 'kaprodi') {
-            $user = Kaprodi::where('email', $request->username)->first();
+            $user = Kaprodi::with('prodis')->where('email', $request->username)->first();
             $guard = 'kaprodi';
         } elseif ($role === 'mahasiswa') {
             $user = Mahasiswa::where('nim', $request->username)->first();
@@ -55,13 +55,23 @@ class AuthController extends Controller
         }
         if ($user && Hash::check($request->password, $user->password)) {
             Auth::guard($guard)->login($user);
+
+            $prodiIds = [];
+            $activeProdiId = null;
+            if ($role === 'kaprodi') {
+                $prodiIds = $user->prodis->pluck('id')->toArray();
+                $activeProdiId = $prodiIds[0] ?? null;
+            }
+
             session(['user' => [
                 'id' => $user->id,
                 'kelasId' => $user->kelas_id,
                 'nama' => $user->nama ?? $user->nama_lengkap,
                 'role' => $role,
                 'wadir' => $user->no,
-                'prodiId' => $user->prodis_id,
+                'prodiId' => $role === 'kaprodi' ? $activeProdiId : ($user->prodis_id ?? null),
+                'prodiIds' => $prodiIds,
+                'activeProdiId' => $activeProdiId,
                 'email' => $user->email,
                 'status_pa' => $user->pembimbing_akademik,
             ]]);

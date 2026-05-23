@@ -22,23 +22,23 @@ class DataPerkuliahanController extends Controller
     public function index()
     {
         $user = Auth::guard('kaprodi')->user();
-        $kaprodi = Kaprodi::findOrFail($user->id);
+        $prodiId = session('user.activeProdiId');
         
         // Ambil Tahun Akademik Aktif
         $tahunAkademikActive = TahunAkademik::where('status', 1)->first();
         $tahun = $tahunAkademikActive ? $tahunAkademikActive->tahun_akademik : null;
 
         $dosens = Dosen::where('status', 1)
-            ->whereHas('jadwal', function ($query) use ($kaprodi, $tahun) {
+            ->whereHas('jadwal', function ($query) use ($prodiId, $tahun) {
                 $query->where('tahun', $tahun)
-                      ->whereHas('kelas', function ($q) use ($kaprodi) {
-                          $q->where('id_prodi', $kaprodi->prodis_id);
+                      ->whereHas('kelas', function ($q) use ($prodiId) {
+                          $q->where('id_prodi', $prodiId);
                       });
             })
-            ->withCount(['jadwal as total_matkul' => function ($query) use ($kaprodi, $tahun) {
+            ->withCount(['jadwal as total_matkul' => function ($query) use ($prodiId, $tahun) {
                 $query->where('tahun', $tahun)
-                      ->whereHas('kelas', function ($q) use ($kaprodi) {
-                          $q->where('id_prodi', $kaprodi->prodis_id);
+                      ->whereHas('kelas', function ($q) use ($prodiId) {
+                          $q->where('id_prodi', $prodiId);
                       });
             }])
             ->get()
@@ -62,7 +62,18 @@ class DataPerkuliahanController extends Controller
     public function show(string $id)
     {
         $user = Auth::guard('kaprodi')->user();
-        $kaprodi = Kaprodi::findOrFail($user->id);
+        $prodiIds = session('user.prodiIds', []);
+        $prodiId = session('user.activeProdiId');
+
+        // Authorization check: Make sure this dosen teaches in one of the prodis this Kaprodi manages
+        $hasAccess = Dosen::where('id', $id)
+            ->whereHas('jadwal.kelas', function ($q) use ($prodiIds) {
+                $q->whereIn('id_prodi', $prodiIds);
+            })
+            ->exists();
+        if (!$hasAccess) {
+            abort(403, 'Unauthorized action.');
+        }
         
         $tahunAkademikActive = TahunAkademik::where('status', 1)->first();
         $tahun = $tahunAkademikActive ? $tahunAkademikActive->tahun_akademik : null;
@@ -77,8 +88,8 @@ class DataPerkuliahanController extends Controller
         ])
             ->where('dosens_id', $id)
             ->where('tahun', $tahun)
-            ->whereHas('kelas', function ($q) use ($kaprodi) {
-                $q->where('id_prodi', $kaprodi->prodis_id);
+            ->whereHas('kelas', function ($q) use ($prodiId) {
+                $q->where('id_prodi', $prodiId);
             })
             ->withMax('absen as pertemuan_max', 'pertemuan')
             ->withMax('resume as berita_max', 'pertemuan')
@@ -92,10 +103,7 @@ class DataPerkuliahanController extends Controller
 
         $formattedJadwals = $jadwals->map(function ($jadwal) use ($user) {
             
-            // Fix N+1 check for messages (Optional addition based on Admin's feature, 
-            // but we can optimize it if we want to include it. Since the user asked for 
-            // the same feature as Admin, I'll include the optimized version here)
-            
+            // Fix N+1 check for messages
             $receiverType = 'App\Models\Kaprodi';
             $dosenType = 'App\Models\Dosen';
 
@@ -179,9 +187,19 @@ class DataPerkuliahanController extends Controller
             ->whereIn('pertemuan', $pertemuan)
             ->get();
 
+        if ($absens->isEmpty()) {
+            abort(404, 'Data presensi tidak ditemukan.');
+        }
+
+        if (!in_array($absens->first()->prodis_id, session('user.prodiIds', []))) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
         $dosenPengampu = Dosen::where('id', $absens->first()->dosens_id)->first();
-        $kaprodi = Kaprodi::where('prodis_id', $absens->first()->prodis_id)->first();
+        $kaprodi = Kaprodi::whereHas('prodis', function ($q) use ($absens) {
+            $q->where('id', $absens->first()->prodis_id);
+        })->first();
 
         $viewName = $rentang === '1-7' 
             ? 'pages.v2.kaprodi.data-perkuliahan.cek1to7' 
@@ -195,6 +213,11 @@ class DataPerkuliahanController extends Controller
      */
     public function cetakBap($matkuls_id, $kelas_id, $jadwal_id, $rentang)
     {
+        $kelas = Kelas::findOrFail($kelas_id);
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $pertemuanRange = $rentang === '1-7' ? [1, 7] : [8, 14];
 
         $beritas = Resume::with([

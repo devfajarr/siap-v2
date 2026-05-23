@@ -33,8 +33,7 @@ class ApprovalController extends Controller
     // --- PRE SENSI ---
     public function presensiIndex()
     {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $diajukan = PengajuanRekapPresensi::with([
             'matkul' => fn($q) => $q->withTrashed(),
@@ -69,9 +68,8 @@ class ApprovalController extends Controller
 
     public function presensiDetail($pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
-        $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -102,9 +100,8 @@ class ApprovalController extends Controller
 
     public function presensiApprove(Request $request, $pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
-        $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -146,8 +143,7 @@ class ApprovalController extends Controller
     // --- BERITA ACARA ---
     public function beritaIndex()
     {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $diajukan = PengajuanRekapBerita::with([
             'matkul' => fn($q) => $q->withTrashed(),
@@ -183,8 +179,7 @@ class ApprovalController extends Controller
     // --- KONTRAK ---
     public function kontrakIndex()
     {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $diajukan = PengajuanRekapkontrak::with([
             'matkul' => fn($q) => $q->withTrashed(),
@@ -220,8 +215,7 @@ class ApprovalController extends Controller
     // --- PERMOHONAN SURAT ---
     public function suratDiajukan(Request $request)
     {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $query = PermohonanSurat::with(['mahasiswa.kelas.prodi', 'mahasiswa.kelas.semester'])
             ->whereHas('mahasiswa.kelas.prodi', function ($q) use ($prodiId) {
@@ -264,8 +258,7 @@ class ApprovalController extends Controller
 
     public function suratDisetujui(Request $request)
     {
-        $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
 
         $query = PermohonanSurat::with(['mahasiswa.kelas.prodi', 'mahasiswa.kelas.semester'])
             ->whereHas('mahasiswa.kelas.prodi', function ($q) use ($prodiId) {
@@ -359,9 +352,8 @@ class ApprovalController extends Controller
 
     public function beritaDetail($pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
-        $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -398,9 +390,8 @@ class ApprovalController extends Controller
 
     public function beritaApprove(Request $request, $pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
-        $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -442,9 +433,8 @@ class ApprovalController extends Controller
 
     public function kontrakDetail($jadwal_id, $matkul_id, $kelas_id)
     {
-        $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::with('prodi')->findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -476,9 +466,8 @@ class ApprovalController extends Controller
 
     public function kontrakApprove(Request $request, $jadwal_id, $matkul_id, $kelas_id)
     {
-        $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::findOrFail($kelas_id);
-        if ($kelas->id_prodi !== $user->prodis_id) {
+        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -516,5 +505,17 @@ class ApprovalController extends Controller
         }
 
         return redirect()->back()->with('success', 'Status persetujuan kontrak kuliah berhasil diperbarui');
+    }
+
+    public function switchProdi(Request $request)
+    {
+        $request->validate(['prodi_id' => 'required|exists:prodi,id']);
+        $prodiIds = session('user.prodiIds', []);
+        if (in_array($request->prodi_id, $prodiIds)) {
+            session(['user.activeProdiId' => $request->prodi_id]);
+            session(['user.prodiId' => $request->prodi_id]); // update fallback V1/legacy
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
     }
 }

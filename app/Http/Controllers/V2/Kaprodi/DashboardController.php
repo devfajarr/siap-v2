@@ -20,7 +20,7 @@ class DashboardController extends Controller
     {
         Carbon::setLocale('id');
         $user = Auth::guard('kaprodi')->user();
-        $prodiId = $user->prodis_id;
+        $prodiId = session('user.activeProdiId');
         $prodi = Prodi::find($prodiId);
 
         $totalMahasiswa = Mahasiswa::whereHas('kelas', function ($query) use ($prodiId) {
