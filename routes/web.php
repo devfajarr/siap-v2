@@ -1,52 +1,47 @@
 <?php
 
-use App\Models\Kelas;
-use App\Models\Jadwal;
-use App\Models\NilaiHuruf;
-use GuzzleHttp\Middleware;
-use App\Models\InformasiLandingPage;
-use App\Models\PengajuanRekapkontrak;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UasController;
-use App\Http\Controllers\UtsController;
-use Illuminate\Support\Facades\Session;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AktifController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DirekturController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\EtikaController;
-use App\Http\Controllers\KelasController;
-use App\Http\Controllers\NilaiController;
-use App\Http\Controllers\ProdiController;
-use App\Http\Controllers\TugasController;
-use App\Http\Controllers\WadirController;
-use App\Http\Controllers\JadwalController;
-use App\Http\Controllers\MatkulController;
-use App\Http\Controllers\KaprodiController;
-use App\Http\Controllers\KontrakController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RuanganController;
-use App\Http\Controllers\DirekturController;
-use App\Http\Controllers\PresensiController;
-use App\Http\Controllers\SemesterController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\MahasiswaController;
-use App\Http\Controllers\PegawaiController;
-use App\Http\Controllers\RekapNilaiController;
-use App\Http\Controllers\JadwalUjianController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\KrsPembayaranController;
-use App\Http\Controllers\PemberitahuanController;
-use App\Http\Controllers\TahunAkademikController;
-use App\Http\Controllers\NilaiMahasiswaController;
-use App\Http\Controllers\PermohonanSuratController;
-use App\Http\Controllers\LembarMonitoringController;
-use League\CommonMark\Extension\SmartPunct\DashParser;
 use App\Http\Controllers\InformasiLandingPageController;
+use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\JadwalUjianController;
+use App\Http\Controllers\KaprodiController;
+use App\Http\Controllers\KelasController;
+use App\Http\Controllers\KontrakController;
+use App\Http\Controllers\KrsPembayaranController;
+use App\Http\Controllers\LembarMonitoringController;
+use App\Http\Controllers\MahasiswaController;
+use App\Http\Controllers\MatkulController;
+use App\Http\Controllers\NilaiController;
+use App\Http\Controllers\NilaiMahasiswaController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\PemberitahuanController;
 use App\Http\Controllers\PengajuanRekapBeritaController;
 use App\Http\Controllers\PengajuanRekapkontrakController;
 use App\Http\Controllers\PengajuanRekapPresensiController;
+use App\Http\Controllers\PermohonanSuratController;
+use App\Http\Controllers\PresensiController;
+use App\Http\Controllers\ProdiController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RekapNilaiController;
+use App\Http\Controllers\RuanganController;
+use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TahunAkademikController;
+use App\Http\Controllers\TugasController;
+use App\Http\Controllers\UasController;
+use App\Http\Controllers\UtsController;
+use App\Http\Controllers\WadirController;
+use App\Models\InformasiLandingPage;
+use App\Models\Jadwal;
 use App\Models\Mahasiswa;
+use GuzzleHttp\Middleware;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,31 +56,31 @@ use App\Models\Mahasiswa;
 
 Route::get('/', function () {
     $brosurs = InformasiLandingPage::where('tipe', 'brosur')->latest()->get();
+
     return view('index', compact('brosurs'));
 })->middleware('guest');
 
 // AUTH
-route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
-route::post('/login', [AuthController::class, 'processLogin'])->middleware('guest');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
+Route::post('/login', [AuthController::class, 'processLogin'])->middleware('guest');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/first-login', [AuthController::class, 'processFirstLogin'])
     ->name('first.login')->middleware(['auth:admin,direktur,wakil_direktur,kaprodi,mahasiswa,dosen']);
 Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware(['auth:admin,direktur,wakil_direktur,kaprodi,mahasiswa,dosen'])->name('change.password');
 
-
 // DASHBOARD V2
 Route::prefix('v2')->group(function () {
     Route::middleware(['auth:dosen'])->group(function () {
-        Route::get('/dosen/kontrak', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'index'])->name('v2.dosen.kontrak.index');
-        Route::get('/dosen/kontrak/create/{id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'create'])->name('v2.dosen.kontrak.create');
-        Route::post('/dosen/kontrak', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'store'])->name('v2.dosen.kontrak.store');
-        Route::get('/dosen/kontrak/edit/{id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'edit'])->name('v2.dosen.kontrak.edit');
-        Route::put('/dosen/kontrak/update/{id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'update'])->name('v2.dosen.kontrak.update');
-        Route::post('/dosen/kontrak/import', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'importWithReplace'])->name('import.kontrak');
-        Route::get('/dosen/kontrak/download-template', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'downloadFormat'])->name('download.format.kontrak');
+        Route::get('/dosen/kontrak', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'index'])->name('v2.dosen.kontrak.index');
+        Route::get('/dosen/kontrak/create/{id}', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'create'])->name('v2.dosen.kontrak.create');
+        Route::post('/dosen/kontrak', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'store'])->name('v2.dosen.kontrak.store');
+        Route::get('/dosen/kontrak/edit/{id}', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'edit'])->name('v2.dosen.kontrak.edit');
+        Route::put('/dosen/kontrak/update/{id}', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'update'])->name('v2.dosen.kontrak.update');
+        Route::post('/dosen/kontrak/import', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'importWithReplace'])->name('import.kontrak');
+        Route::get('/dosen/kontrak/download-template', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'downloadFormat'])->name('download.format.kontrak');
     });
 
-    Route::get('/dosen/kontrak/rekap/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Dosen\KontrakController::class, 'rekap'])
+    Route::get('/dosen/kontrak/rekap/{matkul_id}/{kelas_id}/{jadwal_id}', [App\Http\Controllers\V2\Dosen\KontrakController::class, 'rekap'])
         ->name('v2.dosen.kontrak.rekap')
         ->middleware('auth:dosen,wakil_direktur,kaprodi,admin,direktur');
 });
@@ -110,10 +105,10 @@ Route::prefix('/presensi')->group(function () {
         Route::post('/data-dosen-import', [DosenController::class, 'import'])->name('data-dosen-import');
         Route::get('/data-dosen-download-format', [DosenController::class, 'downloadFormat'])->name('download.format.dosen');
         Route::resource('/data-pegawai', PegawaiController::class)->except(['show']);
-        Route::get('/data-pegawai-export', [pegawaiController::class, 'export'])->name('pegawai.export');
-        Route::post('/data-pegawai-import', [pegawaiController::class, 'import'])->name('pegawai.import');
-        Route::get('/data-pegawai-download-format', [pegawaiController::class, 'downloadFormat'])->name('download.format.pegawai');
-        Route::resource('/data-kaprodi', KaprodiController::class)->except(['show']);;
+        Route::get('/data-pegawai-export', [PegawaiController::class, 'export'])->name('pegawai.export');
+        Route::post('/data-pegawai-import', [PegawaiController::class, 'import'])->name('pegawai.import');
+        Route::get('/data-pegawai-download-format', [PegawaiController::class, 'downloadFormat'])->name('download.format.pegawai');
+        Route::resource('/data-kaprodi', KaprodiController::class)->except(['show']);
         Route::resource('/data-wadir', WadirController::class)->except(['show']);
     });
 
@@ -130,7 +125,6 @@ Route::prefix('/presensi')->group(function () {
     Route::get('/data-mahasiswa/export/{id}', [MahasiswaController::class, 'exportSetiapKelas'])
         ->name('data-mahasiswa-export')
         ->middleware('auth:admin');
-
 
     // JADWAL
     Route::resource('/jadwal-mengajar', JadwalController::class)->middleware('auth:admin')->except(['show']);
@@ -158,7 +152,7 @@ Route::prefix('/presensi')->group(function () {
     Route::get('/data-presensi/rekap/berita-acara-perkuliahan/8-14/{matkuls_id}/{kelas_id}/{jadwal_id}', [PresensiController::class, 'berita8to14'])->middleware('auth:dosen,kaprodi,admin,wakil_direktur,direktur');
 
     // KONTRAK
-    Route::resource('/data-kontrak', KontrakController::class)->middleware('auth:dosen')->except(['show']);;
+    Route::resource('/data-kontrak', KontrakController::class)->middleware('auth:dosen')->except(['show']);
     Route::get('/data-kontrak/isi-kontrak/{id}', [KontrakController::class, 'create'])->middleware('auth:dosen');
     Route::post('/data-kontrak/import', [KontrakController::class, 'importWithReplace'])->name('import.kontrak.legacy')->middleware('auth:dosen');
     Route::get('/data-kontrak/download-template', [KontrakController::class, 'downloadFormat'])->name('download.format.kontrak.legacy')->middleware('auth:dosen');
@@ -169,7 +163,7 @@ Route::prefix('/presensi')->group(function () {
         Route::resource('/rekap-presensi', PengajuanRekapPresensiController::class);
         Route::get('/presensi-disetujui', [PengajuanRekapPresensiController::class, 'confirm'])->middleware('auth:kaprodi,wakil_direktur');
         Route::get('/rekap-presensi/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [PengajuanRekapPresensiController::class, 'edit']);
-        route::put('/rekap-presensi/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [PengajuanRekapPresensiController::class, 'update']);
+        Route::put('/rekap-presensi/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [PengajuanRekapPresensiController::class, 'update']);
 
         // PENGAJUAN BERITA
         Route::resource('/rekap-berita', PengajuanRekapBeritaController::class);
@@ -177,14 +171,12 @@ Route::prefix('/presensi')->group(function () {
         Route::put('/rekap-berita/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [PengajuanRekapBeritaController::class, 'update']);
         Route::get('/berita-disetujui', [PengajuanRekapBeritaController::class, 'confirm']);
 
-
         // PENGAJUAN KONTRAK
         Route::resource('/rekap-kontrak', PengajuanRekapkontrakController::class);
         Route::get('/rekap-kontrak/{jadwal_id}/{matkul_id}/{kelas_id}', [PengajuanRekapkontrakController::class, 'edit']);
         Route::put('/rekap-kontrak/{jadwal_id}/{matkul_id}/{kelas_id}', [PengajuanRekapkontrakController::class, 'update']);
-        Route::get('/kontrak-disetujui', [PengajuanRekapKontrakController::class, 'confirm']);
+        Route::get('/kontrak-disetujui', [PengajuanRekapkontrakController::class, 'confirm']);
     });
-
 
     Route::prefix('/data-nilai')->middleware('auth:dosen,admin')->group(function () {
         // NILAI
@@ -207,7 +199,6 @@ Route::prefix('/presensi')->group(function () {
         Route::put('/{kelas_id}/{matkul_id}/{jadwal_id}/uas', [UasController::class, 'update']);
         Route::delete('/{kelas_id}/{matkul_id}/{jadwal_id}/uas/', [UasController::class, 'destroy']);
 
-
         // UTS
         Route::get('/{kelas_id}/{matkul_id}/{jadwal_id}/uts', [UtsController::class, 'index']);
         Route::get('/{kelas_id}/{matkul_id}/{jadwal_id}/uts/create', [UtsController::class, 'create']);
@@ -216,7 +207,6 @@ Route::prefix('/presensi')->group(function () {
         Route::put('/{kelas_id}/{matkul_id}/{jadwal_id}/uts', [UtsController::class, 'update']);
         Route::delete('/{kelas_id}/{matkul_id}/{jadwal_id}/uts', [UtsController::class, 'destroy']);
 
-
         // ETIKA
         Route::get('/{kelas_id}/{matkul_id}/{jadwal_id}/etika', [EtikaController::class, 'index']);
         Route::get('/{kelas_id}/{matkul_id}/{jadwal_id}/etika/create', [EtikaController::class, 'create']);
@@ -224,7 +214,6 @@ Route::prefix('/presensi')->group(function () {
         Route::get('/{kelas_id}/{matkul_id}/{jadwal_id}/etika/edit', [EtikaController::class, 'edit']);
         Route::put('/{kelas_id}/{matkul_id}/{jadwal_id}/etika', [EtikaController::class, 'update']);
         Route::delete('/{kelas_id}/{matkul_id}/{jadwal_id}/etika', [EtikaController::class, 'destroy']);
-
 
         // AKTIF
         Route::get('/{kelas_id}/{matkul_id}/{jadwal_id}/aktif', [AktifController::class, 'index']);
@@ -274,11 +263,9 @@ Route::prefix('/presensi')->group(function () {
 
     Route::prefix('/data')->middleware('auth:admin,kaprodi,wakil_direktur,direktur')->group(function () {
 
-
         // DATA PERKULIAHAN
         Route::get('/perkuliahan', [PresensiController::class, 'kategori']);
         Route::get('/perkuliahan/{id}', [PresensiController::class, 'detailMatkul']);
-
 
         // DATA PRESENSI
         Route::get('/presence/{matkul_id}/{kelas_id}/{jadwal_id}/1-7', [PresensiController::class, 'cekPresensi1to7']);
@@ -289,7 +276,6 @@ Route::prefix('/presensi')->group(function () {
         Route::get('/resume/{id}', [PresensiController::class, 'detailMatkulResume']);
         Route::get('/resume/{matkul_id}/{kelas_id}/{jadwal_id}/1-7', [PresensiController::class, 'cekResume1to7']);
         Route::get('/resume/{matkul_id}/{kelas_id}/{jadwal_id}/8-14', [PresensiController::class, 'cekResume8to14']);
-
 
         // DATA NILAI
         Route::get('/value', [NilaiController::class, 'kategori']);
@@ -346,17 +332,18 @@ Route::prefix('/presensi')->group(function () {
             ->name('get.unread.count');
         Route::get('/unread-count/{contactId}/{contactType}', [
             PemberitahuanController::class,
-            'getUnreadMessageCountByContact'
+            'getUnreadMessageCountByContact',
         ])
             ->name('get.unread.count.by.contact');
         Route::get('/contacts-dosen', [PemberitahuanController::class, 'getJadwalContactsDosen'])
             ->name('get.contacts.dosen');
+        Route::post('/mark-as-read', [PemberitahuanController::class, 'markAsReadManual'])
+            ->name('mark.as.read');
     });
 
     // NOTIFIKASI
     Route::get('/get-notif', [NotificationController::class, 'getNotifications'])->middleware('auth:dosen,wakil_direktur,direktur,mahasiswa,admin,kaprodi');
     Route::post('/mark-notif-read', [NotificationController::class, 'markNotificationsAsRead'])->middleware('auth:dosen,wakil_direktur,direktur,mahasiswa,admin,kaprodi');
-
 
     Route::get('/lembar-monitoring/{jadwal_id}', [LembarMonitoringController::class, 'index']);
 
@@ -380,315 +367,322 @@ Route::prefix('/presensi')->group(function () {
 
     // JADWAL UJIAN
     Route::resource('/jadwal-ujian', JadwalUjianController::class)->except(['show'])->middleware('auth:admin');
-    Route::get('/jadwal-ujian/search', [JadwalUjianController::class, 'search'])->name('jadwal-ujian.search')->middleware('auth:admin');;
+    Route::get('/jadwal-ujian/search', [JadwalUjianController::class, 'search'])->name('jadwal-ujian.search')->middleware('auth:admin');
 });
 
 use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
+use App\Http\Controllers\V2\Admin\DataNilaiController;
+use App\Http\Controllers\V2\Admin\InformasiTambahanController;
+use App\Http\Controllers\V2\Admin\JadwalMengajarController;
+use App\Http\Controllers\V2\Admin\PembayaranController;
+use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
+use App\Http\Controllers\V2\Dosen\KrsController;
+use App\Http\Controllers\V2\Kaprodi\ApprovalController;
+use App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController;
+use App\Http\Controllers\V2\Kaprodi\MonitoringController;
 
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
-    Route::get('/dosen/dashboard', [\App\Http\Controllers\V2\Dosen\DashboardController::class, 'index'])->name('v2.dosen.dashboard');
-    Route::get('/kaprodi/dashboard', [\App\Http\Controllers\V2\Kaprodi\DashboardController::class, 'index'])->name('v2.kaprodi.dashboard');
+    Route::get('/dosen/dashboard', [App\Http\Controllers\V2\Dosen\DashboardController::class, 'index'])->name('v2.dosen.dashboard');
+    Route::get('/kaprodi/dashboard', [App\Http\Controllers\V2\Kaprodi\DashboardController::class, 'index'])->name('v2.kaprodi.dashboard');
 
     // Kaprodi Monitoring
     Route::middleware('auth:kaprodi')->prefix('kaprodi')->name('v2.kaprodi.')->group(function () {
         Route::prefix('monitoring')->name('monitoring.')->group(function () {
-            Route::get('matkul', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'matkul'])->name('matkul.index');
-            Route::get('matkul/{semester_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'matkulDetail'])->name('matkul.detail');
-            
-            Route::get('perkuliahan', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'perkuliahan'])->name('perkuliahan.index');
-            Route::get('perkuliahan/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'perkuliahanDetail'])->name('perkuliahan.detail');
-            Route::get('perkuliahan/presensi/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'presensiCek'])->name('perkuliahan.presensi-cek');
+            Route::get('matkul', [MonitoringController::class, 'matkul'])->name('matkul.index');
+            Route::get('matkul/{semester_id}', [MonitoringController::class, 'matkulDetail'])->name('matkul.detail');
 
-            Route::get('nilai', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilai'])->name('nilai.index');
-            Route::get('nilai/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
-            Route::get('nilai/cek/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\MonitoringController::class, 'nilaiCek'])->name('nilai.cek');
+            Route::get('perkuliahan', [MonitoringController::class, 'perkuliahan'])->name('perkuliahan.index');
+            Route::get('perkuliahan/{kelas_id}', [MonitoringController::class, 'perkuliahanDetail'])->name('perkuliahan.detail');
+            Route::get('perkuliahan/presensi/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [MonitoringController::class, 'presensiCek'])->name('perkuliahan.presensi-cek');
+
+            Route::get('nilai', [MonitoringController::class, 'nilai'])->name('nilai.index');
+            Route::get('nilai/{kelas_id}', [MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
+            Route::get('nilai/cek/{matkul_id}/{kelas_id}/{jadwal_id}', [MonitoringController::class, 'nilaiCek'])->name('nilai.cek');
         });
 
         // Kaprodi Approval
         Route::prefix('rekap-presensi')->name('rekap-presensi.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiIndex'])->name('index');
-            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiDetail'])->name('detail');
-            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'presensiApprove'])->name('approve');
+            Route::get('/', [ApprovalController::class, 'presensiIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [ApprovalController::class, 'presensiDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [ApprovalController::class, 'presensiApprove'])->name('approve');
         });
 
         // Kaprodi Data Perkuliahan
-        Route::get('/data-perkuliahan', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'index'])->name('data-perkuliahan.index');
-        Route::get('/data-perkuliahan/{id}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'show'])->name('data-perkuliahan.show');
-        Route::get('/data-perkuliahan/presensi-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'cetakPresensi'])->name('data-perkuliahan.presensi-cetak');
-        Route::get('/data-perkuliahan/bap-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController::class, 'cetakBap'])->name('data-perkuliahan.bap-cetak');
+        Route::get('/data-perkuliahan', [DataPerkuliahanController::class, 'index'])->name('data-perkuliahan.index');
+        Route::get('/data-perkuliahan/{id}', [DataPerkuliahanController::class, 'show'])->name('data-perkuliahan.show');
+        Route::get('/data-perkuliahan/presensi-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [DataPerkuliahanController::class, 'cetakPresensi'])->name('data-perkuliahan.presensi-cetak');
+        Route::get('/data-perkuliahan/bap-cetak/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [DataPerkuliahanController::class, 'cetakBap'])->name('data-perkuliahan.bap-cetak');
 
         Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaIndex'])->name('index');
-            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDetail'])->name('detail');
-            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaApprove'])->name('approve');
+            Route::get('/', [ApprovalController::class, 'beritaIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [ApprovalController::class, 'beritaDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [ApprovalController::class, 'beritaApprove'])->name('approve');
         });
 
         Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakIndex'])->name('index');
-            Route::get('detail/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakDetail'])->name('detail');
-            Route::post('approve/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakApprove'])->name('approve');
+            Route::get('/', [ApprovalController::class, 'kontrakIndex'])->name('index');
+            Route::get('detail/{jadwal_id}/{matkul_id}/{kelas_id}', [ApprovalController::class, 'kontrakDetail'])->name('detail');
+            Route::post('approve/{jadwal_id}/{matkul_id}/{kelas_id}', [ApprovalController::class, 'kontrakApprove'])->name('approve');
         });
 
         Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {
-            Route::get('diajukan', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'suratDiajukan'])->name('diajukan');
-            Route::get('disetujui', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'suratDisetujui'])->name('disetujui');
-            Route::post('approve', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'permohonanSuratApprove'])->name('approve');
-            Route::delete('reject/{id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'permohonanSuratReject'])->name('reject');
+            Route::get('diajukan', [ApprovalController::class, 'suratDiajukan'])->name('diajukan');
+            Route::get('disetujui', [ApprovalController::class, 'suratDisetujui'])->name('disetujui');
+            Route::post('approve', [ApprovalController::class, 'permohonanSuratApprove'])->name('approve');
+            Route::delete('reject/{id}', [ApprovalController::class, 'permohonanSuratReject'])->name('reject');
         });
 
-        Route::post('switch-prodi', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'switchProdi'])->name('switch-prodi');
+        Route::post('switch-prodi', [ApprovalController::class, 'switchProdi'])->name('switch-prodi');
     });
 
     // Direktur & Wadir V2 Routes
     Route::middleware('auth:direktur,wakil_direktur')->prefix('direktur')->name('v2.direktur.')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\V2\Direktur\DashboardController::class, 'index'])->name('dashboard');
-        
+        Route::get('/dashboard', [App\Http\Controllers\V2\Direktur\DashboardController::class, 'index'])->name('dashboard');
+
         Route::prefix('rekap-presensi')->name('rekap-presensi.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiIndex'])->name('index');
-            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiDetail'])->name('detail');
-            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiApprove'])->name('approve');
+            Route::get('/', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiApprove'])->name('approve');
         });
 
         Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaIndex'])->name('index');
-            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaDetail'])->name('detail');
-            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaApprove'])->name('approve');
+            Route::get('/', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaApprove'])->name('approve');
         });
 
         Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakIndex'])->name('index');
-            Route::get('detail/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakDetail'])->name('detail');
-            Route::post('approve/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakApprove'])->name('approve');
+            Route::get('/', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakIndex'])->name('index');
+            Route::get('detail/{jadwal_id}/{matkul_id}/{kelas_id}', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakDetail'])->name('detail');
+            Route::post('approve/{jadwal_id}/{matkul_id}/{kelas_id}', [App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakApprove'])->name('approve');
         });
 
         // Direktur Monitoring
         Route::prefix('monitoring')->name('monitoring.')->group(function () {
-            Route::get('perkuliahan', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'perkuliahan'])->name('perkuliahan.index');
-            Route::get('perkuliahan/{kelas_id}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'perkuliahanDetail'])->name('perkuliahan.detail');
-            Route::get('perkuliahan/presensi/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'presensiCek'])->name('perkuliahan.presensi-cek');
+            Route::get('perkuliahan', [App\Http\Controllers\V2\Direktur\MonitoringController::class, 'perkuliahan'])->name('perkuliahan.index');
+            Route::get('perkuliahan/{kelas_id}', [App\Http\Controllers\V2\Direktur\MonitoringController::class, 'perkuliahanDetail'])->name('perkuliahan.detail');
+            Route::get('perkuliahan/presensi/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [App\Http\Controllers\V2\Direktur\MonitoringController::class, 'presensiCek'])->name('perkuliahan.presensi-cek');
 
-            Route::get('nilai', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilai'])->name('nilai.index');
-            Route::get('nilai/{kelas_id}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
-            Route::get('nilai/cek/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilaiCek'])->name('nilai.cek');
+            Route::get('nilai', [App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilai'])->name('nilai.index');
+            Route::get('nilai/{kelas_id}', [App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
+            Route::get('nilai/cek/{matkul_id}/{kelas_id}/{jadwal_id}', [App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilaiCek'])->name('nilai.cek');
         });
     });
 
     // Dosen Presensi
     Route::middleware('auth:dosen')->prefix('dosen')->group(function () {
-        Route::get('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'index'])->name('v2.dosen.presensi.index');
-        Route::post('/data-presensi/request-edit', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'requestEdit'])->name('v2.dosen.presensi.request-edit');
-        Route::get('/data-presensi/create/{id}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'create'])->name('v2.dosen.presensi.create');
-        Route::get('/data-presensi/{jadwal_id}/edit/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'edit'])->name('v2.dosen.presensi.edit');
-        Route::post('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'store'])->name('v2.dosen.presensi.store');
-        Route::put('/data-presensi/{jadwal_id}/update/{pertemuan}', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'update'])->name('v2.dosen.presensi.update');
-        
+        Route::get('/data-presensi', [App\Http\Controllers\V2\Dosen\PresensiController::class, 'index'])->name('v2.dosen.presensi.index');
+        Route::post('/data-presensi/request-edit', [App\Http\Controllers\V2\Dosen\PresensiController::class, 'requestEdit'])->name('v2.dosen.presensi.request-edit');
+        Route::get('/data-presensi/create/{id}', [App\Http\Controllers\V2\Dosen\PresensiController::class, 'create'])->name('v2.dosen.presensi.create');
+        Route::get('/data-presensi/{jadwal_id}/edit/{pertemuan}', [App\Http\Controllers\V2\Dosen\PresensiController::class, 'edit'])->name('v2.dosen.presensi.edit');
+        Route::post('/data-presensi', [App\Http\Controllers\V2\Dosen\PresensiController::class, 'store'])->name('v2.dosen.presensi.store');
+        Route::put('/data-presensi/{jadwal_id}/update/{pertemuan}', [App\Http\Controllers\V2\Dosen\PresensiController::class, 'update'])->name('v2.dosen.presensi.update');
+
         // Dosen KRS (Validasi KRS DPA)
-        Route::get('/krs', [\App\Http\Controllers\V2\Dosen\KrsController::class, 'index'])->name('v2.dosen.krs.index');
-        Route::get('/krs/{id}/detail', [\App\Http\Controllers\V2\Dosen\KrsController::class, 'detail'])->name('v2.dosen.krs.detail');
-        Route::put('/krs/{id}/approve', [\App\Http\Controllers\V2\Dosen\KrsController::class, 'approve'])->name('v2.dosen.krs.approve');
+        Route::get('/krs', [KrsController::class, 'index'])->name('v2.dosen.krs.index');
+        Route::get('/krs/{id}/detail', [KrsController::class, 'detail'])->name('v2.dosen.krs.detail');
+        Route::put('/krs/{id}/approve', [KrsController::class, 'approve'])->name('v2.dosen.krs.approve');
     });
 
     // Dosen Nilai (V2)
     Route::middleware('auth:dosen')->prefix('dosen/nilai')->name('v2.dosen.nilai.')->group(function () {
-        Route::get('/',                                     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'index'])->name('index');
-        Route::get('/{jadwal_id}',                         [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'show'])->name('show');
+        Route::get('/', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'index'])->name('index');
+        Route::get('/{jadwal_id}', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'show'])->name('show');
 
         // Tugas
-        Route::post('/{jadwal_id}/tugas',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeTugas'])->name('tugas.store');
-        Route::put('/{jadwal_id}/tugas/{tugas_ke}',        [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateTugas'])->name('tugas.update');
-        Route::delete('/{jadwal_id}/tugas/{tugas_ke}',     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'destroyTugas'])->name('tugas.destroy');
+        Route::post('/{jadwal_id}/tugas', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeTugas'])->name('tugas.store');
+        Route::put('/{jadwal_id}/tugas/{tugas_ke}', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateTugas'])->name('tugas.update');
+        Route::delete('/{jadwal_id}/tugas/{tugas_ke}', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'destroyTugas'])->name('tugas.destroy');
 
         // UTS
-        Route::post('/{jadwal_id}/uts',                    [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeUts'])->name('uts.store');
-        Route::put('/{jadwal_id}/uts',                     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateUts'])->name('uts.update');
+        Route::post('/{jadwal_id}/uts', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeUts'])->name('uts.store');
+        Route::put('/{jadwal_id}/uts', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateUts'])->name('uts.update');
 
         // UAS
-        Route::post('/{jadwal_id}/uas',                    [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeUas'])->name('uas.store');
-        Route::put('/{jadwal_id}/uas',                     [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateUas'])->name('uas.update');
+        Route::post('/{jadwal_id}/uas', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeUas'])->name('uas.store');
+        Route::put('/{jadwal_id}/uas', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateUas'])->name('uas.update');
 
         // Etika
-        Route::post('/{jadwal_id}/etika',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeEtika'])->name('etika.store');
-        Route::put('/{jadwal_id}/etika',                   [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateEtika'])->name('etika.update');
+        Route::post('/{jadwal_id}/etika', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeEtika'])->name('etika.store');
+        Route::put('/{jadwal_id}/etika', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateEtika'])->name('etika.update');
 
         // Keaktifan
-        Route::post('/{jadwal_id}/aktif',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeAktif'])->name('aktif.store');
-        Route::put('/{jadwal_id}/aktif',                   [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateAktif'])->name('aktif.update');
+        Route::post('/{jadwal_id}/aktif', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'storeAktif'])->name('aktif.store');
+        Route::put('/{jadwal_id}/aktif', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'updateAktif'])->name('aktif.update');
 
         // Pengajuan Rekap Nilai
-        Route::post('/{jadwal_id}/rekap',                  [\App\Http\Controllers\V2\Dosen\NilaiController::class, 'pengajuanRekap'])->name('rekap.store');
+        Route::post('/{jadwal_id}/rekap', [App\Http\Controllers\V2\Dosen\NilaiController::class, 'pengajuanRekap'])->name('rekap.store');
     });
 
-    Route::get('/profile', [\App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');
-
+    Route::get('/profile', [App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');
 
     // Admin Data Master
     Route::middleware('auth:admin')->prefix('admin/data-master')->group(function () {
-        Route::resource('data-matkul', \App\Http\Controllers\V2\Admin\MatkulController::class)
+        Route::resource('data-matkul', App\Http\Controllers\V2\Admin\MatkulController::class)
             ->names('v2.admin.data-matkul')
             ->except(['show', 'create', 'edit']);
 
-        Route::resource('data-prodi', \App\Http\Controllers\V2\Admin\ProdiController::class)
+        Route::resource('data-prodi', App\Http\Controllers\V2\Admin\ProdiController::class)
             ->names('v2.admin.data-prodi')
             ->except(['show', 'create', 'edit']);
 
-        Route::resource('data-semester', \App\Http\Controllers\V2\Admin\SemesterController::class)
+        Route::resource('data-semester', App\Http\Controllers\V2\Admin\SemesterController::class)
             ->names('v2.admin.data-semester')
             ->except(['show', 'create', 'edit', 'update']);
 
-        Route::resource('data-kelas', \App\Http\Controllers\V2\Admin\KelasController::class)
+        Route::resource('data-kelas', App\Http\Controllers\V2\Admin\KelasController::class)
             ->names('v2.admin.data-kelas')
             ->except(['show', 'create', 'edit']);
 
-        Route::resource('tahun-akademik', \App\Http\Controllers\V2\Admin\TahunAkademikController::class)
+        Route::resource('tahun-akademik', App\Http\Controllers\V2\Admin\TahunAkademikController::class)
             ->names('v2.admin.tahun-akademik')
             ->except(['show', 'create', 'edit']);
 
-        Route::resource('data-ruangan', \App\Http\Controllers\V2\Admin\RuanganController::class)
+        Route::resource('data-ruangan', App\Http\Controllers\V2\Admin\RuanganController::class)
             ->names('v2.admin.data-ruangan')
             ->except(['show', 'create', 'edit']);
 
-        Route::resource('data-pegawai', \App\Http\Controllers\V2\Admin\PegawaiController::class)
+        Route::resource('data-pegawai', App\Http\Controllers\V2\Admin\PegawaiController::class)
             ->names('v2.admin.data-pegawai')
             ->except(['show', 'create', 'edit']);
 
-        Route::resource('data-dosen', \App\Http\Controllers\V2\Admin\DosenController::class)
+        Route::resource('data-dosen', App\Http\Controllers\V2\Admin\DosenController::class)
             ->names('v2.admin.data-dosen')
             ->except(['show', 'create', 'edit']);
 
-        Route::get('data-dosen/export', [\App\Http\Controllers\V2\Admin\DosenController::class, 'export'])
+        Route::get('data-dosen/export', [App\Http\Controllers\V2\Admin\DosenController::class, 'export'])
             ->name('v2.admin.data-dosen.export');
-        Route::post('data-dosen/import', [\App\Http\Controllers\V2\Admin\DosenController::class, 'import'])
+        Route::post('data-dosen/import', [App\Http\Controllers\V2\Admin\DosenController::class, 'import'])
             ->name('v2.admin.data-dosen.import');
-        Route::get('data-dosen/download-format', [\App\Http\Controllers\V2\Admin\DosenController::class, 'downloadFormat'])
+        Route::get('data-dosen/download-format', [App\Http\Controllers\V2\Admin\DosenController::class, 'downloadFormat'])
             ->name('v2.admin.data-dosen.download-format');
 
-        Route::resource('data-kaprodi', \App\Http\Controllers\V2\Admin\KaprodiController::class)
+        Route::resource('data-kaprodi', App\Http\Controllers\V2\Admin\KaprodiController::class)
             ->names('v2.admin.data-kaprodi')
             ->except(['show', 'create', 'edit']);
-        Route::resource('data-wadir', \App\Http\Controllers\V2\Admin\WadirController::class)
+        Route::resource('data-wadir', App\Http\Controllers\V2\Admin\WadirController::class)
             ->names('v2.admin.data-wadir')
             ->except(['show', 'create', 'edit']);
-        Route::resource('data-direktur', \App\Http\Controllers\V2\Admin\DirekturController::class)
+        Route::resource('data-direktur', App\Http\Controllers\V2\Admin\DirekturController::class)
             ->names('v2.admin.data-direktur')
             ->except(['show', 'create', 'edit']);
 
-        Route::get('data-pegawai/export', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'export'])
+        Route::get('data-pegawai/export', [App\Http\Controllers\V2\Admin\PegawaiController::class, 'export'])
             ->name('v2.admin.data-pegawai.export');
-        Route::post('data-pegawai/import', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'import'])
+        Route::post('data-pegawai/import', [App\Http\Controllers\V2\Admin\PegawaiController::class, 'import'])
             ->name('v2.admin.data-pegawai.import');
-        Route::get('data-pegawai/download-format', [\App\Http\Controllers\V2\Admin\PegawaiController::class, 'downloadFormat'])
+        Route::get('data-pegawai/download-format', [App\Http\Controllers\V2\Admin\PegawaiController::class, 'downloadFormat'])
             ->name('v2.admin.data-pegawai.download-format');
 
-        Route::post('data-semester/ganti-status', [\App\Http\Controllers\V2\Admin\SemesterController::class, 'gantiStatus'])
+        Route::post('data-semester/ganti-status', [App\Http\Controllers\V2\Admin\SemesterController::class, 'gantiStatus'])
             ->name('v2.admin.data-semester.ganti-status');
     });
 
     // Data Mahasiswa (Tanpa data-master prefix)
     Route::middleware('auth:admin')->prefix('admin')->group(function () {
-        Route::resource('jadwal-mengajar', \App\Http\Controllers\V2\Admin\JadwalMengajarController::class)
+        Route::resource('jadwal-mengajar', JadwalMengajarController::class)
             ->names('v2.admin.jadwal-mengajar')
             ->except(['create', 'edit', 'show']);
 
-        Route::resource('jadwal-ujian', \App\Http\Controllers\V2\Admin\JadwalUjianController::class)
+        Route::resource('jadwal-ujian', App\Http\Controllers\V2\Admin\JadwalUjianController::class)
             ->names('v2.admin.jadwal-ujian')
             ->except(['create', 'edit', 'show']);
 
-        Route::resource('data-mahasiswa', \App\Http\Controllers\V2\Admin\MahasiswaController::class)
+        Route::resource('data-mahasiswa', App\Http\Controllers\V2\Admin\MahasiswaController::class)
             ->names('v2.admin.data-mahasiswa')
             ->parameters(['data-mahasiswa' => 'id'])
             ->except(['create', 'edit']);
-        Route::post('data-mahasiswa/bulk-delete', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'bulkDelete'])
+        Route::post('data-mahasiswa/bulk-delete', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'bulkDelete'])
             ->name('v2.admin.data-mahasiswa.bulk-delete');
-        Route::post('data-mahasiswa/pindah-kelas', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'pindahKelas'])
+        Route::post('data-mahasiswa/pindah-kelas', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'pindahKelas'])
             ->name('v2.admin.data-mahasiswa.pindah-kelas');
-        Route::post('data-mahasiswa/import', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'import'])
+        Route::post('data-mahasiswa/import', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'import'])
             ->name('v2.admin.data-mahasiswa.import');
-        Route::get('data-mahasiswa/export/{id}', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'export'])
+        Route::get('data-mahasiswa/export/{id}', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'export'])
             ->name('v2.admin.data-mahasiswa.export');
-        Route::get('data-mahasiswa/export-all', [\App\Http\Controllers\V2\Admin\MahasiswaController::class, 'exportAll'])
+        Route::get('data-mahasiswa/export-all', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'exportAll'])
             ->name('v2.admin.data-mahasiswa.export-all');
 
         // Pengajuan Edit Presensi
-        Route::get('pengajuan-edit-presensi', [\App\Http\Controllers\V2\Admin\PengajuanEditPresensiController::class, 'index'])
+        Route::get('pengajuan-edit-presensi', [PengajuanEditPresensiController::class, 'index'])
             ->name('v2.admin.pengajuan-edit-presensi.index');
-        Route::post('pengajuan-edit-presensi/verify', [\App\Http\Controllers\V2\Admin\PengajuanEditPresensiController::class, 'verify'])
+        Route::post('pengajuan-edit-presensi/verify', [PengajuanEditPresensiController::class, 'verify'])
             ->name('v2.admin.pengajuan-edit-presensi.verify');
 
         // Data Perkuliahan
-        Route::resource('data-perkuliahan', \App\Http\Controllers\V2\Admin\DataPerkuliahanController::class)
+        Route::resource('data-perkuliahan', App\Http\Controllers\V2\Admin\DataPerkuliahanController::class)
             ->names('v2.admin.data-perkuliahan')
             ->only(['index', 'show']);
 
         // Data Nilai
-        Route::resource('data-nilai', \App\Http\Controllers\V2\Admin\DataNilaiController::class)
+        Route::resource('data-nilai', DataNilaiController::class)
             ->names('v2.admin.data-nilai')
             ->only(['index', 'show']);
 
         // Rekap Nilai
         Route::prefix('rekap-nilai')->name('v2.admin.rekap-nilai.')->group(function () {
-            Route::get('pengajuan', [\App\Http\Controllers\V2\Admin\RekapNilaiController::class, 'pengajuan'])->name('pengajuan');
-            Route::get('disetujui', [\App\Http\Controllers\V2\Admin\RekapNilaiController::class, 'disetujui'])->name('disetujui');
+            Route::get('pengajuan', [App\Http\Controllers\V2\Admin\RekapNilaiController::class, 'pengajuan'])->name('pengajuan');
+            Route::get('disetujui', [App\Http\Controllers\V2\Admin\RekapNilaiController::class, 'disetujui'])->name('disetujui');
         });
 
         // Pembayaran
         Route::prefix('pembayaran')->name('v2.admin.pembayaran.')->group(function () {
-            Route::get('diajukan', [\App\Http\Controllers\V2\Admin\PembayaranController::class, 'diajukan'])->name('diajukan');
-            Route::get('disetujui', [\App\Http\Controllers\V2\Admin\PembayaranController::class, 'disetujui'])->name('disetujui');
-            Route::put('{id}', [\App\Http\Controllers\V2\Admin\PembayaranController::class, 'update'])->name('update');
+            Route::get('diajukan', [PembayaranController::class, 'diajukan'])->name('diajukan');
+            Route::get('disetujui', [PembayaranController::class, 'disetujui'])->name('disetujui');
+            Route::put('{id}', [PembayaranController::class, 'update'])->name('update');
         });
 
         // KRS
         Route::prefix('krs')->name('v2.admin.krs.')->group(function () {
-            Route::get('kategori', [\App\Http\Controllers\V2\Admin\KrsController::class, 'index'])->name('kategori');
-            Route::get('kategori/{id}', [\App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
-            Route::get('kategori/cetak/{id}', [\App\Http\Controllers\V2\Admin\KrsController::class, 'cetak'])->name('cetak');
+            Route::get('kategori', [App\Http\Controllers\V2\Admin\KrsController::class, 'index'])->name('kategori');
+            Route::get('kategori/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
+            Route::get('kategori/cetak/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'cetak'])->name('cetak');
         });
 
         // Permohonan Surat
         Route::prefix('permohonan-surat')->name('v2.admin.permohonan-surat.')->group(function () {
-            Route::get('cetak', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'cetak'])->name('cetak');
-            Route::get('selesai', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'selesai'])->name('selesai');
-            Route::put('{id}/terbitkan', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'terbitkan'])->name('terbitkan');
-            Route::get('{id}/cetak-dokumen', [\App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'cetakDokumen'])->name('cetak-dokumen');
+            Route::get('cetak', [App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'cetak'])->name('cetak');
+            Route::get('selesai', [App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'selesai'])->name('selesai');
+            Route::put('{id}/terbitkan', [App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'terbitkan'])->name('terbitkan');
+            Route::get('{id}/cetak-dokumen', [App\Http\Controllers\V2\Admin\PermohonanSuratController::class, 'cetakDokumen'])->name('cetak-dokumen');
         });
 
         // Informasi Tambahan
         Route::prefix('informasi-tambahan')->name('v2.admin.informasi-tambahan.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'index'])->name('index');
-            Route::post('kalender', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'storeKalender'])->name('store-kalender');
-            Route::post('brosur', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'storeBrosur'])->name('store-brosur');
-            Route::delete('{id}', [\App\Http\Controllers\V2\Admin\InformasiTambahanController::class, 'destroy'])->name('destroy');
+            Route::get('/', [InformasiTambahanController::class, 'index'])->name('index');
+            Route::post('kalender', [InformasiTambahanController::class, 'storeKalender'])->name('store-kalender');
+            Route::post('brosur', [InformasiTambahanController::class, 'storeBrosur'])->name('store-brosur');
+            Route::delete('{id}', [InformasiTambahanController::class, 'destroy'])->name('destroy');
         });
     });
 
     // Mahasiswa Routes
     Route::middleware('auth:mahasiswa')->prefix('mahasiswa')->name('v2.mahasiswa.')->group(function () {
-        Route::get('dashboard', [\App\Http\Controllers\V2\Mahasiswa\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [App\Http\Controllers\V2\Mahasiswa\DashboardController::class, 'index'])->name('dashboard');
 
         // Nilai & KHS
         Route::prefix('nilai')->name('nilai.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'index'])->name('index');
+            Route::get('/', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'index'])->name('index');
         });
-        Route::get('riwayat/{semester_id}', [\App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'riwayat'])->name('riwayat');
-        Route::get('khs/{semester_id}', [\App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'khs'])->name('khs');
+        Route::get('riwayat/{semester_id}', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'riwayat'])->name('riwayat');
+        Route::get('khs/{semester_id}', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'khs'])->name('khs');
 
         // KRS & Pembayaran
         Route::prefix('krs_pembayaran')->name('krs-pembayaran.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'index'])->name('index');
-            Route::post('upload', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'uploadPembayaran'])->name('upload');
-            Route::post('pengajuan', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'pengajuanKrs'])->name('pengajuan');
-            Route::put('persetujuan/{id}', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'persetujuanKrs'])->name('persetujuan');
-            Route::get('cetak/{id}', [\App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'cetakKrs'])->name('cetak');
+            Route::get('/', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'index'])->name('index');
+            Route::post('upload', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'uploadPembayaran'])->name('upload');
+            Route::post('pengajuan', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'pengajuanKrs'])->name('pengajuan');
+            Route::put('persetujuan/{id}', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'persetujuanKrs'])->name('persetujuan');
+            Route::get('cetak/{id}', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'cetakKrs'])->name('cetak');
         });
 
         // Permohonan Surat Mahasiswa
         Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'index'])->name('index');
-            Route::post('/', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'store'])->name('store');
-            Route::put('{id}', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'update'])->name('update');
-            Route::delete('{id}', [\App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'destroy'])->name('destroy');
+            Route::get('/', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'index'])->name('index');
+            Route::post('/', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'store'])->name('store');
+            Route::put('{id}', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'update'])->name('update');
+            Route::delete('{id}', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'destroy'])->name('destroy');
         });
     });
 });
-

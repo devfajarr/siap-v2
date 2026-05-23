@@ -24,14 +24,45 @@ const isSupportedRole = computed(() => {
   return ['Dosen', 'Kaprodi', 'Wadir', 'Direktur'].includes(role.value)
 })
 
+const lastNotifiedMessageId = ref(null)
+
 const fetchUnreadCount = async () => {
   if (!isSupportedRole.value) return
   try {
     const response = await axios.get('/presensi/pemberitahuan/unread-messages')
+    const oldUnreadCount = unreadCount.value
     unreadCount.value = response.data.unread_count
     unreadMessages.value = response.data.unread_get || []
+
+    // Trigger notification if count increased or there's a new message
+    if (unreadCount.value > oldUnreadCount && unreadMessages.value.length > 0) {
+      const latestMsg = unreadMessages.value[0]
+      if (latestMsg.id !== lastNotifiedMessageId.value) {
+        sendBrowserNotification(latestMsg)
+        lastNotifiedMessageId.value = latestMsg.id
+      }
+    }
   } catch (error) {
     console.error('Error fetching unread chat messages:', error)
+  }
+}
+
+// Browser notification helper
+const sendBrowserNotification = (msg) => {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return
+  
+  // Jangan kirim jika window sedang fokus (asumsi user sedang melihat layar)
+  if (document.hasFocus()) return
+
+  const senderName = msg.sender?.nama || 'Pimpinan'
+  const notification = new Notification(`Pesan dari ${senderName}`, {
+    body: msg.message,
+    icon: '/favicon.ico'
+  })
+
+  notification.onclick = () => {
+    window.focus()
+    handleItemClick(msg)
   }
 }
 
@@ -51,6 +82,16 @@ const handleItemClick = (msg) => {
   }
 }
 
+const openMainPage = () => {
+  if (role.value === 'Dosen') {
+    router.visit(route('v2.dosen.presensi.index'))
+  } else if (role.value === 'Kaprodi') {
+    router.visit(route('v2.kaprodi.monitoring.perkuliahan.index'))
+  } else if (role.value === 'Direktur' || role.value === 'Wadir') {
+    router.visit(route('v2.direktur.monitoring.perkuliahan.index'))
+  }
+}
+
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString)
   const now = new Date()
@@ -65,7 +106,20 @@ const formatTimeAgo = (dateString) => {
 onMounted(() => {
   if (isSupportedRole.value) {
     fetchUnreadCount()
-    pollingInterval = setInterval(fetchUnreadCount, 15000) // Poll every 15s for new messages
+    
+    // Request permission if not already set
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+
+    // Listen to global MessageSent event if possible, or rely on polling for notifications
+    // Since ChatDropdown is global, we can listen to private channels of the user
+    if (window.Echo && user.value) {
+      // Logic for global notification listening can be added here
+      // For now, we enhance the polling to trigger notifications
+    }
+
+    pollingInterval = setInterval(fetchUnreadCount, 15000) 
   }
 })
 
@@ -151,7 +205,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-b-2xl text-center border-t border-slate-100 flex items-center justify-center gap-1.5 hover:bg-slate-100 transition-colors cursor-pointer group" @click="router.visit(role === 'Dosen' ? route('v2.dosen.presensi.index') : route('v2.kaprodi.monitoring.perkuliahan.index'))">
+        <div class="p-3 bg-slate-50 rounded-b-2xl text-center border-t border-slate-100 flex items-center justify-center gap-1.5 hover:bg-slate-100 transition-colors cursor-pointer group" @click="openMainPage()">
           <span class="text-[11px] text-[#4B49AC] font-bold">
             Buka Halaman Utama
           </span>

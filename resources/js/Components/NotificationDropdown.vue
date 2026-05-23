@@ -27,7 +27,7 @@ const fetchNotifications = async () => {
 const markAsRead = async (id = null) => {
   try {
     const payload = id ? { notification_id: id } : {}
-    await axios.post('/mark-notif-read', payload)
+    await axios.post('/presensi/mark-notif-read', payload)
     await fetchNotifications()
   } catch (error) {
     console.error('Error marking notifications as read:', error)

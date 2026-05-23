@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Session;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +19,13 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('chat.{jadwalId}', function ($user, $jadwalId) {
-    // Karena aplikasi menggunakan banyak guard, kita pastikan user terautentikasi
-    return auth()->check() || $user !== null;
+    if (auth()->check() || $user !== null) {
+        return [
+            'id' => $user->id,
+            'nama' => $user->nama,
+            'role' => Session::get('user.role') ?? $user->role ?? 'Guest',
+        ];
+    }
+
+    return false;
 });

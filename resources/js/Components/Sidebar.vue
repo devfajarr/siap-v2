@@ -116,6 +116,7 @@ const menuItems = computed(() => {
       { title: 'Data Matkul', icon: BookOpenCheck, href: '/v2/kaprodi/monitoring/matkul' },
       { title: 'Permohonan Surat', icon: Mail, href: '/v2/kaprodi/permohonan-surat/diajukan' },
       { title: 'Data Perkuliahan', icon: ClipboardCheck, href: '/v2/kaprodi/data-perkuliahan' },
+      { title: 'Monitoring Perkuliahan', icon: ClipboardCheck, href: '/v2/kaprodi/monitoring/perkuliahan' },
       { title: 'Data Nilai', icon: Star, href: '/v2/kaprodi/monitoring/nilai' },
       { 
         title: 'Rekap Presensi', 

@@ -4,23 +4,31 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcast
+class MessageRead implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
+    public $messageIds;
+
+    public $jadwalId;
+
+    public $readerId;
+
+    public $readerType;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($message)
+    public function __construct($messageIds, $jadwalId, $readerId, $readerType)
     {
-        $this->message = $message;
+        $this->messageIds = $messageIds;
+        $this->jadwalId = $jadwalId;
+        $this->readerId = $readerId;
+        $this->readerType = $readerType;
     }
 
     /**
@@ -31,7 +39,7 @@ class MessageSent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel('chat.'.$this->message->jadwal_id),
+            new PresenceChannel('chat.'.$this->jadwalId),
         ];
     }
 
@@ -40,7 +48,7 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastAs(): string
     {
-        return 'MessageSent';
+        return 'MessageRead';
     }
 
     /**
@@ -50,9 +58,10 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        // Pastikan kita memuat relasi sender agar di Vue bisa menampilkan nama
         return [
-            'message' => $this->message->load('sender'),
+            'message_ids' => $this->messageIds,
+            'reader_id' => $this->readerId,
+            'reader_type' => $this->readerType,
         ];
     }
 }

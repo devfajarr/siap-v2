@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Log;
+use App\Events\MessageRead;
+use App\Events\MessageSent;
+use App\Models\Direktur;
 use App\Models\Dosen;
 use App\Models\Jadwal;
+use App\Models\Kaprodi;
 use App\Models\Message;
+use App\Models\Wadir;
+use App\Notifications\MessageSentNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use App\Notifications\MessageSentNotification;
 
 class PemberitahuanController extends Controller
 {
-
     protected $role;
+
     protected $userId;
 
     public function __construct()
@@ -22,9 +26,9 @@ class PemberitahuanController extends Controller
         $this->middleware(function ($request, $next) {
             $this->role = Session::get('user.role');
             $this->userId = Session::get('user.id');
-            
+
             // Fallback to Auth guards if session is empty or missing
-            if (!$this->role || !$this->userId) {
+            if (! $this->role || ! $this->userId) {
                 foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur'] as $guard) {
                     if (auth()->guard($guard)->check()) {
                         $user = auth()->guard($guard)->user();
@@ -34,10 +38,11 @@ class PemberitahuanController extends Controller
                     }
                 }
             }
-            
+
             return $next($request);
         });
     }
+
     public function sendMessage(Request $request)
     {
         if ($this->role != 'direktur' && $this->role != 'wakil_direktur' && $this->role != 'kaprodi') {
@@ -59,23 +64,23 @@ class PemberitahuanController extends Controller
         }
 
         $jadwal = Jadwal::findOrFail($request->jadwal_id);
-        $senderModel = "App\\Models\\" . $request->sender_type;
+        $senderModel = 'App\\Models\\'.$request->sender_type;
         $receiverType = $request->receiver_type;
 
         $receiverType = trim($receiverType, '\\');
         if (strpos($receiverType, 'App\\Models\\') !== 0) {
             $receiverType = ltrim($receiverType, 'App\Models\\');
-            $receiverType = "App\\Models\\" . $receiverType;
+            $receiverType = 'App\\Models\\'.$receiverType;
         }
 
-        if (!class_exists($senderModel)) {
+        if (! class_exists($senderModel)) {
             return response()->json([
                 'message' => 'Model pengirim tidak ditemukan.',
             ], 400);
         }
 
         $sender = $senderModel::find($request->sender_id);
-        if (!$sender) {
+        if (! $sender) {
             return response()->json([
                 'message' => 'Data pengirim tidak valid.',
             ], 400);
@@ -84,7 +89,7 @@ class PemberitahuanController extends Controller
         if ($this->role == 'direktur' || $this->role == 'wakil_direktur' || $this->role == 'kaprodi') {
             $receiver = Dosen::find($jadwal->dosens_id);
 
-            if (!$receiver) {
+            if (! $receiver) {
                 return response()->json([
                     'message' => 'Dosen yang dituju tidak ditemukan.',
                 ], 400);
@@ -99,7 +104,6 @@ class PemberitahuanController extends Controller
                 ->first();
 
             $parentId = $lastMessage ? $lastMessage->id : null;
-            
 
             $message = Message::create([
                 'sender_id' => $request->sender_id,
@@ -111,17 +115,17 @@ class PemberitahuanController extends Controller
                 'sent_at' => now(),
                 'jadwal_id' => $request->jadwal_id,
                 'kelas_id' => $jadwal->kelas_id,
-                'parent_id' => $parentId
+                'parent_id' => $parentId,
             ]);
 
             $message->load('sender');
             $receiver->notify(new MessageSentNotification($message));
 
-            broadcast(new \App\Events\MessageSent($message))->toOthers();
+            broadcast(new MessageSent($message))->toOthers();
         } elseif ($this->role == 'dosen') {
             $receiver = $receiverType::find($request->receiver_id);
 
-            if (!$receiver) {
+            if (! $receiver) {
                 return response()->json([
                     'message' => 'Penerima tidak ditemukan.',
                 ], 400);
@@ -147,14 +151,14 @@ class PemberitahuanController extends Controller
                 'sent_at' => now(),
                 'jadwal_id' => $request->jadwal_id,
                 'kelas_id' => $jadwal->kelas_id,
-                'parent_id' => $parentId
+                'parent_id' => $parentId,
 
             ]);
 
             $message->load('sender');
             $receiver->notify(new MessageSentNotification($message));
 
-            broadcast(new \App\Events\MessageSent($message))->toOthers();
+            broadcast(new MessageSent($message))->toOthers();
         }
 
         return response()->json([
@@ -162,8 +166,6 @@ class PemberitahuanController extends Controller
             'data' => $message,
         ]);
     }
-
-
 
     public function getMessages(Request $request)
     {
@@ -230,7 +232,7 @@ class PemberitahuanController extends Controller
     public function getJadwalContactsDosen(Request $request)
     {
         $request->validate([
-            'jadwal_id' => 'required|exists:jadwals,id'
+            'jadwal_id' => 'required|exists:jadwals,id',
         ]);
 
         $jadwal = Jadwal::with('kelas', 'matkul')->findOrFail($request->jadwal_id);
@@ -239,10 +241,10 @@ class PemberitahuanController extends Controller
             ->where(function ($query) {
                 $query->where(function ($q) {
                     $q->where('sender_id', $this->userId)
-                      ->where('sender_type', 'App\Models\Dosen');
+                        ->where('sender_type', 'App\Models\Dosen');
                 })->orWhere(function ($q) {
                     $q->where('receiver_id', $this->userId)
-                      ->where('receiver_type', 'App\Models\Dosen');
+                        ->where('receiver_type', 'App\Models\Dosen');
                 });
             })
             ->get();
@@ -252,43 +254,43 @@ class PemberitahuanController extends Controller
         // 1. Kaprodi of this prodi
         $prodiId = $jadwal->matkul->prodi_id ?? ($jadwal->kelas->id_prodi ?? null);
         if ($prodiId) {
-            $kaprodis = \App\Models\Kaprodi::where('status', 1)
+            $kaprodis = Kaprodi::where('status', 1)
                 ->whereHas('prodis', function ($q) use ($prodiId) {
                     $q->where('prodi_id', $prodiId);
                 })->get();
 
             foreach ($kaprodis as $kaprodi) {
-                $contacts["App\\Models\\Kaprodi_" . $kaprodi->id] = [
+                $contacts['App\\Models\\Kaprodi_'.$kaprodi->id] = [
                     'id' => $kaprodi->id,
                     'type' => 'App\Models\Kaprodi',
                     'nama' => $kaprodi->nama,
                     'role_label' => 'Kaprodi',
-                    'has_messages' => false
+                    'has_messages' => false,
                 ];
             }
         }
 
         // 2. Active Wadirs
-        $wadirs = \App\Models\Wadir::where('status', 1)->get();
+        $wadirs = Wadir::where('status', 1)->get();
         foreach ($wadirs as $wadir) {
-            $contacts["App\\Models\\Wadir_" . $wadir->id] = [
+            $contacts['App\\Models\\Wadir_'.$wadir->id] = [
                 'id' => $wadir->id,
                 'type' => 'App\Models\Wadir',
                 'nama' => $wadir->nama,
                 'role_label' => 'Wakil Direktur',
-                'has_messages' => false
+                'has_messages' => false,
             ];
         }
 
         // 3. Active Direkturs
-        $direkturs = \App\Models\Direktur::where('status', 1)->get();
+        $direkturs = Direktur::where('status', 1)->get();
         foreach ($direkturs as $direktur) {
-            $contacts["App\\Models\\Direktur_" . $direktur->id] = [
+            $contacts['App\\Models\\Direktur_'.$direktur->id] = [
                 'id' => $direktur->id,
                 'type' => 'App\Models\Direktur',
                 'nama' => $direktur->nama,
                 'role_label' => 'Direktur',
-                'has_messages' => false
+                'has_messages' => false,
             ];
         }
 
@@ -299,13 +301,17 @@ class PemberitahuanController extends Controller
             $contactType = $isSenderDosen ? $message->receiver_type : $message->sender_type;
 
             $roleLabel = 'Pimpinan';
-            if ($contactType === 'App\Models\Kaprodi') $roleLabel = 'Kaprodi';
-            elseif ($contactType === 'App\Models\Wadir') $roleLabel = 'Wakil Direktur';
-            elseif ($contactType === 'App\Models\Direktur') $roleLabel = 'Direktur';
+            if ($contactType === 'App\Models\Kaprodi') {
+                $roleLabel = 'Kaprodi';
+            } elseif ($contactType === 'App\Models\Wadir') {
+                $roleLabel = 'Wakil Direktur';
+            } elseif ($contactType === 'App\Models\Direktur') {
+                $roleLabel = 'Direktur';
+            }
 
-            $key = $contactType . "_" . $contactId;
+            $key = $contactType.'_'.$contactId;
 
-            if (!isset($contacts[$key])) {
+            if (! isset($contacts[$key])) {
                 $contactModel = $contactType;
                 $contactUser = $contactModel::find($contactId);
                 if ($contactUser) {
@@ -314,7 +320,7 @@ class PemberitahuanController extends Controller
                         'type' => $contactType,
                         'nama' => $contactUser->nama,
                         'role_label' => $roleLabel,
-                        'has_messages' => true
+                        'has_messages' => true,
                     ];
                 }
             } else {
@@ -324,8 +330,6 @@ class PemberitahuanController extends Controller
 
         return response()->json(array_values($contacts));
     }
-
-
 
     protected function markMessagesAsRead($messages)
     {
@@ -338,8 +342,21 @@ class PemberitahuanController extends Controller
         foreach ($unreadMessages as $message) {
             $message->update([
                 'read' => true,
-                'read_at' => now()
+                'read_at' => now(),
             ]);
+        }
+
+        if ($unreadMessages->isNotEmpty()) {
+            $firstMessage = $messages->first();
+            if ($firstMessage) {
+                $jadwalId = $firstMessage->jadwal_id;
+                broadcast(new MessageRead(
+                    $unreadMessages->pluck('id')->toArray(),
+                    $jadwalId,
+                    $this->userId,
+                    $modelNamespace
+                ))->toOthers();
+            }
         }
     }
 
@@ -365,7 +382,7 @@ class PemberitahuanController extends Controller
 
         return response()->json([
             'unread_count' => $unreadCount,
-            'unread_get' => $unreadGet
+            'unread_get' => $unreadGet,
         ]);
     }
 
@@ -377,7 +394,7 @@ class PemberitahuanController extends Controller
             'wakil_direktur' => 'App\Models\Wadir',
             'kaprodi' => 'App\Models\Kaprodi',
             'mahasiswa' => 'App\Models\Mahasiswa',
-            'dosen' => 'App\Models\Dosen'
+            'dosen' => 'App\Models\Dosen',
         ];
 
         return $roleToModelMap[$role] ?? '';
@@ -386,15 +403,16 @@ class PemberitahuanController extends Controller
     protected function normalizeSenderType($senderType)
     {
         if (strpos($senderType, 'AppModels') === 0) {
-            return 'App\\Models\\' . str_replace('AppModels', '', $senderType);
+            return 'App\\Models\\'.str_replace('AppModels', '', $senderType);
         }
+
         return $senderType;
     }
 
     public function getUnreadMessageCountByContact($contactId, $contactType)
     {
-        if (!str_contains($contactType, 'App\Models\\')) {
-            $contactType = 'App\Models\\' . $contactType;
+        if (! str_contains($contactType, 'App\Models\\')) {
+            $contactType = 'App\Models\\'.$contactType;
         }
 
         $modelNamespace = $this->getModelNamespaceFromRole($this->role);
@@ -407,7 +425,38 @@ class PemberitahuanController extends Controller
             ->count();
 
         return response()->json([
-            'unread_count' => $unreadCount
+            'unread_count' => $unreadCount,
         ]);
+    }
+
+    public function markAsReadManual(Request $request)
+    {
+        $request->validate([
+            'message_ids' => 'required|array',
+            'jadwal_id' => 'required|integer',
+        ]);
+
+        $modelNamespace = $this->getModelNamespaceFromRole($this->role);
+
+        // Update database untuk pesan yang belum dibaca
+        Message::whereIn('id', $request->message_ids)
+            ->where('receiver_id', $this->userId)
+            ->where('receiver_type', $modelNamespace)
+            ->where('read', false)
+            ->update([
+                'read' => true,
+                'read_at' => now(),
+            ]);
+
+        // Tetap broadcast agar UI lawan bicara terupdate,
+        // meskipun pesan mungkin sudah ditandai read sebelumnya
+        broadcast(new MessageRead(
+            $request->message_ids,
+            $request->jadwal_id,
+            $this->userId,
+            $modelNamespace
+        ))->toOthers();
+
+        return response()->json(['status' => 'success']);
     }
 }

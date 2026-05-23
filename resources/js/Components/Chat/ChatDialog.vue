@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
+import { ref, watch, onUnmounted, computed, nextTick, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import {
@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/Components/ui/select'
 import { Badge } from '@/Components/ui/badge'
-import { Send, MessageSquare, Loader2, CheckCircle2, AlertCircle } from 'lucide-vue-next'
+import { Send, MessageSquare, Loader2, CheckCircle2, AlertCircle, Check, CheckCheck, Bell, BellOff } from 'lucide-vue-next'
 
 const props = defineProps({
   open: {
@@ -54,6 +54,9 @@ const isSending = ref(false)
 const contacts = ref([])
 const selectedContactKey = ref('') // Format: "type_id"
 const messagesContainer = ref(null)
+const isWindowFocused = ref(true)
+const onlineUsers = ref([])
+const hasNotificationPermission = ref(false)
 let channel = null
 
 // Toast Notification State
@@ -191,9 +194,11 @@ const handleSendMessage = async () => {
 
     const response = await axios.post('/presensi/pemberitahuan/send', payload)
     
-    if (response.data) {
+    if (response.data && response.data.data) {
       newMessage.value = ''
-      await fetchMessages(false)
+      // Langsung masukkan pesan ke list agar instan (Optimistic UI)
+      messages.value.push(response.data.data)
+      scrollToBottom()
       emit('messageSent')
       triggerToast('Pesan berhasil dikirim.', 'success')
     }
@@ -211,9 +216,24 @@ const startListening = () => {
   if (!props.jadwalId) return
   stopListening()
   
-  console.log('--- ATTEMPTING TO JOIN CHANNEL: chat.' + props.jadwalId + ' ---')
+  console.log('--- ATTEMPTING TO JOIN PRESENCE CHANNEL: chat.' + props.jadwalId + ' ---')
   
-  channel = window.Echo.private(`chat.${props.jadwalId}`)
+  channel = window.Echo.join(`chat.${props.jadwalId}`)
+    .here((users) => {
+      console.log('--- USERS CURRENTLY IN CHANNEL ---', users)
+      onlineUsers.value = users
+    })
+    .joining((user) => {
+      console.log('--- USER JOINED ---', user)
+      const exists = onlineUsers.value.some(u => u.id === user.id && u.role === user.role)
+      if (!exists) {
+        onlineUsers.value.push(user)
+      }
+    })
+    .leaving((user) => {
+      console.log('--- USER LEFT ---', user)
+      onlineUsers.value = onlineUsers.value.filter(u => !(u.id === user.id && u.role === user.role))
+    })
     .listen('.MessageSent', (e) => {
       console.log('!!! REALTIME MESSAGE RECEIVED !!!', e)
       
@@ -225,7 +245,30 @@ const startListening = () => {
         messages.value.push(messageData)
         scrollToBottom()
         emit('messageSent')
+
+        // Jika modal terbuka dan window fokus, langsung tandai dibaca
+        if (props.open && isWindowFocused.value) {
+          markAsRead([messageData.id])
+          // Update status lokal agar langsung terlihat terbaca (optimistic)
+          messageData.read = true
+        } else {
+          // Kirim notifikasi browser jika tidak sedang fokus/terbuka
+          sendBrowserNotification(messageData)
+        }
       }
+    })
+    .listen('.MessageRead', (e) => {
+      console.log('--- EVENT MESSAGE READ RECEIVED ---', e)
+      const { message_ids } = e
+      
+      // Gunakan loose comparison (==) atau paksa ke Number untuk menghindari mismatch tipe data
+      const idSet = new Set(message_ids.map(id => Number(id)))
+      
+      messages.value.forEach(m => {
+        if (idSet.has(Number(m.id))) {
+          m.read = true
+        }
+      })
     })
     .on('pusher:subscription_succeeded', () => {
       console.log('SUCCESS: Subscribed to private-chat.' + props.jadwalId)
@@ -239,6 +282,7 @@ const stopListening = () => {
   if (channel) {
     window.Echo.leave(`chat.${props.jadwalId}`)
     channel = null
+    onlineUsers.value = []
   }
 }
 
@@ -279,6 +323,99 @@ const formatTime = (timeStr) => {
   const date = new Date(timeStr)
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
+
+onMounted(() => {
+  window.addEventListener('focus', () => { isWindowFocused.value = true })
+  window.addEventListener('blur', () => { isWindowFocused.value = false })
+
+  // Request notification permission
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      hasNotificationPermission.value = true
+    } else {
+      hasNotificationPermission.value = false
+    }
+  }
+})
+
+// Send browser notification
+const sendBrowserNotification = (messageData) => {
+  if (!hasNotificationPermission.value) return
+  
+  // Jangan kirim notifikasi jika window sedang fokus DAN modal sedang terbuka
+  if (isWindowFocused.value && props.open) return
+
+  const senderName = messageData.sender?.nama || 'Pesan Baru'
+  const notification = new Notification(`Pesan dari ${senderName}`, {
+    body: messageData.message,
+    icon: '/favicon.ico' // Sesuaikan dengan icon aplikasi Anda
+  })
+
+  notification.onclick = () => {
+    window.focus()
+    if (!props.open) {
+      emit('update:open', true)
+    }
+  }
+}
+
+// Request notification permission manually
+const requestNotificationPermission = async () => {
+  if (!('Notification' in window)) {
+    triggerToast('Browser Anda tidak mendukung notifikasi.', 'error')
+    return
+  }
+
+  try {
+    const permission = await Notification.requestPermission()
+    if (permission === 'granted') {
+      hasNotificationPermission.value = true
+      triggerToast('Notifikasi berhasil diaktifkan!', 'success')
+    } else if (permission === 'denied') {
+      hasNotificationPermission.value = false
+      triggerToast('Izin notifikasi ditolak. Silakan aktifkan melalui pengaturan browser.', 'error')
+    }
+  } catch (err) {
+    console.error('Error requesting notification permission:', err)
+  }
+}
+
+// Mark messages as read manual
+const markAsRead = async (messageIds) => {
+  if (!messageIds.length) return
+  try {
+    await axios.post('/presensi/pemberitahuan/mark-as-read', {
+      message_ids: messageIds,
+      jadwal_id: props.jadwalId
+    })
+  } catch (err) {
+    console.error('Failed to mark messages as read:', err)
+  }
+}
+
+const isUserOnline = (contactId, contactRole) => {
+  if (!contactId) return false
+  
+  // Normalize role name for matching
+  const roleMap = {
+    'Kaprodi': 'kaprodi',
+    'Wakil Direktur': 'wakil_direktur',
+    'Wadir': 'wakil_direktur',
+    'Direktur': 'direktur',
+    'Dosen': 'dosen',
+    'App\\Models\\Kaprodi': 'kaprodi',
+    'App\\Models\\Wadir': 'wakil_direktur',
+    'App\\Models\\Direktur': 'direktur',
+    'App\\Models\\Dosen': 'dosen'
+  }
+  
+  const targetRole = roleMap[contactRole] || (typeof contactRole === 'string' ? contactRole.toLowerCase() : '')
+  
+  return onlineUsers.value.some(u => {
+    const userRole = roleMap[u.role] || (u.role ? u.role.toLowerCase() : '')
+    return u.id == contactId && userRole === targetRole
+  })
+}
 </script>
 
 <template>
@@ -288,13 +425,31 @@ const formatTime = (timeStr) => {
       <!-- Header -->
       <SheetHeader class="bg-[#4B49AC] text-white p-5 flex flex-col gap-1 flex-shrink-0 relative">
         <div class="flex items-center gap-2 pr-6">
-          <MessageSquare class="w-5 h-5" />
+          <div class="relative">
+            <MessageSquare class="w-5 h-5" />
+            <span v-if="activeContact && isUserOnline(activeContact.id, activeContact.role_label)" 
+                  class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border-2 border-[#4B49AC] rounded-full"></span>
+            <span v-else-if="!isDosen && messages.length > 0 && isUserOnline(messages[0].sender_type === 'App\\Models\\Dosen' ? messages[0].sender_id : messages[0].receiver_id, 'Dosen')"
+                  class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border-2 border-[#4B49AC] rounded-full"></span>
+          </div>
           <SheetTitle class="text-white text-base font-bold">Diskusi Akademik</SheetTitle>
         </div>
         <div class="text-[11px] text-indigo-100 font-medium">
           Matkul: {{ matkulName || '-' }} <span class="mx-1">•</span> Kelas: {{ kelasName || '-' }}
           <span v-if="!isDosen"><span class="mx-1">•</span> Dosen: {{ dosenName || '-' }}</span>
         </div>
+        
+        <!-- Notification Toggle Button -->
+        <button 
+          @click="requestNotificationPermission"
+          class="absolute right-12 top-5 p-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 group"
+          :class="hasNotificationPermission ? 'bg-indigo-400/20 text-indigo-100 cursor-default' : 'bg-white/10 hover:bg-white/20 text-white'"
+          :title="hasNotificationPermission ? 'Notifikasi Aktif' : 'Aktifkan Notifikasi Browser'"
+        >
+          <Bell v-if="hasNotificationPermission" class="w-3.5 h-3.5" />
+          <BellOff v-else class="w-3.5 h-3.5 animate-pulse" />
+          <span v-if="!hasNotificationPermission" class="text-[9px] font-bold uppercase tracking-wider">Aktifkan Notif</span>
+        </button>
       </SheetHeader>
 
       <!-- Contact Selector (Dosen Role only) -->
@@ -311,7 +466,13 @@ const formatTime = (timeStr) => {
               :value="`${contact.type}::${contact.id}`"
               class="text-xs focus:bg-indigo-50 focus:text-indigo-950"
             >
-              {{ contact.nama }} ({{ contact.role_label }})
+              <div class="flex items-center gap-2">
+                <div class="relative">
+                  <span class="truncate">{{ contact.nama }} ({{ contact.role_label }})</span>
+                  <span v-if="isUserOnline(contact.id, contact.role_label)" 
+                        class="absolute -right-4 top-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                </div>
+              </div>
             </SelectItem>
           </SelectContent>
         </Select>
@@ -351,10 +512,14 @@ const formatTime = (timeStr) => {
               isSentByMe(msg) ? 'self-end items-end' : 'self-start items-start'
             ]"
           >
-            <!-- Sender Name if received -->
-            <span v-if="!isSentByMe(msg)" class="text-[10px] font-bold text-slate-500 mb-1 ml-1">
-              {{ msg.sender?.nama || 'Pimpinan' }}
-            </span>
+        <!-- Sender Name if received -->
+        <div v-if="!isSentByMe(msg)" class="flex items-center gap-1.5 mb-1 ml-1">
+          <span class="text-[10px] font-bold text-slate-500">
+            {{ msg.sender?.nama || 'Pimpinan' }}
+          </span>
+          <span v-if="isUserOnline(msg.sender_id, msg.sender_type)" 
+                class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+        </div>
             
             <!-- Message Bubble -->
             <div 
@@ -369,9 +534,15 @@ const formatTime = (timeStr) => {
             </div>
             
             <!-- Timestamp -->
-            <span class="text-[9px] text-slate-400 mt-1 mx-1 font-medium">
-              {{ formatTime(msg.sent_at) }}
-            </span>
+            <div class="flex items-center gap-1 mt-1 mx-1">
+              <span class="text-[9px] text-slate-400 font-medium">
+                {{ formatTime(msg.sent_at) }}
+              </span>
+              <template v-if="isSentByMe(msg)">
+                <CheckCheck v-if="msg.read" class="w-3 h-3 text-indigo-500" />
+                <Check v-else class="w-3 h-3 text-slate-300" />
+              </template>
+            </div>
           </div>
         </template>
       </div>
