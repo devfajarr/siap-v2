@@ -432,6 +432,36 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         });
     });
 
+    // Direktur & Wadir V2 Routes
+    Route::middleware('auth:direktur,wakil_direktur')->prefix('direktur')->name('v2.direktur.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\V2\Direktur\DashboardController::class, 'index'])->name('dashboard');
+        
+        Route::prefix('rekap-presensi')->name('rekap-presensi.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'presensiApprove'])->name('approve');
+        });
+
+        Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaIndex'])->name('index');
+        });
+
+        Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakIndex'])->name('index');
+        });
+
+        // Direktur Monitoring
+        Route::prefix('monitoring')->name('monitoring.')->group(function () {
+            Route::get('perkuliahan', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'perkuliahan'])->name('perkuliahan.index');
+            Route::get('perkuliahan/{kelas_id}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'perkuliahanDetail'])->name('perkuliahan.detail');
+            Route::get('perkuliahan/presensi/{matkul_id}/{kelas_id}/{jadwal_id}/{rentang}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'presensiCek'])->name('perkuliahan.presensi-cek');
+
+            Route::get('nilai', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilai'])->name('nilai.index');
+            Route::get('nilai/{kelas_id}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilaiDetail'])->name('nilai.detail');
+            Route::get('nilai/cek/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\MonitoringController::class, 'nilaiCek'])->name('nilai.cek');
+        });
+    });
+
     // Dosen Presensi
     Route::middleware('auth:dosen')->prefix('dosen')->group(function () {
         Route::get('/data-presensi', [\App\Http\Controllers\V2\Dosen\PresensiController::class, 'index'])->name('v2.dosen.presensi.index');

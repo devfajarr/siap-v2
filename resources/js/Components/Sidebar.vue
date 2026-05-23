@@ -133,6 +133,17 @@ const menuItems = computed(() => {
     ]
   }
 
+  if (role === 'Direktur' || role === 'Wakil Direktur') {
+    return [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/direktur/dashboard' },
+      { title: 'Monitoring Perkuliahan', icon: ClipboardCheck, href: '/v2/direktur/monitoring/perkuliahan' },
+      { title: 'Monitoring Nilai', icon: Star, href: '/v2/direktur/monitoring/nilai' },
+      { title: 'Rekap Presensi', icon: ClipboardCheck, href: '/v2/direktur/rekap-presensi' },
+      { title: 'Rekap Berita Acara', icon: FileText, href: '/v2/direktur/rekap-berita' },
+      { title: 'Rekap Kontrak Kuliah', icon: BookOpenCheck, href: '/v2/direktur/rekap-kontrak' },
+    ]
+  }
+
   return [
     { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/admin/dashboard' },
     { 
