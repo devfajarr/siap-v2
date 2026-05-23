@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/Components/ui/select'
 import { Badge } from '@/Components/ui/badge'
-import { Send, MessageSquare, Loader2 } from 'lucide-vue-next'
+import { Send, MessageSquare, Loader2, CheckCircle2, AlertCircle } from 'lucide-vue-next'
 
 const props = defineProps({
   open: {
@@ -56,6 +56,20 @@ const selectedContactKey = ref('') // Format: "type_id"
 const messagesContainer = ref(null)
 let pollingTimer = null
 
+// Toast Notification State
+const showToast = ref(false)
+const toastMessage = ref('')
+const toastType = ref('success') // 'success' or 'error'
+
+const triggerToast = (message, type = 'success') => {
+  toastMessage.value = message
+  toastType.value = type
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
+}
+
 const isDosen = computed(() => page.props.auth?.user?.role === 'Dosen')
 const currentUser = computed(() => page.props.auth?.user)
 
@@ -65,6 +79,7 @@ const getSenderTypeNamespace = (role) => {
     'Dosen': 'App\\Models\\Dosen',
     'Kaprodi': 'App\\Models\\Kaprodi',
     'Wadir': 'App\\Models\\Wadir',
+    'Wakil Direktur': 'App\\Models\\Wadir',
     'Direktur': 'App\\Models\\Direktur'
   }
   return map[role] || 'App\\Models\\Dosen'
@@ -160,12 +175,16 @@ const handleSendMessage = async () => {
     }
 
     // Explicitly map sender_type for backend validator
-    payload.sender_type = currentUser.value.role === 'Wadir' ? 'Wadir' : 
+    payload.sender_type = currentUser.value.role === 'Wakil Direktur' || currentUser.value.role === 'Wadir' ? 'Wadir' : 
                           currentUser.value.role === 'Direktur' ? 'Direktur' : 
                           currentUser.value.role === 'Kaprodi' ? 'Kaprodi' : 'Dosen'
 
     if (isDosen.value) {
-      if (!activeContact.value) return
+      if (!activeContact.value) {
+        triggerToast('Silakan pilih pimpinan akademik terlebih dahulu.', 'error')
+        isSending.value = false
+        return
+      }
       payload.receiver_id = activeContact.value.id
       payload.receiver_type = activeContact.value.type
     }
@@ -176,9 +195,12 @@ const handleSendMessage = async () => {
       newMessage.value = ''
       await fetchMessages(false)
       emit('messageSent')
+      triggerToast('Pesan berhasil dikirim.', 'success')
     }
   } catch (err) {
     console.error('Failed to send message:', err)
+    const errorMsg = err.response?.data?.message || 'Gagal mengirim pesan. Silakan coba lagi.'
+    triggerToast(errorMsg, 'error')
   } finally {
     isSending.value = false
   }
@@ -218,7 +240,7 @@ watch(() => props.open, (newOpen) => {
     contacts.value = []
     selectedContactKey.value = ''
   }
-})
+}, { immediate: true })
 
 // Listen to contact switch
 watch(selectedContactKey, (newVal) => {
@@ -352,6 +374,32 @@ const formatTime = (timeStr) => {
         </Button>
       </div>
 
+      <!-- Self-contained Toast Notification inside Dialog -->
+      <transition name="toast">
+        <div v-if="showToast" class="absolute bottom-20 left-1/2 -translate-x-1/2 z-[150] w-[90%] max-w-[320px]">
+          <div class="bg-slate-900/95 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 border border-slate-800 backdrop-blur-sm">
+            <div :class="toastType === 'error' ? 'bg-red-500' : 'bg-green-500'" class="p-1 rounded-full shrink-0 flex items-center justify-center animate-pulse">
+              <CheckCircle2 v-if="toastType === 'success'" class="w-3 h-3 text-white" />
+              <AlertCircle v-else class="w-3 h-3 text-white" />
+            </div>
+            <span class="text-xs font-semibold leading-tight">{{ toastMessage }}</span>
+          </div>
+        </div>
+      </transition>
+
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 10px) scale(0.95);
+}
+</style>

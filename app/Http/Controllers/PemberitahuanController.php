@@ -22,6 +22,19 @@ class PemberitahuanController extends Controller
         $this->middleware(function ($request, $next) {
             $this->role = Session::get('user.role');
             $this->userId = Session::get('user.id');
+            
+            // Fallback to Auth guards if session is empty or missing
+            if (!$this->role || !$this->userId) {
+                foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur'] as $guard) {
+                    if (auth()->guard($guard)->check()) {
+                        $user = auth()->guard($guard)->user();
+                        $this->role = $guard;
+                        $this->userId = $user->id;
+                        break;
+                    }
+                }
+            }
+            
             return $next($request);
         });
     }
@@ -230,11 +243,13 @@ class PemberitahuanController extends Controller
 
         $contacts = [];
 
+        // 1. Kaprodi of this prodi
         $prodiId = $jadwal->matkul->prodi_id ?? ($jadwal->kelas->id_prodi ?? null);
         if ($prodiId) {
-            $kaprodis = \App\Models\Kaprodi::whereHas('prodis', function ($q) use ($prodiId) {
-                $q->where('prodi_id', $prodiId);
-            })->get();
+            $kaprodis = \App\Models\Kaprodi::where('status', 1)
+                ->whereHas('prodis', function ($q) use ($prodiId) {
+                    $q->where('prodi_id', $prodiId);
+                })->get();
 
             foreach ($kaprodis as $kaprodi) {
                 $contacts["App\\Models\\Kaprodi_" . $kaprodi->id] = [
@@ -247,6 +262,31 @@ class PemberitahuanController extends Controller
             }
         }
 
+        // 2. Active Wadirs
+        $wadirs = \App\Models\Wadir::where('status', 1)->get();
+        foreach ($wadirs as $wadir) {
+            $contacts["App\\Models\\Wadir_" . $wadir->id] = [
+                'id' => $wadir->id,
+                'type' => 'App\Models\Wadir',
+                'nama' => $wadir->nama,
+                'role_label' => 'Wakil Direktur',
+                'has_messages' => false
+            ];
+        }
+
+        // 3. Active Direkturs
+        $direkturs = \App\Models\Direktur::where('status', 1)->get();
+        foreach ($direkturs as $direktur) {
+            $contacts["App\\Models\\Direktur_" . $direktur->id] = [
+                'id' => $direktur->id,
+                'type' => 'App\Models\Direktur',
+                'nama' => $direktur->nama,
+                'role_label' => 'Direktur',
+                'has_messages' => false
+            ];
+        }
+
+        // 4. Overwrite messages status for any who have previous chat history
         foreach ($messages as $message) {
             $isSenderDosen = ($message->sender_type === 'App\Models\Dosen');
             $contactId = $isSenderDosen ? $message->receiver_id : $message->sender_id;
