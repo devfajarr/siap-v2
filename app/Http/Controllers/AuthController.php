@@ -12,15 +12,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
     public function showLogin()
     {
-        if (Auth::check()) {
-            return redirect()->route('dashboard');
+        $roleRedirects = [
+            'admin' => 'v2.admin.dashboard',
+            'mahasiswa' => 'v2.mahasiswa.dashboard',
+            'direktur' => 'v2.direktur.dashboard',
+            'wakil_direktur' => 'v2.direktur.dashboard',
+            'dosen' => 'v2.dosen.dashboard',
+            'kaprodi' => 'v2.kaprodi.dashboard',
+        ];
+
+        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'kaprodi'] as $guard) {
+            if (Auth::guard($guard)->check()) {
+                $redirectRoute = $roleRedirects[$guard] ?? 'dashboard';
+                return redirect()->route($redirectRoute);
+            }
         }
-        return view("pages.auth.login");
+
+        return Inertia::render('Auth/Login');
     }
 
 
@@ -75,7 +89,16 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'status_pa' => $user->pembimbing_akademik,
             ]]);
-            return redirect()->route('dashboard');
+            $roleRedirects = [
+                'admin' => 'v2.admin.dashboard',
+                'mahasiswa' => 'v2.mahasiswa.dashboard',
+                'direktur' => 'v2.direktur.dashboard',
+                'wakil_direktur' => 'v2.direktur.dashboard',
+                'dosen' => 'v2.dosen.dashboard',
+                'kaprodi' => 'v2.kaprodi.dashboard',
+            ];
+            $redirectRoute = $roleRedirects[$role] ?? 'dashboard';
+            return redirect()->route($redirectRoute);
         } else
             return back()->withErrors([
                 'username' => 'Username atau password salah',

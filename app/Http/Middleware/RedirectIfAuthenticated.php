@@ -23,7 +23,16 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+                $guardRedirects = [
+                    'admin' => 'v2.admin.dashboard',
+                    'mahasiswa' => 'v2.mahasiswa.dashboard',
+                    'direktur' => 'v2.direktur.dashboard',
+                    'wakil_direktur' => 'v2.direktur.dashboard',
+                    'dosen' => 'v2.dosen.dashboard',
+                    'kaprodi' => 'v2.kaprodi.dashboard',
+                ];
+                $route = $guardRedirects[$guard] ?? 'dashboard';
+                return redirect()->route($route);
             }
         }
 

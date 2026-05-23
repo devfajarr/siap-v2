@@ -1,5 +1,5 @@
 <script setup>
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link, usePage, router } from '@inertiajs/vue3'
 import { 
   DropdownMenuRoot, 
   DropdownMenuTrigger, 
@@ -15,20 +15,7 @@ const page = usePage()
 const user = computed(() => page.props.auth?.user || { nama: 'Guest', role: 'Unknown', avatar: '/images/user.png' })
 
 const logout = () => {
-  // Logic for logout via Inertia if needed, or standard form submit
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = '/logout'
-  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-  if (csrf) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = '_token'
-    input.value = csrf
-    form.appendChild(input)
-  }
-  document.body.appendChild(form)
-  form.submit()
+  router.post('/logout')
 }
 </script>
 
