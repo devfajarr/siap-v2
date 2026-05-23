@@ -11,6 +11,12 @@ use App\Models\Prodi;
 use App\Models\PengajuanRekapPresensi;
 use App\Models\PengajuanRekapkontrak;
 use App\Models\PengajuanRekapBerita;
+use App\Models\Resume;
+use App\Models\Kontrak;
+use App\Models\Semester;
+use App\Models\TahunAkademik;
+use App\Models\Wadir;
+use App\Models\Kaprodi;
 use App\Notifications\PengajuanPresensiNotification;
 use App\Notifications\PengajuanResumeNotification;
 use App\Notifications\PengajuanKontrakNotification;
@@ -175,5 +181,143 @@ class ApprovalController extends Controller
             'disetujuiList' => $disetujui,
             'title' => 'Rekap Kontrak Kuliah'
         ]);
+    }
+
+    public function beritaDetail($pertemuan, $matkul_id, $kelas_id, $jadwal_id)
+    {
+        $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
+
+        $beritas = Resume::with([
+            'dosen' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'kelas.semester' => fn($q) => $q->withTrashed(),
+            'matkul' => fn($q) => $q->withTrashed()
+        ])
+            ->where('matkuls_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('jadwals_id', $jadwal_id)
+            ->whereIn('pertemuan', $rentang)
+            ->get();
+
+        $semester = Semester::where('status', 1)->first();
+        $sem = $semester ? (($semester->semester % 2 == 0) ? "GENAP" : "GANJIL") : "GANJIL";
+        $tahunAkademik = TahunAkademik::where('status', 1)->first();
+
+        return Inertia::render('Direktur/Approval/Berita/Detail', [
+            'beritas' => $beritas,
+            'tahunAkademik' => $tahunAkademik,
+            'sem' => $sem,
+            'params' => [
+                'pertemuan' => $pertemuan,
+                'matkul_id' => $matkul_id,
+                'kelas_id' => $kelas_id,
+                'jadwal_id' => $jadwal_id
+            ]
+        ]);
+    }
+
+    public function beritaApprove(Request $request, $pertemuan, $matkul_id, $kelas_id, $jadwal_id)
+    {
+        $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
+
+        $resumeRecords = Resume::where('matkuls_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('jadwals_id', $jadwal_id)
+            ->whereIn('pertemuan', $rentang)
+            ->get();
+
+        foreach ($resumeRecords as $resume) {
+            $resume->setuju_wadir = $request->approve;
+            $resume->save();
+        }
+
+        $allKaprodiApproved = $resumeRecords->every(fn($r) => $r->setuju_kaprodi);
+        $allWadirApproved = $resumeRecords->every(fn($r) => $r->setuju_wadir);
+
+        $statusBerita = ($allKaprodiApproved && $allWadirApproved) ? 1 : 0;
+
+        $pengajuan = PengajuanRekapBerita::where('matkuls_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('pertemuan', $pertemuan)
+            ->where('jadwal_id', $jadwal_id)
+            ->first();
+
+        if ($pengajuan) {
+            $pengajuan->update(['status' => $statusBerita]);
+
+            if ($statusBerita) {
+                $dosen = Dosen::find($resumeRecords->first()->dosens_id);
+                if ($dosen) $dosen->notify(new PengajuanResumeNotification($pengajuan));
+            }
+        }
+
+        return redirect()->back()->with('success', 'Status persetujuan berita acara berhasil diperbarui');
+    }
+
+    public function kontrakDetail($jadwal_id, $matkul_id, $kelas_id)
+    {
+        $kontraks = Kontrak::with([
+            'matkul' => fn($q) => $q->withTrashed(),
+            'kelas.semester' => fn($q) => $q->withTrashed(),
+            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn($q) => $q->withTrashed()
+        ])
+            ->where('matkuls_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('jadwals_id', $jadwal_id)
+            ->get();
+
+        $kelas = Kelas::with('prodi')->findOrFail($kelas_id);
+        $kaprodi = Kaprodi::where('prodis_id', $kelas->id_prodi)->first();
+        $wadir = Wadir::where('no', 1)->first();
+
+        return Inertia::render('Direktur/Approval/Kontrak/Detail', [
+            'kontraks' => $kontraks,
+            'kaprodi' => $kaprodi,
+            'wadir' => $wadir,
+            'params' => [
+                'jadwal_id' => $jadwal_id,
+                'matkul_id' => $matkul_id,
+                'kelas_id' => $kelas_id
+            ]
+        ]);
+    }
+
+    public function kontrakApprove(Request $request, $jadwal_id, $matkul_id, $kelas_id)
+    {
+        $kontraks = Kontrak::where('jadwals_id', $jadwal_id)
+            ->where('matkuls_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->get();
+
+        foreach ($kontraks as $kontrak) {
+            $kontrak->setuju_wadir = $request->approve;
+            $kontrak->save();
+        }
+
+        $allKaprodiApproved = $kontraks->every(fn($k) => $k->setuju_kaprodi);
+        $allWadirApproved = $kontraks->every(fn($k) => $k->setuju_wadir);
+
+        $statusKontrak = ($allKaprodiApproved && $allWadirApproved) ? 1 : 0;
+
+        foreach ($kontraks as $kontrak) {
+            $kontrak->update(['status' => $statusKontrak]);
+        }
+
+        $pengajuan = PengajuanRekapkontrak::where('jadwal_id', $jadwal_id)
+            ->where('matkul_id', $matkul_id)
+            ->where('kelas_id', $kelas_id)
+            ->first();
+
+        if ($pengajuan) {
+            $pengajuan->update(['status' => $statusKontrak]);
+
+            if ($statusKontrak) {
+                $dosen = Dosen::find($kontraks->first()->jadwal->dosens_id);
+                if ($dosen) $dosen->notify(new PengajuanKontrakNotification($pengajuan));
+            }
+        }
+
+        return redirect()->back()->with('success', 'Status persetujuan kontrak kuliah berhasil diperbarui');
     }
 }

@@ -418,10 +418,14 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
 
         Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
             Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'beritaApprove'])->name('approve');
         });
 
         Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
             Route::get('/', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakIndex'])->name('index');
+            Route::get('detail/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakDetail'])->name('detail');
+            Route::post('approve/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Kaprodi\ApprovalController::class, 'kontrakApprove'])->name('approve');
         });
 
         Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {
@@ -444,10 +448,14 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
 
         Route::prefix('rekap-berita')->name('rekap-berita.')->group(function () {
             Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaIndex'])->name('index');
+            Route::get('detail/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaDetail'])->name('detail');
+            Route::post('approve/{pertemuan}/{matkul_id}/{kelas_id}/{jadwal_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'beritaApprove'])->name('approve');
         });
 
         Route::prefix('rekap-kontrak')->name('rekap-kontrak.')->group(function () {
             Route::get('/', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakIndex'])->name('index');
+            Route::get('detail/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakDetail'])->name('detail');
+            Route::post('approve/{jadwal_id}/{matkul_id}/{kelas_id}', [\App\Http\Controllers\V2\Direktur\ApprovalController::class, 'kontrakApprove'])->name('approve');
         });
 
         // Direktur Monitoring

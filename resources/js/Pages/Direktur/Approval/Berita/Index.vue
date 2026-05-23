@@ -132,9 +132,18 @@ const filteredList = computed(() => {
                     </Badge>
                   </TableCell>
                   <TableCell class="text-center">
-                    <Button variant="outline" size="sm" class="h-8 gap-1.5" disabled>
-                      <Eye class="w-4 h-4" /> Detail
-                    </Button>
+                    <Link
+                      :href="route('v2.direktur.rekap-berita.detail', {
+                        pertemuan: item.pertemuan,
+                        matkul_id: item.matkuls_id,
+                        kelas_id: item.kelas_id,
+                        jadwal_id: item.jadwal_id
+                      })"
+                    >
+                      <Button variant="outline" size="sm" class="h-8 gap-1.5">
+                        <Eye class="w-4 h-4" /> Detail
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
                 <TableRow v-if="filteredList.length === 0">
