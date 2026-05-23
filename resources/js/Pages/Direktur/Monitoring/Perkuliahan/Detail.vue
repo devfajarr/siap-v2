@@ -15,7 +15,7 @@ import {
 import { Button } from '@/Components/ui/button'
 import { ChevronLeft, MessageSquare } from 'lucide-vue-next'
 
-defineProps({
+const props = defineProps({
   kelas: {
     type: Object,
     required: true

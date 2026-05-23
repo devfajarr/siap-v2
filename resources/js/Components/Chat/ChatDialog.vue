@@ -3,11 +3,11 @@ import { ref, watch, onUnmounted, computed, nextTick } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/Components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/Components/ui/sheet'
 import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
 import {
@@ -54,7 +54,7 @@ const isSending = ref(false)
 const contacts = ref([])
 const selectedContactKey = ref('') // Format: "type_id"
 const messagesContainer = ref(null)
-let pollingTimer = null
+let channel = null
 
 // Toast Notification State
 const showToast = ref(false)
@@ -206,18 +206,39 @@ const handleSendMessage = async () => {
   }
 }
 
-// Polling setup
-const startPolling = () => {
-  stopPolling()
-  pollingTimer = setInterval(() => {
-    fetchMessages(false)
-  }, 10000) // Poll every 10 seconds
+// Realtime setup
+const startListening = () => {
+  if (!props.jadwalId) return
+  stopListening()
+  
+  console.log('--- ATTEMPTING TO JOIN CHANNEL: chat.' + props.jadwalId + ' ---')
+  
+  channel = window.Echo.private(`chat.${props.jadwalId}`)
+    .listen('.MessageSent', (e) => {
+      console.log('!!! REALTIME MESSAGE RECEIVED !!!', e)
+      
+      const messageData = e.message || e
+      
+      // Validasi pesan agar tidak duplikat
+      const exists = messages.value.some(m => m.id === messageData.id)
+      if (!exists) {
+        messages.value.push(messageData)
+        scrollToBottom()
+        emit('messageSent')
+      }
+    })
+    .on('pusher:subscription_succeeded', () => {
+      console.log('SUCCESS: Subscribed to private-chat.' + props.jadwalId)
+    })
+    .error((error) => {
+      console.error('ERROR: Echo connection failed:', error)
+    })
 }
 
-const stopPolling = () => {
-  if (pollingTimer) {
-    clearInterval(pollingTimer)
-    pollingTimer = null
+const stopListening = () => {
+  if (channel) {
+    window.Echo.leave(`chat.${props.jadwalId}`)
+    channel = null
   }
 }
 
@@ -233,9 +254,9 @@ watch(() => props.open, (newOpen) => {
     } else {
       fetchMessages(true)
     }
-    startPolling()
+    startListening()
   } else {
-    stopPolling()
+    stopListening()
     messages.value = []
     contacts.value = []
     selectedContactKey.value = ''
@@ -250,7 +271,7 @@ watch(selectedContactKey, (newVal) => {
 })
 
 onUnmounted(() => {
-  stopPolling()
+  stopListening()
 })
 
 const formatTime = (timeStr) => {
@@ -261,20 +282,20 @@ const formatTime = (timeStr) => {
 </script>
 
 <template>
-  <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="sm:max-w-[500px] h-[80vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-slate-100 shadow-2xl bg-white">
+  <Sheet :open="open" @update:open="emit('update:open', $event)">
+    <SheetContent class="sm:max-w-[450px] w-full h-full flex flex-col p-0 overflow-hidden border-l border-slate-100 shadow-2xl bg-white">
       
       <!-- Header -->
-      <DialogHeader class="bg-[#4B49AC] text-white p-5 flex flex-col gap-1 flex-shrink-0">
-        <div class="flex items-center gap-2">
+      <SheetHeader class="bg-[#4B49AC] text-white p-5 flex flex-col gap-1 flex-shrink-0 relative">
+        <div class="flex items-center gap-2 pr-6">
           <MessageSquare class="w-5 h-5" />
-          <DialogTitle class="text-white text-base font-bold">Diskusi Akademik</DialogTitle>
+          <SheetTitle class="text-white text-base font-bold">Diskusi Akademik</SheetTitle>
         </div>
         <div class="text-[11px] text-indigo-100 font-medium">
           Matkul: {{ matkulName || '-' }} <span class="mx-1">•</span> Kelas: {{ kelasName || '-' }}
           <span v-if="!isDosen"><span class="mx-1">•</span> Dosen: {{ dosenName || '-' }}</span>
         </div>
-      </DialogHeader>
+      </SheetHeader>
 
       <!-- Contact Selector (Dosen Role only) -->
       <div v-if="isDosen && contacts.length > 1" class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
@@ -387,8 +408,8 @@ const formatTime = (timeStr) => {
         </div>
       </transition>
 
-    </DialogContent>
-  </Dialog>
+    </SheetContent>
+  </Sheet>
 </template>
 
 <style scoped>
@@ -401,5 +422,12 @@ const formatTime = (timeStr) => {
 .toast-leave-to {
   opacity: 0;
   transform: translate(-50%, 10px) scale(0.95);
+}
+
+:deep(button.absolute.right-4.top-4) svg {
+  color: white !important;
+}
+:deep(button.absolute.right-4.top-4) {
+  top: 1.25rem !important;
 }
 </style>

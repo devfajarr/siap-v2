@@ -114,7 +114,10 @@ class PemberitahuanController extends Controller
                 'parent_id' => $parentId
             ]);
 
+            $message->load('sender');
             $receiver->notify(new MessageSentNotification($message));
+
+            broadcast(new \App\Events\MessageSent($message))->toOthers();
         } elseif ($this->role == 'dosen') {
             $receiver = $receiverType::find($request->receiver_id);
 
@@ -148,7 +151,10 @@ class PemberitahuanController extends Controller
 
             ]);
 
+            $message->load('sender');
             $receiver->notify(new MessageSentNotification($message));
+
+            broadcast(new \App\Events\MessageSent($message))->toOthers();
         }
 
         return response()->json([
