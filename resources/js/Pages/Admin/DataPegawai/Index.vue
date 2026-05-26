@@ -291,7 +291,7 @@ const downloadTemplate = () => {
               <TableCell class="text-[#4B5563] font-medium">{{ pegawai.nuptk || '-' }}</TableCell>
               <TableCell>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
-                  :class="pegawai.jenis_kelamin === 'Laki-Laki' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'">
+                  :class="(pegawai.jenis_kelamin && pegawai.jenis_kelamin.toLowerCase().includes('laki')) ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'">
                   {{ pegawai.jenis_kelamin }}
                 </span>
               </TableCell>

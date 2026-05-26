@@ -501,7 +501,7 @@ const submitImport = () => {
                                         <div class="text-xs text-muted-foreground">{{ mhs.email }}</div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" :class="mhs.jenis_kelamin === 'Laki-Laki' ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-pink-200 bg-pink-50 text-pink-700'">
+                                        <Badge variant="outline" :class="(mhs.jenis_kelamin && mhs.jenis_kelamin.toLowerCase().includes('laki')) ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-pink-200 bg-pink-50 text-pink-700'">
                                             {{ mhs.jenis_kelamin }}
                                         </Badge>
                                     </TableCell>

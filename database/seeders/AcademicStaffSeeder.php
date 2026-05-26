@@ -26,7 +26,7 @@ class AcademicStaffSeeder extends Seeder
                 [
                     'nama' => "Dosen Seeder {$i}",
                     'nidn' => "9900100" . str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'jenis_kelamin' => $i % 2 === 0 ? 'Perempuan' : 'Laki - Laki',
+                    'jenis_kelamin' => $i % 2 === 0 ? 'Perempuan' : 'Laki-Laki',
                     'pembimbing_akademik' => 1,
                     'no_telephone' => "0891234567" . str_pad($i, 2, '0', STR_PAD_LEFT),
                     'agama' => 'islam',
