@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Dosen;
 use App\Models\Kelas;
+use App\Models\Krs;
 use App\Models\Mahasiswa;
+use App\Models\Pembayaran;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -138,7 +140,7 @@ class MahasiswaSeeder extends Seeder
             $dosenPembimbingId = count($dosenIds) > 0 ? $dosenIds[$index % count($dosenIds)] : null;
             $kelasId = $data['kelas'] ? $data['kelas']->id : $kelasTI->id;
 
-            Mahasiswa::updateOrCreate(
+            $mahasiswa = Mahasiswa::updateOrCreate(
                 ['nim' => $data['nim']],
                 [
                     'dosen_pembimbing_id' => $dosenPembimbingId,
@@ -157,6 +159,33 @@ class MahasiswaSeeder extends Seeder
                     'kelas_id' => $kelasId,
                     'status_krs' => 1,
                     'is_first_login' => true,
+                ]
+            );
+
+            Krs::updateOrCreate(
+                ['mahasiswa_id' => $mahasiswa->id],
+                [
+                    'prodi_id' => $data['kelas'] ? $data['kelas']->id_prodi : 1,
+                    'semester_id' => $data['kelas'] ? $data['kelas']->id_semester : 1,
+                    'kelas_id' => $kelasId,
+                    'status_krs' => 1,
+                    'setuju_pa' => 1,
+                    'setuju_mahasiswa' => 1,
+                    'tahun_ajaran' => '2024/2025',
+                ]
+            );
+
+            Pembayaran::updateOrCreate(
+                [
+                    'mahasiswa_id' => $mahasiswa->id,
+                    'semester_id' => $data['kelas'] ? $data['kelas']->id_semester : 1,
+                ],
+                [
+                    'prodi_id' => $data['kelas'] ? $data['kelas']->id_prodi : 1,
+                    'kelas_id' => $kelasId,
+                    'bukti_pembayaran' => 'bukti_pembayaran/dummy.jpg',
+                    'status_pembayaran' => 1,
+                    'keterangan' => 'Sudah',
                 ]
             );
         }

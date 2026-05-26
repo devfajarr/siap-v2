@@ -650,8 +650,8 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         // KRS
         Route::prefix('krs')->name('v2.admin.krs.')->group(function () {
             Route::get('kategori', [App\Http\Controllers\V2\Admin\KrsController::class, 'index'])->name('kategori');
-            Route::get('kategori/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
             Route::get('kategori/cetak/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'cetak'])->name('cetak');
+            Route::get('kategori/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
         });
 
         // Permohonan Surat

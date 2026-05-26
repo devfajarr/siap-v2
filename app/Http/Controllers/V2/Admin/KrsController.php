@@ -4,10 +4,10 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
-use App\Models\Mahasiswa;
 use App\Models\Krs;
+use App\Models\Mahasiswa;
 use App\Models\Matkul;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\View\View;
 use Inertia\Inertia;
 
 class KrsController extends Controller
@@ -18,22 +18,22 @@ class KrsController extends Controller
     public function index()
     {
         $kelass = Kelas::with([
-            'prodi' => fn($q) => $q->withTrashed(),
-            'semester' => fn($q) => $q->withTrashed(),
+            'prodi' => fn ($q) => $q->withTrashed(),
+            'semester' => fn ($q) => $q->withTrashed(),
         ])
             ->withCount('mahasiswa')
             ->get()
             ->map(function ($kelas) {
                 return [
-                    'id'              => $kelas->id,
-                    'nama_kelas'      => $kelas->nama_kelas,
-                    'prodi'           => $kelas->prodi?->nama_prodi,
+                    'id' => $kelas->id,
+                    'nama_kelas' => $kelas->nama_kelas,
+                    'prodi' => $kelas->prodi?->nama_prodi,
                     'prodi_singkatan' => $kelas->prodi?->singkatan,
-                    'id_prodi'        => $kelas->id_prodi,
-                    'semester'        => $kelas->semester?->semester,
-                    'id_semester'     => $kelas->id_semester,
+                    'id_prodi' => $kelas->id_prodi,
+                    'semester' => $kelas->semester?->semester,
+                    'id_semester' => $kelas->id_semester,
                     'semester_status' => $kelas->semester?->status,  // 1=Aktif, 0=Non-Aktif
-                    'jenis_kelas'     => $kelas->jenis_kelas,
+                    'jenis_kelas' => $kelas->jenis_kelas,
                     'mahasiswa_count' => $kelas->mahasiswa_count,
                 ];
             });
@@ -56,7 +56,7 @@ class KrsController extends Controller
             ->get();
 
         return Inertia::render('Admin/Krs/Show', [
-            'namaKelas'  => $kelas,
+            'namaKelas' => $kelas,
             'mahasiswas' => $mahasiswas,
         ]);
     }
@@ -64,25 +64,27 @@ class KrsController extends Controller
     /**
      * Menampilkan pratinjau cetak KRS untuk mahasiswa tertentu.
      */
-    public function cetak($id)
+    public function cetak(int|string $id): View
     {
         $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester', 'pembimbingAkademik'])->findOrFail($id);
         $semesterId = $mahasiswa->kelas?->id_semester;
         $prodiId = $mahasiswa->kelas?->id_prodi;
 
-        $krs = Krs::where('mahasiswa_id', $mahasiswa->id)
+        $krs = Krs::with([
+            'prodi',
+            'semester',
+            'mahasiswa.kelas',
+            'mahasiswa.pembimbingAkademik',
+        ])
+            ->where('mahasiswa_id', $mahasiswa->id)
             ->where('semester_id', $semesterId)
             ->where('prodi_id', $prodiId)
-            ->first();
+            ->firstOrFail();
 
         $matkulKrs = Matkul::where('prodi_id', $prodiId)
             ->where('semester_id', $semesterId)
             ->get();
 
-        return Inertia::render('Admin/Krs/Cetak', [
-            'mahasiswa' => $mahasiswa,
-            'krs'       => $krs,
-            'matkulKrs' => $matkulKrs,
-        ]);
+        return view('pages.krs.cetak', compact('krs', 'matkulKrs'));
     }
 }

@@ -152,9 +152,9 @@ const totalBelumKrs = computed(() => totalMahasiswa.value - totalSudahKrs.value)
                                             size="sm" 
                                             class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-sm transition-all"
                                         >
-                                            <Link :href="route('v2.admin.krs.cetak', mhs.id)">
+                                            <a :href="route('v2.admin.krs.cetak', mhs.id)" target="_blank">
                                                 <Printer class="mr-2 h-4 w-4" /> Cetak KRS
-                                            </Link>
+                                            </a>
                                         </Button>
                                         <Button 
                                             v-else
