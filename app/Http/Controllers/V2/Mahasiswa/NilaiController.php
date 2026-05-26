@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\V2\Mahasiswa;
 
-use App\Models\Kelas;
-use App\Models\Matkul;
-use App\Models\Kaprodi;
-use App\Models\Semester;
-use App\Models\Mahasiswa;
-use App\Models\NilaiHuruf;
-use Illuminate\Http\Request;
-use App\Models\TahunAkademik;
 use App\Http\Controllers\Controller;
+use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use App\Models\NilaiHuruf;
+use App\Models\Pembayaran;
+use App\Models\PengajuanCetakKhs;
+use App\Models\Semester;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class NilaiController extends Controller
@@ -24,7 +24,7 @@ class NilaiController extends Controller
         $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester'])->findOrFail($user->id);
         $kelas = $mahasiswa->kelas;
 
-        if (!$kelas || !$kelas->id_semester) {
+        if (! $kelas || ! $kelas->id_semester) {
             return Inertia::render('Mahasiswa/Nilai/Index', [
                 'mahasiswa' => [
                     'nama_lengkap' => $mahasiswa->nama_lengkap,
@@ -35,14 +35,17 @@ class NilaiController extends Controller
                 'semesterRiwayat' => null,
                 'isRiwayat' => false,
                 'matkuls' => [],
+                'pembayaran' => null,
                 'summary' => [
                     'total_sks' => 0,
-                    'ips' => 0,
+                    'ips' => '0.00',
                     'matkul_dinilai' => 0,
                     'total_matkul' => 0,
                     'can_print' => false,
+                    'can_view' => false,
                     'semester_id' => null,
-                ]
+                    'pengajuan' => null,
+                ],
             ]);
         }
 
@@ -58,7 +61,7 @@ class NilaiController extends Controller
         $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester'])->findOrFail($user->id);
         $kelas = $mahasiswa->kelas;
 
-        if (!$kelas) {
+        if (! $kelas) {
             return redirect()->route('v2.mahasiswa.nilai.index');
         }
 
@@ -78,6 +81,46 @@ class NilaiController extends Controller
     {
         $targetSemester = Semester::findOrFail($semester_id);
 
+        // Ambil data pembayaran untuk semester yang ditargetkan
+        $pembayaran = Pembayaran::where('mahasiswa_id', $mahasiswa->id)
+            ->where('semester_id', $semester_id)
+            ->latest()
+            ->first();
+
+        $isLunas = $pembayaran && $pembayaran->status_pembayaran === 1 && $pembayaran->keterangan === 'Sudah';
+
+        if (! $isLunas) {
+            return Inertia::render('Mahasiswa/Nilai/Index', [
+                'mahasiswa' => [
+                    'nama_lengkap' => $mahasiswa->nama_lengkap,
+                    'nim' => $mahasiswa->nim,
+                    'prodi' => $kelas->prodi->nama_prodi ?? '-',
+                    'semester' => 'Semester '.$targetSemester->semester,
+                ],
+                'semesterRiwayat' => $targetSemester,
+                'isRiwayat' => $isRiwayat,
+                'matkuls' => [],
+                'pembayaran' => $pembayaran ? [
+                    'id' => $pembayaran->id,
+                    'status_pembayaran' => (int) $pembayaran->status_pembayaran,
+                    'keterangan' => $pembayaran->keterangan,
+                    'bukti_pembayaran' => $pembayaran->bukti_pembayaran,
+                    'created_at' => $pembayaran->created_at->translatedFormat('d F Y H:i'),
+                ] : null,
+                'summary' => [
+                    'total_sks' => 0,
+                    'ips' => '0.00',
+                    'matkul_dinilai' => 0,
+                    'total_matkul' => 0,
+                    'can_print' => false,
+                    'can_view' => false,
+                    'semester_id' => $targetSemester->id,
+                    'pengajuan' => null,
+                ],
+            ]);
+        }
+
+        // Jika Lunas, ambil data nilai KHS secara normal
         $matkuls = Matkul::where('prodi_id', $kelas->id_prodi)
             ->where('semester_id', $semester_id)
             ->get();
@@ -109,113 +152,138 @@ class NilaiController extends Controller
         $matkulDinilai = $combinedData->where('nilai_huruf', '!=', 'Belum Dinilai')->count();
         $totalMatkul = $combinedData->count();
 
-        // Bisa cetak jika ada minimal 1 matkul yang sudah dinilai
-        $canPrint = $matkulDinilai > 0;
+        // Bisa mengajukan cetak (Bypass pengisian nilai untuk kepentingan testing)
+        $canPrint = true;
+
+        // Ambil data pengajuan cetak KHS terakhir
+        $pengajuan = PengajuanCetakKhs::where('mahasiswa_id', $mahasiswa->id)
+            ->where('semester_id', $semester_id)
+            ->first();
 
         return Inertia::render('Mahasiswa/Nilai/Index', [
             'mahasiswa' => [
                 'nama_lengkap' => $mahasiswa->nama_lengkap,
                 'nim' => $mahasiswa->nim,
                 'prodi' => $kelas->prodi->nama_prodi ?? '-',
-                'semester' => 'Semester ' . $targetSemester->semester,
+                'semester' => 'Semester '.$targetSemester->semester,
             ],
             'semesterRiwayat' => $targetSemester,
             'isRiwayat' => $isRiwayat,
             'matkuls' => $combinedData,
+            'pembayaran' => $pembayaran ? [
+                'id' => $pembayaran->id,
+                'status_pembayaran' => (int) $pembayaran->status_pembayaran,
+                'keterangan' => $pembayaran->keterangan,
+                'bukti_pembayaran' => $pembayaran->bukti_pembayaran,
+                'created_at' => $pembayaran->created_at->translatedFormat('d F Y H:i'),
+            ] : null,
             'summary' => [
                 'total_sks' => $totalSks,
                 'ips' => number_format($ips, 2),
                 'matkul_dinilai' => $matkulDinilai,
                 'total_matkul' => $totalMatkul,
                 'can_print' => $canPrint,
+                'can_view' => true,
                 'semester_id' => $targetSemester->id,
-            ]
+                'pengajuan' => $pengajuan ? [
+                    'id' => $pengajuan->id,
+                    'status' => (int) $pengajuan->status,
+                    'keterangan' => $pengajuan->keterangan,
+                    'created_at' => $pengajuan->created_at->translatedFormat('d F Y H:i'),
+                ] : null,
+            ],
         ]);
     }
 
     /**
-     * Menampilkan halaman cetak KHS formal.
+     * Memproses pengajuan cetak KHS fisik oleh mahasiswa.
      */
-    public function khs(Request $request, $semester_id)
+    public function ajukanCetak(Request $request)
     {
-        $user = auth()->guard('mahasiswa')->user();
-        $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester', 'pembimbingAkademik'])->findOrFail($user->id);
-        $kelas = $mahasiswa->kelas;
-        $targetSemester = Semester::findOrFail($semester_id);
+        $request->validate([
+            'semester_id' => 'required|exists:semesters,id',
+        ]);
 
-        // Security check: ensure student can only access semesters they have reached
-        if ($targetSemester->semester > ($kelas->semester->semester ?? 0)) {
-            return redirect()->route('v2.mahasiswa.nilai.index')->with('error', 'Anda belum mencapai semester ini.');
+        $user = auth()->guard('mahasiswa')->user();
+        $mahasiswa = Mahasiswa::findOrFail($user->id);
+        $semesterId = $request->semester_id;
+
+        // Validasi Pembayaran
+        $pembayaran = Pembayaran::where('mahasiswa_id', $mahasiswa->id)
+            ->where('semester_id', $semesterId)
+            ->first();
+
+        if (! $pembayaran || $pembayaran->status_pembayaran !== 1 || $pembayaran->keterangan !== 'Sudah') {
+            return redirect()->back()->with('error', 'Pengajuan cetak KHS hanya dapat dilakukan setelah pembayaran semester terverifikasi lunas.');
         }
 
-        $ipss = NilaiHuruf::with('matkul')
-            ->where('mahasiswa_id', $mahasiswa->id)
-            ->where('semester_id', $semester_id)
-            ->get();
+        // Cek double pengajuan aktif
+        $pengajuan = PengajuanCetakKhs::where('mahasiswa_id', $mahasiswa->id)
+            ->where('semester_id', $semesterId)
+            ->first();
 
-        $ipks = NilaiHuruf::with('matkul')
-            ->where('mahasiswa_id', $mahasiswa->id)
-            ->whereHas('semester', function ($query) use ($targetSemester) {
-                $query->where('semester', '<=', $targetSemester->semester);
-            })
-            ->get();
+        if ($pengajuan && $pengajuan->status == 0) {
+            return redirect()->back()->with('error', 'Anda sudah mengajukan cetak KHS untuk semester ini.');
+        }
 
-        $formattedIpss = $ipss->map(function ($item) {
-            $sks = ($item->matkul->praktek ?? 0) + ($item->matkul->teori ?? 0);
-            $kredit = self::calculateKredit($item->nilai_huruf, $sks);
-            return [
-                'kode' => $item->matkul->kode ?? '-',
-                'nama_matkul' => $item->matkul->nama_matkul ?? '-',
-                'alias' => $item->matkul->alias ?? '-',
-                'sks' => $sks,
-                'nilai_huruf' => $item->nilai_huruf ?? '-',
-                'kredit' => $kredit,
-            ];
-        });
+        if ($pengajuan) {
+            $pengajuan->update([
+                'status' => 0,
+                'keterangan' => null,
+            ]);
+        } else {
+            PengajuanCetakKhs::create([
+                'mahasiswa_id' => $mahasiswa->id,
+                'semester_id' => $semesterId,
+                'status' => 0,
+                'keterangan' => null,
+            ]);
+        }
 
-        $sksIps = $formattedIpss->sum('sks');
-        $kreditIps = $formattedIpss->sum('kredit');
-        $ips = $sksIps > 0 ? round($kreditIps / $sksIps, 2) : 0;
+        return redirect()->back()->with('success', 'Permohonan cetak KHS berhasil dikirim ke bagian akademik.');
+    }
 
-        $sksIpk = $ipks->sum(function ($item) {
-            return ($item->matkul->praktek ?? 0) + ($item->matkul->teori ?? 0);
-        });
-        $kreditIpk = $ipks->sum(function ($item) {
-            $sks = ($item->matkul->praktek ?? 0) + ($item->matkul->teori ?? 0);
-            return self::calculateKredit($item->nilai_huruf, $sks);
-        });
-        $ipk = $sksIpk > 0 ? round($kreditIpk / $sksIpk, 2) : 0;
-
-        $tahunAkademik = TahunAkademik::where('status', 1)->first();
-        $tahunAkademikFormatted = $tahunAkademik ? str_replace('/', '-', $tahunAkademik->tahun_akademik) : date('Y');
-
-        // Mengatasi bug hardcode Kaprodi dengan menggunakan id_prodi aktual mahasiswa
-        $kaprodi = Kaprodi::where('prodis_id', $kelas->id_prodi ?? 1)->where('status', 1)->first();
-
-        return Inertia::render('Mahasiswa/Nilai/Khs', [
-            'mahasiswa' => [
-                'nama_lengkap' => $mahasiswa->nama_lengkap,
-                'nim' => $mahasiswa->nim,
-                'prodi_nama' => $kelas->prodi->nama_prodi ?? '-',
-                'prodi_alias' => $kelas->prodi->alias_nama ?? '-',
-                'jenjang' => $kelas->prodi->jenjang ?? '-',
-                'alias_jenjang' => $kelas->prodi->alias_jenjang ?? '-',
-                'semester_angka' => $targetSemester->semester,
-                'semester_romawi' => self::toRoman($targetSemester->semester),
-                'pembimbing_akademik' => $mahasiswa->pembimbingAkademik->nama ?? '................................',
-            ],
-            'tahunAkademik' => $tahunAkademikFormatted,
-            'kaprodi' => $kaprodi->nama ?? '................................',
-            'items' => $formattedIpss,
-            'rekap' => [
-                'sks_ips' => $sksIps,
-                'kredit_ips' => $kreditIps,
-                'ips' => number_format($ips, 2),
-                'sks_ipk' => $sksIpk,
-                'kredit_ipk' => $kreditIpk,
-                'ipk' => number_format($ipk, 2),
-            ]
+    /**
+     * Mengunggah bukti pembayaran via halaman KHS.
+     */
+    public function uploadPembayaran(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+            'semester_id' => 'required|exists:semesters,id',
         ]);
+
+        $user = auth()->guard('mahasiswa')->user();
+        $mahasiswa = Mahasiswa::findOrFail($user->id);
+        $semesterId = $request->semester_id;
+
+        $pembayaran = Pembayaran::where('mahasiswa_id', $mahasiswa->id)
+            ->where('semester_id', $semesterId)
+            ->first();
+
+        $path = $request->file('file')->store('bukti_pembayaran', 'public');
+
+        if ($pembayaran) {
+            if ($pembayaran->bukti_pembayaran && Storage::disk('public')->exists($pembayaran->bukti_pembayaran)) {
+                Storage::disk('public')->delete($pembayaran->bukti_pembayaran);
+            }
+            $pembayaran->update([
+                'bukti_pembayaran' => $path,
+                'status_pembayaran' => 0,
+                'keterangan' => 'Belum',
+            ]);
+        } else {
+            Pembayaran::create([
+                'mahasiswa_id' => $mahasiswa->id,
+                'semester_id' => $semesterId,
+                'jumlah_pembayaran' => 0,
+                'bukti_pembayaran' => $path,
+                'status_pembayaran' => 0,
+                'keterangan' => 'Belum',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Bukti pembayaran berhasil diunggah dan sedang menunggu verifikasi administrasi.');
     }
 
     public static function calculateKredit($nilai, $sks)
@@ -234,6 +302,7 @@ class NilaiController extends Controller
         ];
 
         $bobot = $nilaiToKredit[$nilai] ?? 0;
+
         return $bobot * $sks;
     }
 

@@ -386,6 +386,7 @@ use App\Http\Controllers\V2\Admin\InformasiTambahanController;
 use App\Http\Controllers\V2\Admin\JadwalMengajarController;
 use App\Http\Controllers\V2\Admin\PembayaranController;
 use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
+use App\Http\Controllers\V2\Admin\PengajuanKhsController;
 use App\Http\Controllers\V2\Dosen\BimbinganController;
 use App\Http\Controllers\V2\Dosen\KrsController;
 use App\Http\Controllers\V2\Kaprodi\ApprovalController;
@@ -669,6 +670,13 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::post('brosur', [InformasiTambahanController::class, 'storeBrosur'])->name('store-brosur');
             Route::delete('{id}', [InformasiTambahanController::class, 'destroy'])->name('destroy');
         });
+
+        // Pengajuan Cetak KHS
+        Route::prefix('pengajuan-khs')->name('v2.admin.pengajuan-khs.')->group(function () {
+            Route::get('/', [PengajuanKhsController::class, 'index'])->name('index');
+            Route::put('{id}/status', [PengajuanKhsController::class, 'updateStatus'])->name('update-status');
+            Route::get('cetak/{mahasiswa_id}/{semester_id}', [PengajuanKhsController::class, 'cetak'])->name('cetak');
+        });
     });
 
     // Mahasiswa Routes
@@ -678,9 +686,10 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         // Nilai & KHS
         Route::prefix('nilai')->name('nilai.')->group(function () {
             Route::get('/', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'index'])->name('index');
+            Route::post('/ajukan-cetak', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'ajukanCetak'])->name('ajukan-cetak');
+            Route::post('/upload-pembayaran', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'uploadPembayaran'])->name('upload-pembayaran');
         });
         Route::get('riwayat/{semester_id}', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'riwayat'])->name('riwayat');
-        Route::get('khs/{semester_id}', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'khs'])->name('khs');
 
         // KRS & Pembayaran
         Route::prefix('krs_pembayaran')->name('krs-pembayaran.')->group(function () {

@@ -1,3 +1,58 @@
+@php
+    if (!function_exists('calculateKredit')) {
+        function calculateKredit($nilai, $sks)
+        {
+            $nilaiToKredit = [
+                'A' => 4,
+                'A-' => 3.7,
+                'B+' => 3.4,
+                'B' => 3,
+                'B-' => 2.7,
+                'C+' => 2.4,
+                'C' => 2,
+                'C-' => 1.7,
+                'D' => 1,
+                'E' => 0,
+            ];
+
+            $kredit = isset($nilaiToKredit[$nilai]) ? $nilaiToKredit[$nilai] : 0;
+            return $kredit * $sks;
+        }
+    }
+
+    if (!function_exists('toRoman')) {
+        function toRoman($num)
+        {
+            $n = intval($num);
+            $result = '';
+
+            $romanNumerals = [
+                1000 => 'M',
+                900 => 'CM',
+                500 => 'D',
+                400 => 'CD',
+                100 => 'C',
+                90 => 'XC',
+                50 => 'L',
+                40 => 'XL',
+                10 => 'X',
+                9 => 'IX',
+                5 => 'V',
+                4 => 'IV',
+                1 => 'I',
+            ];
+
+            foreach ($romanNumerals as $value => $symbol) {
+                while ($n >= $value) {
+                    $result .= $symbol;
+                    $n -= $value;
+                }
+            }
+
+            return $result;
+        }
+    }
+@endphp
 <style>
     table {
         border-collapse: collapse;
@@ -219,12 +274,12 @@
 
         <td colspan="2" style="margin-top: -5px;padding-top:0;padding-bottom:0">
             <div>Indeks Prestasi Semester</div>
-            <div>IPS : {{ number_format(round($kreditIps / $sksIps, 2), 2, '.', '') }}</div>
+            <div>IPS : {{ $sksIps > 0 ? number_format(round($kreditIps / $sksIps, 2), 2, '.', '') : '0.00' }}</div>
             <div class="monotype-corsiva">Grade Point</div>
         </td>
         <td colspan="2" style="margin-top: -5px;padding-top:0;padding-bottom:0">
             <div>Indeks Prestasi Kumulatif</div>
-            <div>IPK : {{ number_format(round($kreditIpk / $sksIpk, 2), 2, '.', '') }}</div>
+            <div>IPK : {{ $sksIpk > 0 ? number_format(round($kreditIpk / $sksIpk, 2), 2, '.', '') : '0.00' }}</div>
             <div class="monotype-corsiva">Cumulative GPA</div>
         </td>
     </tr>
@@ -246,57 +301,6 @@
     </div>
 </div>
 
-
-@php
-    function calculateKredit($nilai, $sks)
-    {
-        $nilaiToKredit = [
-            'A' => 4,
-            'A-' => 3.7,
-            'B+' => 3.4,
-            'B' => 3,
-            'B-' => 2.7,
-            'C+' => 2.4,
-            'C' => 2,
-            'C-' => 1.7,
-            'D' => 1,
-            'E' => 0,
-        ];
-
-        $kredit = isset($nilaiToKredit[$nilai]) ? $nilaiToKredit[$nilai] : 0;
-        return $kredit * $sks;
-    }
-    function toRoman($num)
-    {
-        $n = intval($num);
-        $result = '';
-
-        $romanNumerals = [
-            1000 => 'M',
-            900 => 'CM',
-            500 => 'D',
-            400 => 'CD',
-            100 => 'C',
-            90 => 'XC',
-            50 => 'L',
-            40 => 'XL',
-            10 => 'X',
-            9 => 'IX',
-            5 => 'V',
-            4 => 'IV',
-            1 => 'I',
-        ];
-
-        foreach ($romanNumerals as $value => $symbol) {
-            while ($n >= $value) {
-                $result .= $symbol;
-                $n -= $value;
-            }
-        }
-
-        return $result;
-    }
-@endphp
 <script>
     window.print()
 </script>

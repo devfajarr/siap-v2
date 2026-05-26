@@ -234,6 +234,7 @@ const menuItems = computed(() => {
       ]
     },
     { title: 'KRS', icon: KrsIcon, href: '/v2/admin/krs/kategori' },
+    { title: 'Pengajuan Cetak KHS', icon: Star, href: '/v2/admin/pengajuan-khs' },
     { 
       title: 'Permohonan Surat', 
       icon: Mail, 
