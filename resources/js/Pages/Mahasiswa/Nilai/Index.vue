@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { 
@@ -16,6 +16,14 @@ import {
   UploadCloud,
   AlertTriangle
 } from 'lucide-vue-next'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/Components/ui/dialog'
 
 const props = defineProps({
   mahasiswa: {
@@ -87,9 +95,49 @@ const ajukanForm = useForm({
   semester_id: props.summary.semester_id
 })
 
-const submitAjukanCetak = () => {
-  ajukanForm.post('/v2/mahasiswa/nilai/ajukan-cetak')
+const showConfirmAjukanModal = ref(false)
+const showFlashModal = ref(false)
+const flashMessage = ref('')
+const flashType = ref('success')
+
+const openConfirmAjukanModal = () => {
+  showConfirmAjukanModal.value = true
 }
+
+const confirmAjukanCetak = () => {
+  ajukanForm.post('/v2/mahasiswa/nilai/ajukan-cetak', {
+    onSuccess: () => {
+      showConfirmAjukanModal.value = false
+    },
+    onError: () => {
+      showConfirmAjukanModal.value = false
+    }
+  })
+}
+
+watch(() => page.props.flash, (newFlash) => {
+  if (newFlash?.success) {
+    flashMessage.value = newFlash.success
+    flashType.value = 'success'
+    showFlashModal.value = true
+  } else if (newFlash?.error) {
+    flashMessage.value = newFlash.error
+    flashType.value = 'error'
+    showFlashModal.value = true
+  }
+}, { deep: true })
+
+onMounted(() => {
+  if (page.props.flash?.success) {
+    flashMessage.value = page.props.flash.success
+    flashType.value = 'success'
+    showFlashModal.value = true
+  } else if (page.props.flash?.error) {
+    flashMessage.value = page.props.flash.error
+    flashType.value = 'error'
+    showFlashModal.value = true
+  }
+})
 
 // Helper untuk warna badge nilai huruf
 const getGradeBadgeClass = (grade) => {
@@ -142,7 +190,7 @@ const getGradeBadgeClass = (grade) => {
             <!-- Belum Mengajukan -->
             <button
               v-if="!summary.pengajuan"
-              @click="submitAjukanCetak"
+              @click="openConfirmAjukanModal"
               :disabled="ajukanForm.processing"
               class="flex items-center justify-center gap-2 w-full md:w-auto px-5 py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer"
             >
@@ -173,7 +221,7 @@ const getGradeBadgeClass = (grade) => {
               </div>
               <span class="text-xs text-rose-600 font-medium">Alasan: {{ summary.pengajuan.keterangan || '-' }}</span>
               <button
-                @click="submitAjukanCetak"
+                @click="openConfirmAjukanModal"
                 :disabled="ajukanForm.processing"
                 class="mt-1 text-xs text-[#4B49AC] hover:underline font-bold"
               >
@@ -184,17 +232,7 @@ const getGradeBadgeClass = (grade) => {
         </div>
       </div>
 
-      <!-- Banner Notifikasi Sukses / Galat dari Sesi -->
-      <div v-if="page.props.flash?.success || page.props.flash?.error" class="mb-4">
-        <div v-if="page.props.flash?.success" class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 shadow-xs">
-          <CheckCircle2 class="w-5 h-5 text-emerald-600 flex-shrink-0" />
-          <span class="text-sm font-medium">{{ page.props.flash.success }}</span>
-        </div>
-        <div v-if="page.props.flash?.error" class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center gap-3 shadow-xs">
-          <AlertTriangle class="w-5 h-5 text-rose-600 flex-shrink-0" />
-          <span class="text-sm font-medium">{{ page.props.flash.error }}</span>
-        </div>
-      </div>
+      <!-- Banner Notifikasi Sukses / Galat dari Sesi dinonaktifkan karena menggunakan Dialog popup -->
 
       <!-- Student Info Banner -->
       <div class="bg-gradient-to-br from-[#4B49AC] to-[#5957c2] p-6 rounded-2xl text-white shadow-md flex items-center gap-6 relative overflow-hidden">
@@ -443,5 +481,78 @@ const getGradeBadgeClass = (grade) => {
         </div>
       </div>
     </div>
+
+    <!-- Dialog Konfirmasi Pengajuan Cetak KHS -->
+    <Dialog v-model:open="showConfirmAjukanModal">
+      <DialogContent class="sm:max-w-md bg-white p-0 overflow-hidden sm:rounded-2xl border border-gray-200 shadow-xl [&>button]:text-white [&>button:hover]:bg-white/20 [&>button]:rounded-lg [&>button]:p-1">
+        <DialogHeader class="bg-[#4B49AC] text-white p-6">
+          <DialogTitle class="text-white text-xl font-bold flex items-center gap-2">
+            <Printer class="w-6 h-6" /> Konfirmasi Pengajuan Cetak
+          </DialogTitle>
+          <DialogDescription class="text-indigo-100 text-xs">
+            Persetujuan permohonan cetak Kartu Hasil Studi (KHS) fisik
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="p-6 space-y-4">
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed flex items-start gap-3 shadow-xs">
+            <AlertTriangle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <span class="font-bold">Apakah Anda yakin?</span> Permohonan cetak KHS fisik untuk semester ini akan dikirimkan ke bagian administrasi akademik. Pastikan seluruh nilai Anda telah terbit dengan benar.
+            </div>
+          </div>
+
+          <div class="text-xs space-y-2 p-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 shadow-xs">
+            <div class="flex justify-between border-b pb-1.5"><span class="font-semibold text-gray-500">Nama Mahasiswa:</span> <span class="font-bold text-gray-900">{{ mahasiswa.nama_lengkap }}</span></div>
+            <div class="flex justify-between border-b pb-1.5"><span class="font-semibold text-gray-500">NIM:</span> <span class="font-mono font-bold text-[#4B49AC]">{{ mahasiswa.nim }}</span></div>
+            <div class="flex justify-between"><span class="font-semibold text-gray-500">Semester KHS:</span> <span class="font-bold text-gray-900">{{ mahasiswa.semester }}</span></div>
+          </div>
+        </div>
+
+        <DialogFooter class="p-6 pt-0 gap-3 flex flex-col-reverse sm:flex-row">
+          <button 
+            type="button" 
+            @click="showConfirmAjukanModal = false"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-gray-300 font-bold text-sm text-gray-700 hover:bg-gray-100 transition-all text-center cursor-pointer"
+          >
+            Batal
+          </button>
+          <button 
+            type="button" 
+            @click="confirmAjukanCetak"
+            :disabled="ajukanForm.processing"
+            class="w-full sm:flex-1 px-6 py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] disabled:bg-gray-300 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 text-center cursor-pointer whitespace-nowrap"
+          >
+            <span v-if="ajukanForm.processing" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <Printer class="w-4 h-4 flex-shrink-0" /> Ya, Ajukan Cetak
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Dialog Notifikasi Status Flash (Sukses/Gagal) -->
+    <Dialog v-model:open="showFlashModal">
+      <DialogContent class="sm:max-w-md bg-white p-0 overflow-hidden sm:rounded-2xl border border-gray-200 shadow-xl [&>button]:text-white [&>button:hover]:bg-white/20 [&>button]:rounded-lg [&>button]:p-1">
+        <div class="p-6 text-center">
+          <div :class="flashType === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xs">
+            <CheckCircle2 v-if="flashType === 'success'" class="w-8 h-8" />
+            <AlertCircle v-else class="w-8 h-8" />
+          </div>
+          <DialogTitle class="text-lg font-bold text-gray-900 mb-2">
+            {{ flashType === 'success' ? 'Berhasil' : 'Gagal' }}
+          </DialogTitle>
+          <DialogDescription class="text-sm text-gray-500 mb-6">
+            {{ flashMessage }}
+          </DialogDescription>
+          <button 
+            type="button" 
+            @click="showFlashModal = false"
+            class="w-full py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] text-white font-bold text-sm shadow-md transition-all text-center cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>

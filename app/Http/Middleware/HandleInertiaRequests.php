@@ -2,6 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Mahasiswa;
+use App\Models\PengajuanCetakKhs;
+use App\Models\PermohonanSurat;
+use App\Models\Prodi;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,9 +41,9 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        
+
         // Fallback for multiple guards
-        if (!$user) {
+        if (! $user) {
             foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur'] as $guard) {
                 if (auth()->guard($guard)->check()) {
                     $user = auth()->guard($guard)->user();
@@ -53,32 +58,37 @@ class HandleInertiaRequests extends Middleware
 
         if ($user) {
             // Determine Role based on guard or session
-            if (auth()->guard('admin')->check()) $role = 'Administrator';
-            else if (auth()->guard('dosen')->check()) $role = 'Dosen';
-            else if (auth()->guard('mahasiswa')->check()) {
+            if (auth()->guard('admin')->check()) {
+                $role = 'Administrator';
+            } elseif (auth()->guard('dosen')->check()) {
+                $role = 'Dosen';
+            } elseif (auth()->guard('mahasiswa')->check()) {
                 $role = 'Mahasiswa';
                 if ($user->profile_picture) {
-                    $avatar = asset('storage/profile_pictures/' . $user->profile_picture);
+                    $avatar = asset('storage/profile_pictures/'.$user->profile_picture);
                 }
-                
+
                 // Fetch semesters based on student's current semester level
-                $mahasiswa = \App\Models\Mahasiswa::with('kelas.semester')->find($user->id);
+                $mahasiswa = Mahasiswa::with('kelas.semester')->find($user->id);
                 $currentSemesterLevel = $mahasiswa->kelas->semester->semester ?? 0;
 
-                $semesters = \App\Models\Semester::where('semester', '<=', $currentSemesterLevel)
+                $semesters = Semester::where('semester', '<=', $currentSemesterLevel)
                     ->orderBy('semester', 'asc')
                     ->get()
                     ->map(function ($semester) {
                         return [
                             'id' => $semester->id,
-                            'title' => 'Semester ' . $semester->semester,
-                            'href' => '/v2/mahasiswa/riwayat/' . $semester->id,
+                            'title' => 'Semester '.$semester->semester,
+                            'href' => '/v2/mahasiswa/riwayat/'.$semester->id,
                         ];
                     })->toArray();
+            } elseif (auth()->guard('kaprodi')->check()) {
+                $role = 'Kaprodi';
+            } elseif (auth()->guard('direktur')->check()) {
+                $role = 'Direktur';
+            } elseif (auth()->guard('wakil_direktur')->check()) {
+                $role = 'Wakil Direktur';
             }
-            else if (auth()->guard('kaprodi')->check()) $role = 'Kaprodi';
-            else if (auth()->guard('direktur')->check()) $role = 'Direktur';
-            else if (auth()->guard('wakil_direktur')->check()) $role = 'Wakil Direktur';
         }
 
         $prodis = [];
@@ -86,10 +96,19 @@ class HandleInertiaRequests extends Middleware
         if ($user && $role === 'Kaprodi') {
             $prodiIds = session('user.prodiIds', []);
             $activeProdiId = session('user.activeProdiId');
-            $prodis = \App\Models\Prodi::whereIn('id', $prodiIds)
+            $prodis = Prodi::whereIn('id', $prodiIds)
                 ->select('id', 'nama_prodi')
                 ->get()
                 ->toArray();
+        }
+
+        $pendingKhsCount = 0;
+        $pendingSuratCount = 0;
+        if ($user && $role === 'Administrator') {
+            $pendingKhsCount = PengajuanCetakKhs::where('status', 0)->count();
+            $pendingSuratCount = PermohonanSurat::where('setuju_kaprodi', 1)
+                ->where('status', 0)
+                ->count();
         }
 
         return [
@@ -102,6 +121,8 @@ class HandleInertiaRequests extends Middleware
                     'avatar' => $avatar,
                     'prodis' => $prodis,
                     'activeProdiId' => $activeProdiId,
+                    'pending_khs_count' => $pendingKhsCount,
+                    'pending_surat_count' => $pendingSuratCount,
                 ] : null,
                 'semesters' => $semesters,
             ],
@@ -113,4 +134,3 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 }
-

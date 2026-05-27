@@ -101,6 +101,18 @@ onUnmounted(() => {
   if (guidancePollTimer) clearInterval(guidancePollTimer)
 })
 
+// ─── Admin Pending Counts & Badge Helper ────────────────────────
+const pendingKhsCount = computed(() => page.props.auth?.user?.pending_khs_count || 0)
+const pendingSuratCount = computed(() => page.props.auth?.user?.pending_surat_count || 0)
+
+const getBadgeValue = (badge) => {
+  if (badge === null || badge === undefined) return 0
+  if (typeof badge === 'object' && badge !== null && 'value' in badge) {
+    return badge.value
+  }
+  return badge
+}
+
 
 const menuItems = computed(() => {
   const role = page.props.auth?.user?.role
@@ -234,12 +246,22 @@ const menuItems = computed(() => {
       ]
     },
     { title: 'KRS', icon: KrsIcon, href: '/v2/admin/krs/kategori' },
-    { title: 'Pengajuan Cetak KHS', icon: Star, href: '/v2/admin/pengajuan-khs' },
+    { 
+      title: 'Pengajuan Cetak KHS', 
+      icon: Star, 
+      href: '/v2/admin/pengajuan-khs',
+      badge: pendingKhsCount.value
+    },
     { 
       title: 'Permohonan Surat', 
       icon: Mail, 
+      badge: pendingSuratCount.value,
       children: [
-        { title: 'Cetak Surat', href: '/v2/admin/permohonan-surat/cetak' },
+        { 
+          title: 'Cetak Surat', 
+          href: '/v2/admin/permohonan-surat/cetak',
+          badge: pendingSuratCount.value
+        },
         { title: 'Surat Selesai', href: '/v2/admin/permohonan-surat/selesai' },
       ]
     },
@@ -284,15 +306,28 @@ const menuItems = computed(() => {
               { 'text-[#4B49AC] font-semibold': isMenuActive(item) }
             ]"
           >
-            <component 
-              :is="item.icon" 
-              class="w-5 h-5 text-[#4B49AC] group-hover:scale-110 transition-transform flex-shrink-0" 
-            />
+            <div class="relative flex-shrink-0">
+              <component 
+                :is="item.icon" 
+                class="w-5 h-5 text-[#4B49AC] group-hover:scale-110 transition-transform" 
+              />
+              <!-- Collapse Badge Dot -->
+              <div 
+                v-if="!isOpen && item.badge && getBadgeValue(item.badge) > 0"
+                class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"
+              />
+            </div>
             <span 
               v-if="isOpen"
               class="text-sm font-medium whitespace-nowrap flex-1 text-left"
             >
               {{ item.title }}
+            </span>
+            <span 
+              v-if="isOpen && item.badge && getBadgeValue(item.badge) > 0" 
+              class="mr-2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+            >
+              {{ getBadgeValue(item.badge) }}
             </span>
             <ChevronDown 
               v-if="isOpen"
@@ -351,6 +386,12 @@ const menuItems = computed(() => {
               >
                 <component :is="child.icon" v-if="child.icon" class="w-4 h-4 text-[#4B49AC]" />
                 <span class="text-xs font-medium">{{ child.title }}</span>
+                <span 
+                  v-if="child.badge && getBadgeValue(child.badge) > 0" 
+                  class="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                >
+                  {{ getBadgeValue(child.badge) }}
+                </span>
               </Link>
 
             </div>
@@ -368,17 +409,30 @@ const menuItems = computed(() => {
           ]"
 
         >
-          <component 
-            :is="item.icon" 
-            class="w-5 h-5 text-[#4B49AC] group-hover:scale-110 transition-transform flex-shrink-0" 
-            :class="{ 'text-[#4B49AC]': isMenuActive(item) }"
-          />
+          <div class="relative flex-shrink-0">
+            <component 
+              :is="item.icon" 
+              class="w-5 h-5 text-[#4B49AC] group-hover:scale-110 transition-transform" 
+              :class="{ 'text-[#4B49AC]': isMenuActive(item) }"
+            />
+            <!-- Collapse Badge Dot -->
+            <div 
+              v-if="!isOpen && item.badge && getBadgeValue(item.badge) > 0"
+              class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"
+            />
+          </div>
 
           <span 
             v-if="isOpen"
             class="text-sm font-medium whitespace-nowrap"
           >
             {{ item.title }}
+          </span>
+          <span 
+            v-if="isOpen && item.badge && getBadgeValue(item.badge) > 0" 
+            class="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+          >
+            {{ getBadgeValue(item.badge) }}
           </span>
           
           <div 

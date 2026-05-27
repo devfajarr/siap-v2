@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Head, useForm, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { 
@@ -40,6 +40,13 @@ const showRejectModal = ref(false)
 const selectedPengajuanId = ref(null)
 const rejectReason = ref('')
 
+const showConfirmCompleteModal = ref(false)
+const selectedCompleteId = ref(null)
+
+const showFlashModal = ref(false)
+const flashMessage = ref('')
+const flashType = ref('success')
+
 const rejectForm = useForm({
   status: 2,
   keterangan: ''
@@ -67,10 +74,47 @@ const submitReject = () => {
   })
 }
 
-const markAsCompleted = (id) => {
-  statusUpdateForm.status = 1
-  statusUpdateForm.put(`/v2/admin/pengajuan-khs/${id}/status`)
+const openConfirmCompleteModal = (id) => {
+  selectedCompleteId.value = id
+  showConfirmCompleteModal.value = true
 }
+
+const submitComplete = () => {
+  statusUpdateForm.status = 1
+  statusUpdateForm.put(`/v2/admin/pengajuan-khs/${selectedCompleteId.value}/status`, {
+    onSuccess: () => {
+      showConfirmCompleteModal.value = false
+      selectedCompleteId.value = null
+    },
+    onError: () => {
+      showConfirmCompleteModal.value = false
+    }
+  })
+}
+
+watch(() => page.props.flash, (newFlash) => {
+  if (newFlash?.success) {
+    flashMessage.value = newFlash.success
+    flashType.value = 'success'
+    showFlashModal.value = true
+  } else if (newFlash?.error) {
+    flashMessage.value = newFlash.error
+    flashType.value = 'error'
+    showFlashModal.value = true
+  }
+}, { deep: true })
+
+onMounted(() => {
+  if (page.props.flash?.success) {
+    flashMessage.value = page.props.flash.success
+    flashType.value = 'success'
+    showFlashModal.value = true
+  } else if (page.props.flash?.error) {
+    flashMessage.value = page.props.flash.error
+    flashType.value = 'error'
+    showFlashModal.value = true
+  }
+})
 
 // Handler Cetak KHS (Buka tab baru dan refresh halaman setelah beberapa detik untuk memuat status terbaru)
 const handleCetak = (mahasiswaId, semesterId) => {
@@ -116,17 +160,7 @@ const countByStatus = (status) => {
         </div>
       </div>
 
-      <!-- Flash Message Banner -->
-      <div v-if="page.props.flash?.success || page.props.flash?.error" class="mb-4">
-        <div v-if="page.props.flash?.success" class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 shadow-xs">
-          <CheckCircle2 class="w-5 h-5 text-emerald-600 flex-shrink-0" />
-          <span class="text-sm font-medium">{{ page.props.flash.success }}</span>
-        </div>
-        <div v-if="page.props.flash?.error" class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center gap-3 shadow-xs">
-          <AlertCircle class="w-5 h-5 text-rose-600 flex-shrink-0" />
-          <span class="text-sm font-medium">{{ page.props.flash.error }}</span>
-        </div>
-      </div>
+      <!-- Flash Message Banner dinonaktifkan karena menggunakan Dialog popup -->
 
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -260,28 +294,30 @@ const countByStatus = (status) => {
                   <td class="py-4 px-4 text-sm text-center font-bold text-gray-700">Smtr {{ item.semester }}</td>
                   <td class="py-4 px-4 text-sm text-center text-gray-500 font-medium">{{ item.created_at }}</td>
                   <td class="py-4 px-4 text-center">
-                    <span 
-                      v-if="item.status === 0"
-                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold"
-                    >
-                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                      Pending
-                    </span>
-                    <span 
-                      v-else-if="item.status === 1"
-                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold"
-                    >
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      Telah Dicetak
-                    </span>
-                    <span 
-                      v-else-if="item.status === 2"
-                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold"
-                      :title="`Alasan: ${item.keterangan || '-'}`"
-                    >
-                      <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                      Ditolak
-                    </span>
+                    <div class="flex justify-center">
+                      <span 
+                        v-if="item.status === 0"
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold whitespace-nowrap"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        Pending
+                      </span>
+                      <span 
+                        v-else-if="item.status === 1"
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold whitespace-nowrap"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Telah Dicetak
+                      </span>
+                      <span 
+                        v-else-if="item.status === 2"
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold whitespace-nowrap"
+                        :title="`Alasan: ${item.keterangan || '-'}`"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                        Ditolak
+                      </span>
+                    </div>
                   </td>
                   <td class="py-4 px-4 text-right">
                     <div class="flex items-center justify-end gap-2">
@@ -297,7 +333,7 @@ const countByStatus = (status) => {
                       <!-- Tombol Selesaikan Manual (jika status pending/tolak) -->
                       <button 
                         v-if="item.status !== 1"
-                        @click="markAsCompleted(item.id)"
+                        @click="openConfirmCompleteModal(item.id)"
                         :disabled="statusUpdateForm.processing"
                         class="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 hover:bg-emerald-600 text-emerald-700 hover:text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
                         title="Tandai KHS telah dicetak & siap diambil"
@@ -369,6 +405,73 @@ const countByStatus = (status) => {
             Tolak Pengajuan
           </button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Dialog Konfirmasi Selesai / Approval Cetak KHS -->
+    <Dialog v-model:open="showConfirmCompleteModal">
+      <DialogContent class="sm:max-w-md bg-white p-0 overflow-hidden sm:rounded-2xl border border-gray-200 shadow-xl [&>button]:text-white [&>button:hover]:bg-white/20 [&>button]:rounded-lg [&>button]:p-1">
+        <DialogHeader class="bg-[#4B49AC] text-white p-6">
+          <DialogTitle class="text-white text-xl font-bold flex items-center gap-2">
+            <CheckCircle2 class="w-6 h-6" /> Konfirmasi Approval Cetak
+          </DialogTitle>
+          <DialogDescription class="text-indigo-100 text-xs">
+            Tandai permohonan cetak Kartu Hasil Studi (KHS) sebagai Selesai
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="p-6 space-y-4">
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed flex items-start gap-3 shadow-xs">
+            <AlertTriangle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <span class="font-bold">Apakah Anda yakin?</span> Tindakan ini akan menandai pengajuan cetak KHS mahasiswa tersebut sebagai selesai (siap diambil di loket) dan mengirimkan notifikasi status ke mahasiswa.
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter class="p-6 pt-0 gap-3 flex flex-col-reverse sm:flex-row">
+          <button 
+            type="button" 
+            @click="showConfirmCompleteModal = false"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-gray-300 font-bold text-sm text-gray-700 hover:bg-gray-100 transition-all text-center cursor-pointer"
+          >
+            Batal
+          </button>
+          <button 
+            type="button" 
+            @click="submitComplete"
+            :disabled="statusUpdateForm.processing"
+            class="w-full sm:flex-1 px-6 py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] disabled:bg-gray-300 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 text-center cursor-pointer whitespace-nowrap"
+          >
+            <span v-if="statusUpdateForm.processing" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <CheckCircle2 class="w-4 h-4 flex-shrink-0" /> Ya, Selesaikan
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Dialog Notifikasi Status Flash (Sukses/Gagal) -->
+    <Dialog v-model:open="showFlashModal">
+      <DialogContent class="sm:max-w-md bg-white p-0 overflow-hidden sm:rounded-2xl border border-gray-200 shadow-xl [&>button]:text-white [&>button:hover]:bg-white/20 [&>button]:rounded-lg [&>button]:p-1">
+        <div class="p-6 text-center">
+          <div :class="flashType === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xs">
+            <CheckCircle2 v-if="flashType === 'success'" class="w-8 h-8" />
+            <AlertCircle v-else class="w-8 h-8" />
+          </div>
+          <DialogTitle class="text-lg font-bold text-gray-900 mb-2">
+            {{ flashType === 'success' ? 'Berhasil' : 'Gagal' }}
+          </DialogTitle>
+          <DialogDescription class="text-sm text-gray-500 mb-6">
+            {{ flashMessage }}
+          </DialogDescription>
+          <button 
+            type="button" 
+            @click="showFlashModal = false"
+            class="w-full py-2.5 rounded-xl bg-[#4B49AC] hover:bg-[#3a3888] text-white font-bold text-sm shadow-md transition-all text-center cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   </AdminLayout>
