@@ -1,5 +1,14 @@
 <?php
 
+use App\Models\Admin;
+use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Jabatan;
+use App\Models\Kaprodi;
+use App\Models\Mahasiswa;
+use App\Models\Pegawai;
+use App\Models\Wadir;
+
 return [
 
     /*
@@ -67,6 +76,10 @@ return [
             'driver' => 'session',
             'provider' => 'pegawais',
         ],
+        'jabatan' => [
+            'driver' => 'session',
+            'provider' => 'jabatans',
+        ],
     ],
     /*
     |--------------------------------------------------------------------------
@@ -88,31 +101,35 @@ return [
     'providers' => [
         'admins' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Admin::class,
+            'model' => Admin::class,
         ],
         'direkturs' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Direktur::class,
+            'model' => Direktur::class,
         ],
         'wadirs' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Wadir::class,
+            'model' => Wadir::class,
         ],
         'kaprodis' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Kaprodi::class,
+            'model' => Kaprodi::class,
         ],
         'mahasiswas' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Mahasiswa::class,
+            'model' => Mahasiswa::class,
         ],
         'dosens' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Dosen::class,
+            'model' => Dosen::class,
         ],
         'pegawais' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Pegawai::class,
+            'model' => Pegawai::class,
+        ],
+        'jabatans' => [
+            'driver' => 'eloquent',
+            'model' => Jabatan::class,
         ],
     ],
 
@@ -134,7 +151,6 @@ return [
     | quickly generating a very large amount of password reset tokens.
     |
     */
-
 
     'passwords' => [
         'admins' => [

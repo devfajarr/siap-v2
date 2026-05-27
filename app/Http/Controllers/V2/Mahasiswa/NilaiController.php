@@ -152,8 +152,8 @@ class NilaiController extends Controller
         $matkulDinilai = $combinedData->where('nilai_huruf', '!=', 'Belum Dinilai')->count();
         $totalMatkul = $combinedData->count();
 
-        // Bisa mengajukan cetak (Bypass pengisian nilai untuk kepentingan testing)
-        $canPrint = true;
+        // Bisa cetak jika ada minimal 1 matkul yang sudah dinilai
+        $canPrint = $matkulDinilai > 0;
 
         // Ambil data pengajuan cetak KHS terakhir
         $pengajuan = PengajuanCetakKhs::where('mahasiswa_id', $mahasiswa->id)

@@ -383,6 +383,7 @@ Route::prefix('/presensi')->group(function () {
 use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
 use App\Http\Controllers\V2\Admin\DataNilaiController;
 use App\Http\Controllers\V2\Admin\InformasiTambahanController;
+use App\Http\Controllers\V2\Admin\JabatanController;
 use App\Http\Controllers\V2\Admin\JadwalMengajarController;
 use App\Http\Controllers\V2\Admin\PembayaranController;
 use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
@@ -581,6 +582,9 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->except(['show', 'create', 'edit']);
         Route::resource('data-direktur', App\Http\Controllers\V2\Admin\DirekturController::class)
             ->names('v2.admin.data-direktur')
+            ->except(['show', 'create', 'edit']);
+        Route::resource('data-jabatan', JabatanController::class)
+            ->names('v2.admin.data-jabatan')
             ->except(['show', 'create', 'edit']);
 
         Route::get('data-pegawai/export', [App\Http\Controllers\V2\Admin\PegawaiController::class, 'export'])

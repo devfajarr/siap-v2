@@ -44,7 +44,7 @@ class HandleInertiaRequests extends Middleware
 
         // Fallback for multiple guards
         if (! $user) {
-            foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur'] as $guard) {
+            foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur', 'jabatan'] as $guard) {
                 if (auth()->guard($guard)->check()) {
                     $user = auth()->guard($guard)->user();
                     break;
@@ -88,6 +88,15 @@ class HandleInertiaRequests extends Middleware
                 $role = 'Direktur';
             } elseif (auth()->guard('wakil_direktur')->check()) {
                 $role = 'Wakil Direktur';
+            } elseif (auth()->guard('jabatan')->check()) {
+                $roleMap = [
+                    'bpmi' => 'BPMI',
+                    'kemahasiswaan' => 'Kemahasiswaan',
+                    'perpustakaan' => 'Perpustakaan',
+                    'sarpras' => 'Sarpras',
+                    'personalia' => 'Personalia',
+                ];
+                $role = $roleMap[$user->nama_jabatan] ?? ucfirst($user->nama_jabatan);
             }
         }
 
@@ -123,6 +132,10 @@ class HandleInertiaRequests extends Middleware
                     'activeProdiId' => $activeProdiId,
                     'pending_khs_count' => $pendingKhsCount,
                     'pending_surat_count' => $pendingSuratCount,
+                    'jabatans' => session('user.jabatans', []),
+                    'is_dosen' => ! empty($user->dosens_id) || auth()->guard('dosen')->check(),
+                    'is_pegawai' => ! empty($user->pegawais_id) || auth()->guard('pegawai')->check(),
+                    'status_pa' => auth()->guard('dosen')->check() ? auth()->guard('dosen')->user()->pembimbing_akademik : session('user.status_pa', 0),
                 ] : null,
                 'semesters' => $semesters,
             ],

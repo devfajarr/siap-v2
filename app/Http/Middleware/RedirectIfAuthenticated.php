@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,12 +12,12 @@ class RedirectIfAuthenticated
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
-        $guards = empty($guards) ? 
-            ['admin', 'direktur', 'wakil_direktur', 'kaprodi', 'mahasiswa', 'dosen'] : 
+        $guards = empty($guards) ?
+            ['admin', 'direktur', 'wakil_direktur', 'kaprodi', 'mahasiswa', 'dosen', 'jabatan'] :
             $guards;
 
         foreach ($guards as $guard) {
@@ -30,8 +29,19 @@ class RedirectIfAuthenticated
                     'wakil_direktur' => 'v2.direktur.dashboard',
                     'dosen' => 'v2.dosen.dashboard',
                     'kaprodi' => 'v2.kaprodi.dashboard',
+                    'bpmi' => 'v2.dosen.dashboard',
+                    'kemahasiswaan' => 'v2.dosen.dashboard',
+                    'perpustakaan' => 'v2.dosen.dashboard',
+                    'sarpras' => 'v2.dosen.dashboard',
+                    'personalia' => 'v2.dosen.dashboard',
                 ];
-                $route = $guardRedirects[$guard] ?? 'dashboard';
+                if ($guard === 'jabatan') {
+                    $user = Auth::guard('jabatan')->user();
+                    $route = $guardRedirects[$user->nama_jabatan] ?? 'v2.dosen.dashboard';
+                } else {
+                    $route = $guardRedirects[$guard] ?? 'dashboard';
+                }
+
                 return redirect()->route($route);
             }
         }

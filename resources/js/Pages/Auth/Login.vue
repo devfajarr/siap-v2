@@ -182,6 +182,11 @@ const submit = () => {
                       <SelectItem value="kaprodi">Kaprodi</SelectItem>
                       <SelectItem value="dosen">Dosen</SelectItem>
                       <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
+                      <SelectItem value="bpmi">BPMI</SelectItem>
+                      <SelectItem value="kemahasiswaan">Kemahasiswaan</SelectItem>
+                      <SelectItem value="perpustakaan">Perpustakaan</SelectItem>
+                      <SelectItem value="sarpras">Sarpras</SelectItem>
+                      <SelectItem value="personalia">Personalia</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

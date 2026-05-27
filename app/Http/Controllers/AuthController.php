@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
-use App\Models\Dosen;
-use App\Models\Wadir;
-use App\Models\Kaprodi;
 use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Jabatan;
+use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 
 class AuthController extends Controller
@@ -25,11 +25,22 @@ class AuthController extends Controller
             'wakil_direktur' => 'v2.direktur.dashboard',
             'dosen' => 'v2.dosen.dashboard',
             'kaprodi' => 'v2.kaprodi.dashboard',
+            'bpmi' => 'v2.dosen.dashboard',
+            'kemahasiswaan' => 'v2.dosen.dashboard',
+            'perpustakaan' => 'v2.dosen.dashboard',
+            'sarpras' => 'v2.dosen.dashboard',
+            'personalia' => 'v2.dosen.dashboard',
         ];
 
-        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'kaprodi'] as $guard) {
+        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'kaprodi', 'jabatan'] as $guard) {
             if (Auth::guard($guard)->check()) {
-                $redirectRoute = $roleRedirects[$guard] ?? 'dashboard';
+                if ($guard === 'jabatan') {
+                    $user = Auth::guard('jabatan')->user();
+                    $redirectRoute = $roleRedirects[$user->nama_jabatan] ?? 'v2.dosen.dashboard';
+                } else {
+                    $redirectRoute = $roleRedirects[$guard] ?? 'dashboard';
+                }
+
                 return redirect()->route($redirectRoute);
             }
         }
@@ -37,16 +48,16 @@ class AuthController extends Controller
         return Inertia::render('Auth/Login');
     }
 
-
     public function processLogin(Request $request)
     {
         $request->validate([
             'username' => 'required',
             'password' => 'required',
-            'role' => 'required'
+            'role' => 'required',
         ]);
         $role = $request->role;
         $user = null;
+        $guard = null;
 
         if ($role === 'admin') {
             $user = Admin::where('email', $request->username)->first();
@@ -66,7 +77,14 @@ class AuthController extends Controller
         } elseif ($role === 'dosen') {
             $user = Dosen::where('email', $request->username)->first();
             $guard = 'dosen';
+        } elseif (in_array($role, ['bpmi', 'kemahasiswaan', 'perpustakaan', 'sarpras', 'personalia'])) {
+            $user = Jabatan::where('email', $request->username)
+                ->where('nama_jabatan', $role)
+                ->where('status', 1)
+                ->first();
+            $guard = 'jabatan';
         }
+
         if ($user && Hash::check($request->password, $user->password)) {
             Auth::guard($guard)->login($user);
 
@@ -77,18 +95,36 @@ class AuthController extends Controller
                 $activeProdiId = $prodiIds[0] ?? null;
             }
 
+            // Find all active structural roles associated with this person to support multi-role access
+            $jabatansList = [];
+            if ($guard === 'jabatan') {
+                if ($user->dosens_id) {
+                    $jabatansList = Jabatan::where('dosens_id', $user->dosens_id)->where('status', 1)->pluck('nama_jabatan')->toArray();
+                } elseif ($user->pegawais_id) {
+                    $jabatansList = Jabatan::where('pegawais_id', $user->pegawais_id)->where('status', 1)->pluck('nama_jabatan')->toArray();
+                }
+            } elseif ($guard === 'dosen') {
+                $jabatansList = Jabatan::where('dosens_id', $user->id)->where('status', 1)->pluck('nama_jabatan')->toArray();
+            } elseif ($guard === 'kaprodi' || $guard === 'direktur' || $guard === 'wakil_direktur') {
+                if (! empty($user->dosens_id)) {
+                    $jabatansList = Jabatan::where('dosens_id', $user->dosens_id)->where('status', 1)->pluck('nama_jabatan')->toArray();
+                }
+            }
+
             session(['user' => [
                 'id' => $user->id,
-                'kelasId' => $user->kelas_id,
-                'nama' => $user->nama ?? $user->nama_lengkap,
+                'kelasId' => $user->kelas_id ?? null,
+                'nama' => $user->nama ?? $user->nama_lengkap ?? $user->name,
                 'role' => $role,
-                'wadir' => $user->no,
+                'jabatans' => $jabatansList,
+                'wadir' => $user->no ?? null,
                 'prodiId' => $role === 'kaprodi' ? $activeProdiId : ($user->prodis_id ?? null),
                 'prodiIds' => $prodiIds,
                 'activeProdiId' => $activeProdiId,
                 'email' => $user->email,
-                'status_pa' => $user->pembimbing_akademik,
+                'status_pa' => $user->pembimbing_akademik ?? null,
             ]]);
+
             $roleRedirects = [
                 'admin' => 'v2.admin.dashboard',
                 'mahasiswa' => 'v2.mahasiswa.dashboard',
@@ -96,13 +132,20 @@ class AuthController extends Controller
                 'wakil_direktur' => 'v2.direktur.dashboard',
                 'dosen' => 'v2.dosen.dashboard',
                 'kaprodi' => 'v2.kaprodi.dashboard',
+                'bpmi' => 'v2.dosen.dashboard',
+                'kemahasiswaan' => 'v2.dosen.dashboard',
+                'perpustakaan' => 'v2.dosen.dashboard',
+                'sarpras' => 'v2.dosen.dashboard',
+                'personalia' => 'v2.dosen.dashboard',
             ];
             $redirectRoute = $roleRedirects[$role] ?? 'dashboard';
+
             return redirect()->route($redirectRoute);
-        } else
+        } else {
             return back()->withErrors([
                 'username' => 'Username atau password salah',
             ])->withInput($request->only('username', 'role'));
+        }
     }
 
     public function logout(Request $request)
@@ -128,10 +171,18 @@ class AuthController extends Controller
             case 'dosen':
                 Auth::guard('dosen')->logout();
                 break;
+            case 'bpmi':
+            case 'kemahasiswaan':
+            case 'perpustakaan':
+            case 'sarpras':
+            case 'personalia':
+                Auth::guard('jabatan')->logout();
+                break;
         }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
@@ -144,8 +195,8 @@ class AuthController extends Controller
             'password' => [
                 'required',
                 'confirmed',
-                'min:8'
-            ]
+                'min:8',
+            ],
         ]);
 
         $user = Auth::user();
@@ -156,18 +207,19 @@ class AuthController extends Controller
             Wadir::class => 'wakil_direktur',
             Kaprodi::class => 'kaprodi',
             Mahasiswa::class => 'mahasiswa',
-            Dosen::class => 'dosen'
+            Dosen::class => 'dosen',
+            Jabatan::class => 'jabatan',
         ];
 
         $guard = $guardMap[get_class($user)] ?? null;
 
-        if (!$guard) {
+        if (! $guard) {
             return back()->withErrors('Tipe pengguna tidak dikenali');
         }
 
         $user->update([
             'password' => Hash::make($request->password),
-            'is_first_login' => false
+            'is_first_login' => false,
         ]);
 
         Auth::guard($guard)->logout();
@@ -178,7 +230,7 @@ class AuthController extends Controller
             ->with('success', 'Password berhasil diatur. Silakan login kembali.')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
-            ->header('Expires', '0');;
+            ->header('Expires', '0');
     }
 
     public function changePassword(Request $request)
@@ -198,13 +250,12 @@ class AuthController extends Controller
             'new_password_confirmation.same' => 'Konfirmasi password baru tidak sama dengan password baru.',
         ]);
 
-
-        if (!Hash::check($request->old_password, $user->password)) {
+        if (! Hash::check($request->old_password, $user->password)) {
             return back()->withErrors(['old_password' => 'Password lama salah.']);
         }
 
         $user->update([
-            'password' => Hash::make($request->new_password)
+            'password' => Hash::make($request->new_password),
         ]);
 
         $guardMap = [
@@ -213,12 +264,13 @@ class AuthController extends Controller
             Wadir::class => 'wakil_direktur',
             Kaprodi::class => 'kaprodi',
             Mahasiswa::class => 'mahasiswa',
-            Dosen::class => 'dosen'
+            Dosen::class => 'dosen',
+            Jabatan::class => 'jabatan',
         ];
 
         $guard = $guardMap[get_class($user)] ?? null;
 
-        if (!$guard) {
+        if (! $guard) {
             return back()->withErrors('Tipe pengguna tidak dikenali');
         }
 
@@ -228,11 +280,10 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Password berhasil diubah, silakan login kembali.'
+            'message' => 'Password berhasil diubah, silakan login kembali.',
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate')
-          ->header('Pragma', 'no-cache')
-          ->header('Expires', '0');
-
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
 
     }
 }

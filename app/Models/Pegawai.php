@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 
 class Pegawai extends Authenticatable
 {
-    use HasFactory,SoftDeletes,Notifiable;
+    use HasFactory,Notifiable,SoftDeletes;
 
     protected $guarded = ['id'];
 
     protected $dates = ['deleted_at'];
+
+    public function jabatans()
+    {
+        return $this->hasMany(Jabatan::class, 'pegawais_id', 'id');
+    }
 }

@@ -3,14 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Dosen extends Authenticatable
 {
-    use HasFactory,SoftDeletes,Notifiable;
+    use HasFactory,Notifiable,SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -23,7 +22,7 @@ class Dosen extends Authenticatable
 
     public function jadwal()
     {
-        return $this->hasMany(Jadwal::class,'dosens_id');
+        return $this->hasMany(Jadwal::class, 'dosens_id');
     }
 
     public function absen()
@@ -45,17 +44,18 @@ class Dosen extends Authenticatable
     {
         return $this->hasMany(PengajuanRekapBerita::class);
     }
+
     public function tugas()
     {
         return $this->hasMany(Tugas::class);
     }
 
-    public function sentMessages() 
+    public function sentMessages()
     {
         return $this->morphMany(Message::class, 'sender');
     }
 
-    public function receivMessages() 
+    public function receivMessages()
     {
         return $this->morphMany(Message::class, 'receiver');
     }
@@ -65,11 +65,18 @@ class Dosen extends Authenticatable
         return $this->hasOne(Direktur::class);
     }
 
-    public function wadir(){
+    public function wadir()
+    {
         return $this->hasOne(Wadir::class);
     }
 
-    public function kaprodi(){
+    public function kaprodi()
+    {
         return $this->hasMany(Kaprodi::class);
+    }
+
+    public function jabatans()
+    {
+        return $this->hasMany(Jabatan::class, 'dosens_id', 'id');
     }
 }
