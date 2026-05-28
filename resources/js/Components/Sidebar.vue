@@ -458,7 +458,7 @@ const menuItems = computed(() => {
                     :key="grandChild.title"
                     :href="grandChild.href"
                     class="flex items-center gap-3 pl-20 pr-6 py-2 text-[#6C7383] hover:text-[#4B49AC] hover:bg-[#F5F7FF] transition-all text-xs"
-                    :class="{ 'text-[#4B49AC] font-bold bg-[#F5F7FF]': page.url.split('?')[0] === grandChild.href }"
+                    :class="{ 'text-[#4B49AC] font-bold bg-[#F5F7FF]': isMenuActive(grandChild) }"
                   >
                     {{ grandChild.title }}
                   </Link>
@@ -471,7 +471,7 @@ const menuItems = computed(() => {
                 v-else
                 :href="child.href"
                 class="flex items-center gap-3 pl-12 pr-6 py-2.5 text-[#1F1F1F] hover:bg-[#F5F7FF] transition-all group relative"
-                :class="{ 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': page.url.split('?')[0] === child.href }"
+                :class="{ 'bg-[#F5F7FF] text-[#4B49AC] border-r-4 border-[#4B49AC] shadow-sm': isMenuActive(child) }"
               >
                 <component :is="child.icon" v-if="child.icon" class="w-4 h-4 text-[#4B49AC]" />
                 <span class="text-xs font-medium">{{ child.title }}</span>
