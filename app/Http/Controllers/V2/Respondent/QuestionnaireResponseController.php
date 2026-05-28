@@ -5,10 +5,13 @@ namespace App\Http\Controllers\V2\Respondent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V2\Respondent\Questionnaire\SubmitResponseRequest;
 use App\Models\Dosen;
+use App\Models\Jadwal;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
 use App\Models\Pegawai;
 use App\Models\Questionnaire;
 use App\Models\QuestionnaireResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -68,7 +71,7 @@ class QuestionnaireResponseController extends Controller
     /**
      * Display the questionnaire form.
      */
-    public function show(int $id)
+    public function show(Request $request, int $id)
     {
         $questionnaire = Questionnaire::with(['sections' => function ($query) {
             $query->orderBy('order');
@@ -86,9 +89,76 @@ class QuestionnaireResponseController extends Controller
         $isBpmi = auth()->guard('jabatan')->check() && auth()->guard('jabatan')->user()->nama_jabatan === 'bpmi';
         $isPreview = $isAdmin || $isBpmi;
 
+        $dosen = null;
+        $matkul = null;
+        $dosenId = $request->query('dosen_id');
+        $jadwalId = $request->query('jadwal_id');
+
+        if ($questionnaire->type === 'kinerja_pengajar') {
+            if (! $isPreview) {
+                if (! $dosenId || ! $jadwalId) {
+                    abort(400, 'Dosen dan Jadwal harus ditentukan untuk penilaian kinerja pengajar.');
+                }
+
+                $mahasiswa = auth()->guard('mahasiswa')->user();
+                $schedule = Jadwal::where('id', $jadwalId)
+                    ->where('kelas_id', $mahasiswa->kelas_id)
+                    ->where('dosens_id', $dosenId)
+                    ->whereHas('kelas.semester', function ($query) {
+                        $query->where('status', 1);
+                    })
+                    ->with(['dosen', 'matkul'])
+                    ->first();
+
+                if (! $schedule) {
+                    abort(403, 'Jadwal mengajar tidak valid atau tidak sesuai dengan kelas Anda.');
+                }
+
+                // Cek apakah sudah pernah dinilai sebelumnya untuk mencegah duplikasi pengisian
+                $alreadySubmitted = QuestionnaireResponse::where('questionnaire_id', $questionnaire->id)
+                    ->where('respondent_id', $mahasiswa->id)
+                    ->where('respondent_type', Mahasiswa::class)
+                    ->where('dosen_id', $dosenId)
+                    ->where('jadwal_id', $jadwalId)
+                    ->exists();
+
+                if ($alreadySubmitted) {
+                    return redirect()->route('v2.mahasiswa.kuisioner.index')
+                        ->with('error', 'Anda sudah memberikan penilaian untuk dosen ini.');
+                }
+
+                $dosen = $schedule->dosen;
+                $matkul = $schedule->matkul;
+            } else {
+                // Admin/BPMI Preview
+                if ($dosenId && $jadwalId) {
+                    $dosen = Dosen::find($dosenId);
+                    $schedule = Jadwal::with('matkul')->find($jadwalId);
+                    $matkul = $schedule ? $schedule->matkul : null;
+                } else {
+                    $dosen = Dosen::first();
+                    $matkul = Matkul::first();
+                    $schedule = Jadwal::first();
+                    $jadwalId = $schedule ? $schedule->id : null;
+                }
+            }
+        }
+
         return Inertia::render('Respondent/Questionnaire/Show', [
             'questionnaire' => $questionnaire,
             'isPreview' => $isPreview,
+            'dosen' => $dosen ? [
+                'id' => $dosen->id,
+                'nama' => $dosen->nama,
+            ] : null,
+            'matkul' => $matkul ? [
+                'id' => $matkul->id,
+                'nama_matkul' => $matkul->nama_matkul,
+                'kode' => $matkul->kode,
+            ] : null,
+            'dosenId' => $dosen ? $dosen->id : null,
+            'matkulId' => $matkul ? $matkul->id : null,
+            'jadwalId' => $jadwalId ? (int) $jadwalId : null,
         ]);
     }
 
@@ -124,12 +194,31 @@ class QuestionnaireResponseController extends Controller
             throw ValidationException::withMessages($errors);
         }
 
-        DB::transaction(function () use ($questionnaire, $answersData, $request) {
+        if ($questionnaire->type === 'kinerja_pengajar') {
+            $mahasiswa = auth()->user();
+            $alreadySubmitted = QuestionnaireResponse::where('questionnaire_id', $questionnaire->id)
+                ->where('respondent_id', $mahasiswa->id)
+                ->where('respondent_type', get_class($mahasiswa))
+                ->where('dosen_id', $validated['dosen_id'])
+                ->where('jadwal_id', $validated['jadwal_id'])
+                ->exists();
+
+            if ($alreadySubmitted) {
+                throw ValidationException::withMessages([
+                    'dosen_id' => 'Anda sudah memberikan penilaian untuk dosen ini.',
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($questionnaire, $answersData, $request, $validated) {
             // Simpan Sesi Response
             $response = QuestionnaireResponse::create([
                 'questionnaire_id' => $questionnaire->id,
                 'respondent_id' => auth()->id(),
                 'respondent_type' => get_class(auth()->user()),
+                'dosen_id' => $validated['dosen_id'] ?? null,
+                'matkul_id' => $validated['matkul_id'] ?? null,
+                'jadwal_id' => $validated['jadwal_id'] ?? null,
                 'submitted_at' => now(),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
@@ -180,7 +269,8 @@ class QuestionnaireResponseController extends Controller
             abort(403, 'Akses khusus Mahasiswa.');
         }
 
-        $mahasiswaId = auth()->id();
+        $mahasiswa = auth()->guard('mahasiswa')->user();
+        $mahasiswaId = $mahasiswa->id;
 
         // Ambil kuisioner tipe pelayanan dan kinerja_pengajar yang dipublish
         // dan menargetkan mahasiswa / publik.
@@ -194,6 +284,49 @@ class QuestionnaireResponseController extends Controller
             }])
             ->latest()
             ->get();
+
+        // Ambil jadwal kelas mhs di semester aktif untuk kuisioner tipe kinerja_pengajar
+        $schedules = Jadwal::where('kelas_id', $mahasiswa->kelas_id)
+            ->whereHas('kelas.semester', function ($query) {
+                $query->where('status', 1);
+            })
+            ->with(['dosen', 'matkul'])
+            ->get();
+
+        $questionnaires->transform(function ($q) use ($mahasiswa, $schedules) {
+            if ($q->type === 'kinerja_pengajar') {
+                $teachers = $schedules->map(function ($schedule) use ($mahasiswa, $q) {
+                    $isSubmitted = QuestionnaireResponse::where('questionnaire_id', $q->id)
+                        ->where('respondent_id', $mahasiswa->id)
+                        ->where('respondent_type', Mahasiswa::class)
+                        ->where('dosen_id', $schedule->dosens_id)
+                        ->where('jadwal_id', $schedule->id)
+                        ->exists();
+
+                    return [
+                        'dosen_id' => $schedule->dosens_id,
+                        'nama_dosen' => $schedule->dosen->nama ?? '-',
+                        'matkul_id' => $schedule->matkuls_id,
+                        'nama_matkul' => $schedule->matkul->nama_matkul ?? '-',
+                        'jadwal_id' => $schedule->id,
+                        'is_submitted' => $isSubmitted,
+                    ];
+                });
+
+                $q->teachers_to_evaluate = $teachers;
+
+                // Override responses_count untuk mencerminkan penyelesaian seluruh dosen
+                $totalTeachers = $teachers->count();
+                $completedTeachers = $teachers->where('is_submitted', true)->count();
+                $q->responses_count = ($totalTeachers > 0 && $completedTeachers === $totalTeachers) ? 1 : 0;
+                $q->completed_teachers_count = $completedTeachers;
+                $q->total_teachers_count = $totalTeachers;
+            } else {
+                $q->teachers_to_evaluate = [];
+            }
+
+            return $q;
+        });
 
         return Inertia::render('Respondent/Questionnaire/Index', [
             'questionnaires' => $questionnaires,

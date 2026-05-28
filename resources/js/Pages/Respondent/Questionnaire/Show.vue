@@ -21,7 +21,12 @@ const props = defineProps({
   isPreview: {
     type: Boolean,
     default: false
-  }
+  },
+  dosen: Object,
+  matkul: Object,
+  dosenId: Number,
+  matkulId: Number,
+  jadwalId: Number
 })
 
 const currentStep = ref(0)
@@ -41,7 +46,10 @@ props.questionnaire.sections.forEach(s => {
 })
 
 const form = useForm({
-  answers: initialAnswers
+  answers: initialAnswers,
+  dosen_id: props.dosenId,
+  matkul_id: props.matkulId,
+  jadwal_id: props.jadwalId
 })
 
 // Fungsi validasi halaman aktif saat ini
@@ -122,6 +130,20 @@ const toggleCheckbox = (questionId, option) => {
         <AlertCircle class="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
         <div class="flex-1 text-xs sm:text-sm">
           <strong>Mode Pratinjau</strong>: Anda sedang melihat tampilan kuisioner ini sebagai Pembuat/Admin. Pengiriman tanggapan dinonaktifkan dan tidak akan disimpan.
+        </div>
+      </div>
+
+      <!-- Context Banner for Teacher Performance Evaluation (Shows on all steps) -->
+      <div 
+        v-if="questionnaire.type === 'kinerja_pengajar' && dosen && matkul" 
+        class="bg-[#4B49AC]/5 border border-[#4B49AC]/10 text-[#4B49AC] p-4 rounded-xl shadow-xs space-y-1"
+      >
+        <div class="text-[10px] uppercase tracking-wider font-extrabold text-[#4B49AC]/80">Dosen yang Sedang Dinilai:</div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div class="font-extrabold text-slate-800 text-sm sm:text-base">{{ dosen.nama }}</div>
+          <div class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md sm:self-center w-fit">
+            {{ matkul.nama_matkul }} ({{ matkul.kode }})
+          </div>
         </div>
       </div>
 

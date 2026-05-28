@@ -3,9 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Dosen;
+use App\Models\Jadwal;
+use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use App\Models\Prodi;
 use App\Models\Questionnaire;
 use App\Models\QuestionnaireResponse;
+use App\Models\Semester;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -258,5 +264,132 @@ class QuestionnaireTest extends TestCase
             ->get('/v2/mahasiswa/kuisioner');
 
         $response->assertStatus(200);
+    }
+
+    /**
+     * Test mahasiswa can submit teacher performance evaluation for a specific lecturer and duplicate is prevented.
+     */
+    public function test_mahasiswa_can_submit_teacher_evaluation_and_duplicate_is_prevented(): void
+    {
+        // 1. Create a published teacher evaluation questionnaire
+        $questionnaire = Questionnaire::create([
+            'title' => 'Evaluasi Kinerja Dosen',
+            'description' => 'Evaluasi Dosen oleh Mahasiswa',
+            'type' => 'kinerja_pengajar',
+            'status' => 'published',
+            'target_respondent' => 'mahasiswa',
+            'created_by_id' => $this->admin->id,
+            'created_by_type' => get_class($this->admin),
+        ]);
+
+        $section = $questionnaire->sections()->create([
+            'title' => 'Bagian Utama',
+            'description' => 'Pertanyaan',
+            'order' => 0,
+        ]);
+
+        $question1 = $section->questions()->create([
+            'questionnaire_id' => $questionnaire->id,
+            'question_text' => 'Bagaimana dosen mengajar?',
+            'question_type' => 'radio',
+            'options' => ['Baik', 'Cukup'],
+            'is_required' => true,
+            'order' => 0,
+        ]);
+
+        // 2. Setup Dosen, Kelas, Matkul, and Jadwal
+        $dosen = Dosen::create([
+            'nama' => 'Dosen Penguji',
+            'pembimbing_akademik' => 0,
+            'jenis_kelamin' => 'L',
+            'no_telephone' => '0812345678',
+            'agama' => 'Islam',
+            'status' => 1,
+            'tanggal_lahir' => '1980-01-01',
+            'tempat_lahir' => 'Purworejo',
+            'email' => 'dosen-penguji@test.com',
+            'password' => Hash::make('password'),
+        ]);
+
+        $prodi = Prodi::create([
+            'nama_prodi' => 'Teknik Informatika',
+            'jenjang' => 'D3',
+            'status' => 1,
+        ]);
+
+        $semester = Semester::create([
+            'semester' => 3,
+            'status' => 1, // Active semester
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'TI-3A',
+            'id_semester' => $semester->id,
+            'id_prodi' => $prodi->id,
+        ]);
+
+        // Update student class
+        $this->mahasiswa->update([
+            'kelas_id' => $kelas->id,
+        ]);
+
+        $matkul = Matkul::create([
+            'prodi_id' => $prodi->id,
+            'semester_id' => $semester->id,
+            'nama_matkul' => 'Rekayasa Perangkat Lunak',
+            'alias' => 'RPL',
+            'kode' => 'RPL101',
+        ]);
+
+        $jadwal = Jadwal::create([
+            'dosens_id' => $dosen->id,
+            'matkuls_id' => $matkul->id,
+            'kelas_id' => $kelas->id,
+            'ruangans_id' => 1,
+            'waktu_mulai' => '08:00',
+            'waktu_selesai' => '10:00',
+            'hari' => 'Senin',
+            'tahun' => '2026',
+        ]);
+
+        // Check helper initially returns false
+        $this->assertFalse($this->mahasiswa->hasCompletedAllTeacherEvaluations());
+
+        // 3. Submit evaluation for this lecturer
+        $response = $this->actingAs($this->mahasiswa, 'mahasiswa')
+            ->post("/v2/isi-kuisioner/{$questionnaire->id}/submit", [
+                'dosen_id' => $dosen->id,
+                'matkul_id' => $matkul->id,
+                'jadwal_id' => $jadwal->id,
+                'answers' => [
+                    $question1->id => 'Baik',
+                ],
+            ]);
+
+        $response->assertRedirect(route('v2.mahasiswa.kuisioner.index'));
+
+        $this->assertDatabaseHas('questionnaire_responses', [
+            'questionnaire_id' => $questionnaire->id,
+            'respondent_id' => $this->mahasiswa->id,
+            'dosen_id' => $dosen->id,
+            'matkul_id' => $matkul->id,
+            'jadwal_id' => $jadwal->id,
+        ]);
+
+        // Now helper should return true
+        $this->assertTrue($this->mahasiswa->fresh()->hasCompletedAllTeacherEvaluations());
+
+        // 4. Try submitting again for the same lecturer (should fail)
+        $responseDuplicate = $this->actingAs($this->mahasiswa, 'mahasiswa')
+            ->post("/v2/isi-kuisioner/{$questionnaire->id}/submit", [
+                'dosen_id' => $dosen->id,
+                'matkul_id' => $matkul->id,
+                'jadwal_id' => $jadwal->id,
+                'answers' => [
+                    $question1->id => 'Baik',
+                ],
+            ]);
+
+        $responseDuplicate->assertSessionHasErrors('dosen_id');
     }
 }

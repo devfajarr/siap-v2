@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Mahasiswa;
+use App\Models\PengajuanCetakKartuUjian;
 use App\Models\PengajuanCetakKhs;
 use App\Models\PermohonanSurat;
 use App\Models\Prodi;
@@ -115,11 +116,13 @@ class HandleInertiaRequests extends Middleware
 
         $pendingKhsCount = 0;
         $pendingSuratCount = 0;
+        $pendingKartuUjianCount = 0;
         if ($user && $role === 'Administrator') {
             $pendingKhsCount = PengajuanCetakKhs::where('status', 0)->count();
             $pendingSuratCount = PermohonanSurat::where('setuju_kaprodi', 1)
                 ->where('status', 0)
                 ->count();
+            $pendingKartuUjianCount = PengajuanCetakKartuUjian::where('status', 0)->count();
         }
 
         return [
@@ -134,6 +137,7 @@ class HandleInertiaRequests extends Middleware
                     'activeProdiId' => $activeProdiId,
                     'pending_khs_count' => $pendingKhsCount,
                     'pending_surat_count' => $pendingSuratCount,
+                    'pending_kartu_ujian_count' => $pendingKartuUjianCount,
                     'jabatans' => session('user.jabatans', []),
                     'is_dosen' => ! empty($user->dosens_id) || auth()->guard('dosen')->check(),
                     'is_pegawai' => ! empty($user->pegawais_id) || auth()->guard('pegawai')->check(),

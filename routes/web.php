@@ -387,6 +387,7 @@ use App\Http\Controllers\V2\Admin\JabatanController;
 use App\Http\Controllers\V2\Admin\JadwalMengajarController;
 use App\Http\Controllers\V2\Admin\PembayaranController;
 use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
+use App\Http\Controllers\V2\Admin\PengajuanKartuUjianController;
 use App\Http\Controllers\V2\Admin\PengajuanKhsController;
 use App\Http\Controllers\V2\Admin\QuestionnaireController;
 use App\Http\Controllers\V2\Dosen\BimbinganController;
@@ -697,6 +698,12 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::put('{id}/status', [PengajuanKhsController::class, 'updateStatus'])->name('update-status');
             Route::get('cetak/{mahasiswa_id}/{semester_id}', [PengajuanKhsController::class, 'cetak'])->name('cetak');
         });
+
+        // Pengajuan Kartu Ujian
+        Route::prefix('pengajuan-kartu-ujian')->name('v2.admin.pengajuan-kartu-ujian.')->group(function () {
+            Route::get('/', [PengajuanKartuUjianController::class, 'index'])->name('index');
+            Route::put('{id}/status', [PengajuanKartuUjianController::class, 'updateStatus'])->name('update-status');
+        });
     });
 
     // Admin & BPMI Questionnaire Routes
@@ -729,6 +736,12 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::post('/upload-pembayaran', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'uploadPembayaran'])->name('upload-pembayaran');
         });
         Route::get('riwayat/{semester_id}', [App\Http\Controllers\V2\Mahasiswa\NilaiController::class, 'riwayat'])->name('riwayat');
+
+        // Jadwal & Kartu Ujian MHS
+        Route::prefix('jadwal-ujian')->name('jadwal-ujian.')->group(function () {
+            Route::get('/', [App\Http\Controllers\V2\Mahasiswa\JadwalUjianController::class, 'index'])->name('index');
+            Route::post('/ajukan', [App\Http\Controllers\V2\Mahasiswa\JadwalUjianController::class, 'ajukan'])->name('ajukan');
+        });
 
         // KRS & Pembayaran
         Route::prefix('krs_pembayaran')->name('krs-pembayaran.')->group(function () {

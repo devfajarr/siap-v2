@@ -28,7 +28,7 @@ class QuestionnaireResponseExport implements FromCollection, ShouldAutoSize, Wit
      */
     public function collection()
     {
-        return QuestionnaireResponse::with(['answers', 'respondent'])
+        return QuestionnaireResponse::with(['answers', 'respondent', 'dosen', 'matkul'])
             ->where('questionnaire_id', $this->questionnaire->id)
             ->latest()
             ->get();
@@ -47,6 +47,10 @@ class QuestionnaireResponseExport implements FromCollection, ShouldAutoSize, Wit
             'IP Address',
         ];
 
+        if ($this->questionnaire->type === 'kinerja_pengajar') {
+            array_splice($headers, 3, 0, ['Dosen yang Dinilai', 'Mata Kuliah']);
+        }
+
         foreach ($this->questions as $question) {
             $headers[] = $question->question_text;
         }
@@ -64,12 +68,18 @@ class QuestionnaireResponseExport implements FromCollection, ShouldAutoSize, Wit
         static $rowNumber = 0;
         $rowNumber++;
 
+        $isKinerjaDosen = $this->questionnaire->type === 'kinerja_pengajar';
+
         $respondentName = 'Anonim';
         $respondentType = 'Tamu / Umum';
 
         if ($response->respondent) {
-            $res = $response->respondent;
-            $respondentName = $res->nama ?? $res->nama_lengkap ?? $res->name ?? 'User';
+            if ($isKinerjaDosen) {
+                $respondentName = 'Anonim';
+            } else {
+                $res = $response->respondent;
+                $respondentName = $res->nama ?? $res->nama_lengkap ?? $res->name ?? 'User';
+            }
             $respondentType = class_basename($response->respondent_type);
         }
 
@@ -77,9 +87,15 @@ class QuestionnaireResponseExport implements FromCollection, ShouldAutoSize, Wit
             $rowNumber,
             $response->submitted_at ? $response->submitted_at->format('Y-m-d H:i:s') : '-',
             $respondentName,
-            $respondentType,
-            $response->ip_address ?? '-',
         ];
+
+        if ($isKinerjaDosen) {
+            $rowData[] = $response->dosen->nama ?? '-';
+            $rowData[] = $response->matkul->nama_matkul ?? '-';
+        }
+
+        $rowData[] = $respondentType;
+        $rowData[] = $response->ip_address ?? '-';
 
         $answersMap = $response->answers->keyBy('question_id');
 

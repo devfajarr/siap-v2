@@ -104,6 +104,7 @@ onUnmounted(() => {
 // ─── Admin Pending Counts & Badge Helper ────────────────────────
 const pendingKhsCount = computed(() => page.props.auth?.user?.pending_khs_count || 0)
 const pendingSuratCount = computed(() => page.props.auth?.user?.pending_surat_count || 0)
+const pendingKartuUjianCount = computed(() => page.props.auth?.user?.pending_kartu_ujian_count || 0)
 
 const formatRoleName = (role) => {
   const map = {
@@ -142,6 +143,7 @@ const menuItems = computed(() => {
         children: riwayatChildren.length > 0 ? riwayatChildren : [{ title: 'Belum ada riwayat', href: '#' }]
       },
       { title: 'KRS & Pembayaran', icon: KrsIcon, href: '/v2/mahasiswa/krs_pembayaran' },
+      { title: 'Jadwal & Kartu Ujian', icon: Calendar, href: '/v2/mahasiswa/jadwal-ujian' },
       { title: 'Permohonan Surat', icon: Mail, href: '/v2/mahasiswa/permohonan-surat' },
       { title: 'Konsultasi DPA', icon: MessageSquare, href: '/v2/mahasiswa/dashboard?open_guidance=true' },
       { title: 'Daftar Kuisioner', icon: ClipboardCheck, href: '/v2/mahasiswa/kuisioner' },
@@ -154,7 +156,8 @@ const menuItems = computed(() => {
       { title: 'Presensi',   icon: ClipboardCheck,  href: '/v2/dosen/data-presensi' },
       { title: 'Kontrak',    icon: BookOpenCheck,   href: '/v2/dosen/kontrak' },
       { title: 'Nilai',      icon: BarChart3,       href: '/v2/dosen/nilai' },
-      { title: 'Kuisioner',  icon: FileText,        href: '/v2/dosen/kuisioner' },
+      { title: 'AMI', isSeparator: true },
+      { title: 'Kuisioner AMI',  icon: FileText,        href: '/v2/dosen/kuisioner' },
     ]
 
     if (page.props.auth?.user?.status_pa == 1) {
@@ -346,6 +349,12 @@ const menuItems = computed(() => {
       icon: Star, 
       href: '/v2/admin/pengajuan-khs',
       badge: pendingKhsCount.value
+    },
+    { 
+      title: 'Pengajuan Kartu Ujian', 
+      icon: Calendar, 
+      href: '/v2/admin/pengajuan-kartu-ujian',
+      badge: pendingKartuUjianCount.value
     },
     { 
       title: 'Permohonan Surat', 

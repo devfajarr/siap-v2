@@ -41,4 +41,28 @@ class QuestionnaireResponse extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * Get the evaluated lecturer (dosen) associated with the response.
+     */
+    public function dosen(): BelongsTo
+    {
+        return $this->belongsTo(Dosen::class, 'dosen_id');
+    }
+
+    /**
+     * Get the evaluated subject (matkul) associated with the response.
+     */
+    public function matkul(): BelongsTo
+    {
+        return $this->belongsTo(Matkul::class, 'matkul_id');
+    }
+
+    /**
+     * Get the evaluated schedule (jadwal) associated with the response.
+     */
+    public function jadwal(): BelongsTo
+    {
+        return $this->belongsTo(Jadwal::class, 'jadwal_id');
+    }
 }

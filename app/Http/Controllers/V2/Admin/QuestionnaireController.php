@@ -6,6 +6,7 @@ use App\Exports\QuestionnaireResponseExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V2\Admin\Questionnaire\StoreQuestionnaireRequest;
 use App\Models\Dosen;
+use App\Models\Jadwal;
 use App\Models\Mahasiswa;
 use App\Models\Pegawai;
 use App\Models\Question;
@@ -250,26 +251,37 @@ class QuestionnaireController extends Controller
     /**
      * Display statistical dashboard of questionnaire responses.
      */
-    public function analytics(string $type, int $id)
+    public function analytics(Request $request, string $type, int $id)
     {
         $this->getDatabaseType($type);
         $questionnaire = Questionnaire::with(['sections.questions'])->findOrFail($id);
+        $dosenId = $request->input('dosen_id');
 
-        $totalRespondents = $questionnaire->responses()->count();
+        $responsesQuery = $questionnaire->responses();
+        if ($dosenId && $questionnaire->type === 'kinerja_pengajar') {
+            $responsesQuery->where('dosen_id', $dosenId);
+        }
+        $totalRespondents = $responsesQuery->count();
 
-        // Hitung total target berdasarkan target_respondent
+        // Hitung total target berdasarkan target_respondent dan dosen terpilih
         $target = $questionnaire->target_respondent;
         $totalTarget = 0;
-        if ($target === 'all') {
-            $totalTarget = Mahasiswa::count() + Dosen::count() + Pegawai::count();
-        } elseif ($target === 'mahasiswa') {
-            $totalTarget = Mahasiswa::count();
-        } elseif ($target === 'dosen') {
-            $totalTarget = Dosen::count();
-        } elseif ($target === 'pegawai') {
-            $totalTarget = Pegawai::count();
-        } elseif ($target === 'dosen_pegawai') {
-            $totalTarget = Dosen::count() + Pegawai::count();
+
+        if ($dosenId && $questionnaire->type === 'kinerja_pengajar') {
+            // Target adalah seluruh mahasiswa yang kelasnya diajar oleh dosen terpilih
+            $totalTarget = Mahasiswa::whereIn('kelas_id', Jadwal::where('dosens_id', $dosenId)->pluck('kelas_id'))->count();
+        } else {
+            if ($target === 'all') {
+                $totalTarget = Mahasiswa::count() + Dosen::count() + Pegawai::count();
+            } elseif ($target === 'mahasiswa') {
+                $totalTarget = Mahasiswa::count();
+            } elseif ($target === 'dosen') {
+                $totalTarget = Dosen::count();
+            } elseif ($target === 'pegawai') {
+                $totalTarget = Pegawai::count();
+            } elseif ($target === 'dosen_pegawai') {
+                $totalTarget = Dosen::count() + Pegawai::count();
+            }
         }
 
         // Antisipasi jika data response melebihi target di db local
@@ -288,6 +300,20 @@ class QuestionnaireController extends Controller
             'filled_percentage' => $filledPercentage,
             'pending_percentage' => $pendingPercentage,
         ];
+
+        // Ambil daftar dosen yang dinilai di kuisioner ini (untuk dropdown filter admin)
+        $evaluatedDosens = [];
+        if ($questionnaire->type === 'kinerja_pengajar') {
+            $dosenIds = DB::table('questionnaire_responses')
+                ->where('questionnaire_id', $id)
+                ->whereNotNull('dosen_id')
+                ->distinct()
+                ->pluck('dosen_id');
+
+            $evaluatedDosens = Dosen::whereIn('id', $dosenIds)
+                ->orderBy('nama')
+                ->get(['id', 'nama']);
+        }
 
         $analytics = [];
 
@@ -310,17 +336,21 @@ class QuestionnaireController extends Controller
                     'data' => [],
                 ];
 
-                // Ambil semua jawaban untuk pertanyaan ini
-                $answers = DB::table('questionnaire_answers')
+                // Ambil semua jawaban untuk pertanyaan ini (filter dosen jika dipilih)
+                $answersQuery = DB::table('questionnaire_answers')
                     ->join('questionnaire_responses', 'questionnaire_answers.response_id', '=', 'questionnaire_responses.id')
                     ->where('questionnaire_responses.questionnaire_id', $questionnaire->id)
-                    ->where('questionnaire_answers.question_id', $question->id)
-                    ->pluck('questionnaire_answers.answer_value');
+                    ->where('questionnaire_answers.question_id', $question->id);
 
+                if ($dosenId && $questionnaire->type === 'kinerja_pengajar') {
+                    $answersQuery->where('questionnaire_responses.dosen_id', $dosenId);
+                }
+
+                $answers = $answersQuery->pluck('questionnaire_answers.answer_value');
                 $questionData['total_answers'] = $answers->count();
 
                 if (in_array($question->question_type, ['radio', 'select', 'checkbox'])) {
-                    // Untuk pilihan ganda
+                    // Pilihan ganda
                     $counts = [];
                     foreach ($question->options as $opt) {
                         $counts[$opt] = 0;
@@ -343,7 +373,7 @@ class QuestionnaireController extends Controller
                         }
                     }
 
-                    // Format untuk chart
+                    // Format chart
                     foreach ($counts as $label => $count) {
                         $percentage = $totalRespondents > 0 ? round(($count / $totalRespondents) * 100, 1) : 0;
                         $questionData['data'][] = [
@@ -353,7 +383,7 @@ class QuestionnaireController extends Controller
                         ];
                     }
                 } else {
-                    // Untuk teks bebas / paragraph
+                    // Paragraph / teks bebas
                     $questionData['data'] = $answers->take(50)->toArray();
                 }
 
@@ -368,6 +398,10 @@ class QuestionnaireController extends Controller
             'totalRespondents' => $totalRespondents,
             'targetStats' => $targetStats,
             'analytics' => $analytics,
+            'evaluatedDosens' => $evaluatedDosens,
+            'filters' => [
+                'dosen_id' => $dosenId ? (int) $dosenId : null,
+            ],
             'category' => $type,
             'categoryName' => match ($type) {
                 'pelayanan' => 'Kuis Pelayanan',

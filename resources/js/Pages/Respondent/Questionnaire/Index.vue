@@ -82,7 +82,14 @@ const getCategoryClass = (type) => {
                     
                     <!-- Completion Status -->
                     <span 
-                      v-if="q.responses_count > 0" 
+                      v-if="q.type === 'kinerja_pengajar'" 
+                      class="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#4B49AC] bg-indigo-50/50 px-2 py-0.5 rounded-full border border-[#4B49AC]/10"
+                    >
+                      <Clock class="w-3.5 h-3.5 text-[#4B49AC]" />
+                      Progress: {{ q.completed_teachers_count }}/{{ q.total_teachers_count }} Dosen
+                    </span>
+                    <span 
+                      v-else-if="q.responses_count > 0" 
                       class="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"
                     >
                       <CheckCircle2 class="w-3.5 h-3.5" />
@@ -108,8 +115,48 @@ const getCategoryClass = (type) => {
                   </p>
                 </div>
 
-                <!-- Footer Action -->
-                <div class="pt-2">
+                <!-- Footer Action / List Dosen -->
+                <div v-if="q.type === 'kinerja_pengajar'" class="w-full space-y-3 pt-2">
+                  <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Evaluasi per Dosen Pengajar:</div>
+                  <div v-if="q.teachers_to_evaluate && q.teachers_to_evaluate.length > 0" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    <div 
+                      v-for="t in q.teachers_to_evaluate" 
+                      :key="t.jadwal_id"
+                      class="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all gap-2"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <p class="text-xs font-bold text-slate-800 truncate">{{ t.nama_dosen }}</p>
+                        <p class="text-[10px] text-slate-500 truncate">{{ t.nama_matkul }}</p>
+                      </div>
+                      
+                      <div class="shrink-0">
+                        <div 
+                          v-if="t.is_submitted"
+                          class="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"
+                        >
+                          <CheckCircle2 class="w-3 h-3 text-emerald-500" />
+                          Selesai
+                        </div>
+                        <Link 
+                          v-else
+                          :href="`/v2/isi-kuisioner/${q.id}?dosen_id=${t.dosen_id}&jadwal_id=${t.jadwal_id}`"
+                        >
+                          <Button 
+                            class="h-7 bg-[#4B49AC] hover:bg-[#3f3d91] text-white font-bold rounded-md text-[10px] px-2.5 shadow-sm flex items-center gap-1"
+                          >
+                            Nilai
+                            <ArrowRight class="w-3 h-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="text-center py-4 bg-slate-50 rounded-lg text-xs text-slate-400">
+                    Tidak ada dosen pengajar terdaftar di kelas Anda.
+                  </div>
+                </div>
+
+                <div v-else class="pt-2">
                   <Link 
                     v-if="q.responses_count === 0" 
                     :href="`/v2/isi-kuisioner/${q.id}`"
