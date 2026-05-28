@@ -396,10 +396,21 @@ use App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController;
 use App\Http\Controllers\V2\Kaprodi\MonitoringController;
 use App\Http\Controllers\V2\Respondent\QuestionnaireResponseController;
 
-Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
+Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan', 'role_switch'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
+    Route::middleware('auth:pegawai')->prefix('pegawai')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\V2\Pegawai\DashboardController::class, 'index'])->name('v2.pegawai.dashboard');
+        Route::get('/kuisioner', [QuestionnaireResponseController::class, 'pegawaiIndex'])->name('v2.pegawai.kuisioner.index');
+    });
     Route::get('/dosen/dashboard', [App\Http\Controllers\V2\Dosen\DashboardController::class, 'index'])->name('v2.dosen.dashboard');
     Route::get('/kaprodi/dashboard', [App\Http\Controllers\V2\Kaprodi\DashboardController::class, 'index'])->name('v2.kaprodi.dashboard');
+
+    // Structural Roles Dashboard redirects
+    Route::redirect('/bpmi/dashboard', '/v2/pegawai/dashboard');
+    Route::redirect('/kemahasiswaan/dashboard', '/v2/pegawai/dashboard');
+    Route::redirect('/perpustakaan/dashboard', '/v2/pegawai/dashboard');
+    Route::redirect('/sarpras/dashboard', '/v2/pegawai/dashboard');
+    Route::redirect('/personalia/dashboard', '/v2/pegawai/dashboard');
 
     // Kaprodi Monitoring
     Route::middleware('auth:kaprodi')->prefix('kaprodi')->name('v2.kaprodi.')->group(function () {
@@ -501,6 +512,9 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
 
         // Dosen Bimbingan Akademik
         Route::get('/bimbingan', [BimbinganController::class, 'index'])->name('v2.dosen.bimbingan.index');
+
+        // Dosen Kuisioner (sebagai respondent)
+        Route::get('/kuisioner', [QuestionnaireResponseController::class, 'dosenIndex'])->name('v2.dosen.kuisioner.index');
     });
 
     // Dosen Nilai (V2)
@@ -686,7 +700,7 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
     });
 
     // Admin & BPMI Questionnaire Routes
-    Route::middleware(['auth:admin,dosen'])->prefix('admin/kuisioner')->name('v2.admin.kuisioner.')->group(function () {
+    Route::middleware(['auth:admin,dosen,jabatan'])->prefix('admin/kuisioner')->name('v2.admin.kuisioner.')->group(function () {
         Route::get('{type}', [QuestionnaireController::class, 'index'])->name('index');
         Route::get('{type}/create', [QuestionnaireController::class, 'create'])->name('create');
         Route::post('{type}', [QuestionnaireController::class, 'store'])->name('store');

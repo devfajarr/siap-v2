@@ -44,7 +44,7 @@ class HandleInertiaRequests extends Middleware
 
         // Fallback for multiple guards
         if (! $user) {
-            foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur', 'jabatan'] as $guard) {
+            foreach (['admin', 'dosen', 'pegawai', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur', 'jabatan'] as $guard) {
                 if (auth()->guard($guard)->check()) {
                     $user = auth()->guard($guard)->user();
                     break;
@@ -88,6 +88,8 @@ class HandleInertiaRequests extends Middleware
                 $role = 'Direktur';
             } elseif (auth()->guard('wakil_direktur')->check()) {
                 $role = 'Wakil Direktur';
+            } elseif (auth()->guard('pegawai')->check()) {
+                $role = 'Pegawai';
             } elseif (auth()->guard('jabatan')->check()) {
                 $roleMap = [
                     'bpmi' => 'BPMI',

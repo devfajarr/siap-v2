@@ -4,9 +4,12 @@ namespace App\Http\Controllers\V2\Respondent;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V2\Respondent\Questionnaire\SubmitResponseRequest;
+use App\Models\Dosen;
 use App\Models\Mahasiswa;
+use App\Models\Pegawai;
 use App\Models\Questionnaire;
 use App\Models\QuestionnaireResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -155,7 +158,12 @@ class QuestionnaireResponseController extends Controller
         }
 
         if (auth()->guard('dosen')->check()) {
-            return redirect()->route('v2.dosen.dashboard')
+            return redirect()->route('v2.dosen.kuisioner.index')
+                ->with('success', 'Tanggapan kuisioner Anda berhasil dikirim. Terima kasih atas partisipasi Anda.');
+        }
+
+        if (auth()->guard('pegawai')->check()) {
+            return redirect()->route('v2.pegawai.kuisioner.index')
                 ->with('success', 'Tanggapan kuisioner Anda berhasil dikirim. Terima kasih atas partisipasi Anda.');
         }
 
@@ -183,6 +191,58 @@ class QuestionnaireResponseController extends Controller
             ->withCount(['responses' => function ($query) use ($mahasiswaId) {
                 $query->where('respondent_id', $mahasiswaId)
                     ->where('respondent_type', Mahasiswa::class);
+            }])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Respondent/Questionnaire/Index', [
+            'questionnaires' => $questionnaires,
+        ]);
+    }
+
+    /**
+     * Display a listing of available questionnaires for Dosen.
+     */
+    public function dosenIndex()
+    {
+        /** @var Dosen $dosen */
+        $dosen = Auth::guard('dosen')->user();
+        $dosenId = $dosen->id;
+
+        // Ambil kuisioner tipe ami & pelayanan yang dipublish dan menargetkan dosen.
+        $questionnaires = Questionnaire::query()
+            ->whereIn('type', ['ami', 'pelayanan'])
+            ->where('status', 'published')
+            ->whereIn('target_respondent', ['all', 'dosen', 'dosen_pegawai'])
+            ->withCount(['responses' => function ($query) use ($dosenId) {
+                $query->where('respondent_id', $dosenId)
+                    ->where('respondent_type', Dosen::class);
+            }])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Respondent/Questionnaire/Index', [
+            'questionnaires' => $questionnaires,
+        ]);
+    }
+
+    /**
+     * Display a listing of available questionnaires for Pegawai.
+     */
+    public function pegawaiIndex()
+    {
+        /** @var Pegawai $pegawai */
+        $pegawai = Auth::guard('pegawai')->user();
+        $pegawaiId = $pegawai->id;
+
+        // Ambil kuisioner tipe ami & pelayanan yang dipublish dan menargetkan pegawai.
+        $questionnaires = Questionnaire::query()
+            ->whereIn('type', ['ami', 'pelayanan'])
+            ->where('status', 'published')
+            ->whereIn('target_respondent', ['all', 'pegawai', 'dosen_pegawai'])
+            ->withCount(['responses' => function ($query) use ($pegawaiId) {
+                $query->where('respondent_id', $pegawaiId)
+                    ->where('respondent_type', Pegawai::class);
             }])
             ->latest()
             ->get();

@@ -154,7 +154,7 @@ const menuItems = computed(() => {
       { title: 'Presensi',   icon: ClipboardCheck,  href: '/v2/dosen/data-presensi' },
       { title: 'Kontrak',    icon: BookOpenCheck,   href: '/v2/dosen/kontrak' },
       { title: 'Nilai',      icon: BarChart3,       href: '/v2/dosen/nilai' },
-      { title: 'Kuisioner AMI', icon: FileText,      href: '#' },
+      { title: 'Kuisioner',  icon: FileText,        href: '/v2/dosen/kuisioner' },
     ]
 
     if (page.props.auth?.user?.status_pa == 1) {
@@ -164,28 +164,34 @@ const menuItems = computed(() => {
     }
 
     const jabatans = page.props.auth?.user?.jabatans || []
-    if (jabatans.length > 0) {
-      items.push({ title: 'Akses Jabatan Struktural', isSeparator: true })
-      jabatans.forEach(j => {
-        items.push({ 
-          title: 'Menu ' + formatRoleName(j), 
-          icon: Folder, 
-          href: `/v2/${j}/dashboard` 
+    jabatans.forEach(j => {
+      const formattedName = formatRoleName(j)
+      items.push({ title: 'Akses ' + formattedName, isSeparator: true })
+      if (j.toLowerCase() === 'bpmi') {
+        items.push({
+          title: 'Manajemen Kuisioner',
+          icon: ClipboardCheck,
+          children: [
+            { title: 'Kuis Pelayanan', href: '/v2/admin/kuisioner/pelayanan' },
+            { title: 'Kinerja Pengajar', href: '/v2/admin/kuisioner/kinerja-pengajar' },
+            { title: 'Kuisioner AMI', href: '/v2/admin/kuisioner/ami' },
+          ]
         })
-      })
-    }
+      }
+    })
 
     return items
   }
 
-  if (['BPMI', 'Kemahasiswaan', 'Perpustakaan', 'Sarpras', 'Personalia'].includes(role)) {
+  if (['Pegawai', 'BPMI', 'Kemahasiswaan', 'Perpustakaan', 'Sarpras', 'Personalia'].includes(role)) {
     const items = [
-      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/dosen/dashboard' },
+      { title: 'Dashboard', icon: LayoutDashboard, href: role === 'Pegawai' || ['BPMI', 'Kemahasiswaan', 'Perpustakaan', 'Sarpras', 'Personalia'].includes(role) ? '/v2/pegawai/dashboard' : '/v2/dosen/dashboard' },
+      { title: 'Kuisioner AMI', icon: FileText, href: '/v2/pegawai/kuisioner' },
     ]
 
     if (role === 'BPMI') {
       items.push({
-        title: 'Kuisioner',
+        title: 'Manajemen Kuisioner',
         icon: ClipboardCheck,
         children: [
           { title: 'Kuis Pelayanan', href: '/v2/admin/kuisioner/pelayanan' },
@@ -193,25 +199,29 @@ const menuItems = computed(() => {
           { title: 'Kuisioner AMI', href: '/v2/admin/kuisioner/ami' },
         ]
       })
-    } else {
-      items.push({ title: 'Kuisioner AMI', icon: FileText, href: '#' })
     }
-
-    items.push({ title: 'Akses Jabatan Struktural', isSeparator: true })
 
     const jabatans = page.props.auth?.user?.jabatans || []
     const activeRole = role.toLowerCase()
-    const allJabatans = Array.from(new Set([activeRole, ...jabatans]))
+    const otherJabatans = jabatans.filter(j => j.toLowerCase() !== activeRole)
 
-    allJabatans.forEach(j => {
-      items.push({ 
-        title: 'Menu ' + formatRoleName(j), 
-        icon: Folder, 
-        href: `/v2/${j}/dashboard` 
-      })
+    otherJabatans.forEach(j => {
+      const formattedName = formatRoleName(j)
+      items.push({ title: 'Akses ' + formattedName, isSeparator: true })
+      if (j.toLowerCase() === 'bpmi') {
+        items.push({
+          title: 'Manajemen Kuisioner',
+          icon: ClipboardCheck,
+          children: [
+            { title: 'Kuis Pelayanan', href: '/v2/admin/kuisioner/pelayanan' },
+            { title: 'Kinerja Pengajar', href: '/v2/admin/kuisioner/kinerja-pengajar' },
+            { title: 'Kuisioner AMI', href: '/v2/admin/kuisioner/ami' },
+          ]
+        })
+      }
     })
 
-    if (page.props.auth?.user?.is_dosen) {
+    if (page.props.auth?.user?.is_dosen && role !== 'Dosen') {
       items.push({ title: 'Akses Dosen', isSeparator: true })
       items.push({ title: 'Presensi',   icon: ClipboardCheck,  href: '/v2/dosen/data-presensi' })
       items.push({ title: 'Kontrak',    icon: BookOpenCheck,   href: '/v2/dosen/kontrak' })
@@ -220,6 +230,11 @@ const menuItems = computed(() => {
         items.push({ title: 'Validasi KRS', icon: KrsIcon, href: '/v2/dosen/krs' })
         items.push({ title: 'Bimbingan Mahasiswa', icon: MessageSquare, href: '/v2/dosen/bimbingan', badge: dosenUnreadGuidance })
       }
+    }
+
+    if (page.props.auth?.user?.is_pegawai && role !== 'Pegawai') {
+      items.push({ title: 'Akses Pegawai', isSeparator: true })
+      items.push({ title: 'Dashboard Pegawai', icon: LayoutDashboard, href: '/v2/pegawai/dashboard' })
     }
 
     return items

@@ -8,6 +8,7 @@ use App\Models\Dosen;
 use App\Models\Jabatan;
 use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
+use App\Models\Pegawai;
 use App\Models\Wadir;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,19 +25,20 @@ class AuthController extends Controller
             'direktur' => 'v2.direktur.dashboard',
             'wakil_direktur' => 'v2.direktur.dashboard',
             'dosen' => 'v2.dosen.dashboard',
+            'pegawai' => 'v2.pegawai.dashboard',
             'kaprodi' => 'v2.kaprodi.dashboard',
-            'bpmi' => 'v2.dosen.dashboard',
-            'kemahasiswaan' => 'v2.dosen.dashboard',
-            'perpustakaan' => 'v2.dosen.dashboard',
-            'sarpras' => 'v2.dosen.dashboard',
-            'personalia' => 'v2.dosen.dashboard',
+            'bpmi' => 'v2.pegawai.dashboard',
+            'kemahasiswaan' => 'v2.pegawai.dashboard',
+            'perpustakaan' => 'v2.pegawai.dashboard',
+            'sarpras' => 'v2.pegawai.dashboard',
+            'personalia' => 'v2.pegawai.dashboard',
         ];
 
-        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'kaprodi', 'jabatan'] as $guard) {
+        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'pegawai', 'kaprodi', 'jabatan'] as $guard) {
             if (Auth::guard($guard)->check()) {
                 if ($guard === 'jabatan') {
                     $user = Auth::guard('jabatan')->user();
-                    $redirectRoute = $roleRedirects[$user->nama_jabatan] ?? 'v2.dosen.dashboard';
+                    $redirectRoute = $roleRedirects[$user->nama_jabatan] ?? 'v2.pegawai.dashboard';
                 } else {
                     $redirectRoute = $roleRedirects[$guard] ?? 'dashboard';
                 }
@@ -77,6 +79,9 @@ class AuthController extends Controller
         } elseif ($role === 'dosen') {
             $user = Dosen::where('email', $request->username)->first();
             $guard = 'dosen';
+        } elseif ($role === 'pegawai') {
+            $user = Pegawai::where('email', $request->username)->first();
+            $guard = 'pegawai';
         } elseif (in_array($role, ['bpmi', 'kemahasiswaan', 'perpustakaan', 'sarpras', 'personalia'])) {
             $user = Jabatan::where('email', $request->username)
                 ->where('nama_jabatan', $role)
@@ -105,6 +110,8 @@ class AuthController extends Controller
                 }
             } elseif ($guard === 'dosen') {
                 $jabatansList = Jabatan::where('dosens_id', $user->id)->where('status', 1)->pluck('nama_jabatan')->toArray();
+            } elseif ($guard === 'pegawai') {
+                $jabatansList = Jabatan::where('pegawais_id', $user->id)->where('status', 1)->pluck('nama_jabatan')->toArray();
             } elseif ($guard === 'kaprodi' || $guard === 'direktur' || $guard === 'wakil_direktur') {
                 if (! empty($user->dosens_id)) {
                     $jabatansList = Jabatan::where('dosens_id', $user->dosens_id)->where('status', 1)->pluck('nama_jabatan')->toArray();
@@ -131,12 +138,13 @@ class AuthController extends Controller
                 'direktur' => 'v2.direktur.dashboard',
                 'wakil_direktur' => 'v2.direktur.dashboard',
                 'dosen' => 'v2.dosen.dashboard',
+                'pegawai' => 'v2.pegawai.dashboard',
                 'kaprodi' => 'v2.kaprodi.dashboard',
-                'bpmi' => 'v2.dosen.dashboard',
-                'kemahasiswaan' => 'v2.dosen.dashboard',
-                'perpustakaan' => 'v2.dosen.dashboard',
-                'sarpras' => 'v2.dosen.dashboard',
-                'personalia' => 'v2.dosen.dashboard',
+                'bpmi' => 'v2.pegawai.dashboard',
+                'kemahasiswaan' => 'v2.pegawai.dashboard',
+                'perpustakaan' => 'v2.pegawai.dashboard',
+                'sarpras' => 'v2.pegawai.dashboard',
+                'personalia' => 'v2.pegawai.dashboard',
             ];
             $redirectRoute = $roleRedirects[$role] ?? 'dashboard';
 
@@ -170,6 +178,9 @@ class AuthController extends Controller
                 break;
             case 'dosen':
                 Auth::guard('dosen')->logout();
+                break;
+            case 'pegawai':
+                Auth::guard('pegawai')->logout();
                 break;
             case 'bpmi':
             case 'kemahasiswaan':
@@ -208,6 +219,7 @@ class AuthController extends Controller
             Kaprodi::class => 'kaprodi',
             Mahasiswa::class => 'mahasiswa',
             Dosen::class => 'dosen',
+            Pegawai::class => 'pegawai',
             Jabatan::class => 'jabatan',
         ];
 
@@ -265,6 +277,7 @@ class AuthController extends Controller
             Kaprodi::class => 'kaprodi',
             Mahasiswa::class => 'mahasiswa',
             Dosen::class => 'dosen',
+            Pegawai::class => 'pegawai',
             Jabatan::class => 'jabatan',
         ];
 

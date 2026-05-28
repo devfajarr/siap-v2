@@ -10,13 +10,35 @@ use App\Models\Message;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index()
+    /**
+     * Display the Dosen / structural dashboard.
+     */
+    public function index(): Response
     {
         Carbon::setLocale('id');
+
         $dosen = Auth::guard('dosen')->user();
+        if (! $dosen && Auth::guard('jabatan')->check()) {
+            $dosen = Auth::guard('jabatan')->user()->dosen;
+        }
+
+        if (! $dosen) {
+            return Inertia::render('Dosen/Dashboard', [
+                'stats' => [
+                    'totalKelas' => 0,
+                    'totalMatakuliah' => 0,
+                    'totalPresensiHariIni' => 0,
+                    'totalBimbinganUnread' => 0,
+                ],
+                'jadwalHariIni' => [],
+                'bimbinganUnread' => [],
+            ]);
+        }
+
         $nowDay = Carbon::now()->isoFormat('dddd');
 
         $jadwalsDosenHariIni = Jadwal::with(['kelas', 'matkul', 'ruangan'])
