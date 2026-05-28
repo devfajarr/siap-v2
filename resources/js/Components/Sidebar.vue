@@ -144,7 +144,7 @@ const menuItems = computed(() => {
       { title: 'KRS & Pembayaran', icon: KrsIcon, href: '/v2/mahasiswa/krs_pembayaran' },
       { title: 'Permohonan Surat', icon: Mail, href: '/v2/mahasiswa/permohonan-surat' },
       { title: 'Konsultasi DPA', icon: MessageSquare, href: '/v2/mahasiswa/dashboard?open_guidance=true' },
-      { title: 'Daftar Kuisioner', icon: ClipboardCheck, href: '#' },
+      { title: 'Daftar Kuisioner', icon: ClipboardCheck, href: '/v2/mahasiswa/kuisioner' },
     ]
   }
 
@@ -181,9 +181,23 @@ const menuItems = computed(() => {
   if (['BPMI', 'Kemahasiswaan', 'Perpustakaan', 'Sarpras', 'Personalia'].includes(role)) {
     const items = [
       { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/dosen/dashboard' },
-      { title: 'Kuisioner AMI', icon: FileText, href: '#' },
-      { title: 'Akses Jabatan Struktural', isSeparator: true },
     ]
+
+    if (role === 'BPMI') {
+      items.push({
+        title: 'Kuisioner',
+        icon: ClipboardCheck,
+        children: [
+          { title: 'Kuis Pelayanan', href: '/v2/admin/kuisioner/pelayanan' },
+          { title: 'Kinerja Pengajar', href: '/v2/admin/kuisioner/kinerja-pengajar' },
+          { title: 'Kuisioner AMI', href: '/v2/admin/kuisioner/ami' },
+        ]
+      })
+    } else {
+      items.push({ title: 'Kuisioner AMI', icon: FileText, href: '#' })
+    }
+
+    items.push({ title: 'Akses Jabatan Struktural', isSeparator: true })
 
     const jabatans = page.props.auth?.user?.jabatans || []
     const activeRole = role.toLowerCase()
@@ -332,6 +346,15 @@ const menuItems = computed(() => {
       ]
     },
     { title: 'Informasi Tambahan', icon: PlusCircle, href: '/v2/admin/informasi-tambahan' },
+    {
+      title: 'Kuisioner',
+      icon: ClipboardCheck,
+      children: [
+        { title: 'Kuis Pelayanan', href: '/v2/admin/kuisioner/pelayanan' },
+        { title: 'Kinerja Pengajar', href: '/v2/admin/kuisioner/kinerja-pengajar' },
+        { title: 'Kuisioner AMI', href: '/v2/admin/kuisioner/ami' },
+      ]
+    },
   ]
 })
 </script>

@@ -388,11 +388,13 @@ use App\Http\Controllers\V2\Admin\JadwalMengajarController;
 use App\Http\Controllers\V2\Admin\PembayaranController;
 use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
 use App\Http\Controllers\V2\Admin\PengajuanKhsController;
+use App\Http\Controllers\V2\Admin\QuestionnaireController;
 use App\Http\Controllers\V2\Dosen\BimbinganController;
 use App\Http\Controllers\V2\Dosen\KrsController;
 use App\Http\Controllers\V2\Kaprodi\ApprovalController;
 use App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController;
 use App\Http\Controllers\V2\Kaprodi\MonitoringController;
+use App\Http\Controllers\V2\Respondent\QuestionnaireResponseController;
 
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,kaprodi'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
@@ -683,9 +685,28 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         });
     });
 
-    // Mahasiswa Routes
+    // Admin & BPMI Questionnaire Routes
+    Route::middleware(['auth:admin,dosen'])->prefix('admin/kuisioner')->name('v2.admin.kuisioner.')->group(function () {
+        Route::get('{type}', [QuestionnaireController::class, 'index'])->name('index');
+        Route::get('{type}/create', [QuestionnaireController::class, 'create'])->name('create');
+        Route::post('{type}', [QuestionnaireController::class, 'store'])->name('store');
+        Route::get('{type}/{id}/edit', [QuestionnaireController::class, 'edit'])->name('edit');
+        Route::put('{type}/{id}', [QuestionnaireController::class, 'update'])->name('update');
+        Route::delete('{type}/{id}', [QuestionnaireController::class, 'destroy'])->name('destroy');
+        Route::get('{type}/{id}/analytics', [QuestionnaireController::class, 'analytics'])->name('analytics');
+        Route::get('{type}/{id}/export/{format}', [QuestionnaireController::class, 'export'])->name('export');
+    });
+
+    // Respondent Questionnaire Routes
+    Route::middleware(['auth:mahasiswa,dosen,admin'])->group(function () {
+        Route::get('isi-kuisioner/{id}', [QuestionnaireResponseController::class, 'show'])->name('v2.kuisioner.show');
+        Route::post('isi-kuisioner/{id}/submit', [QuestionnaireResponseController::class, 'submit'])->name('v2.kuisioner.submit');
+    });
+
     Route::middleware('auth:mahasiswa')->prefix('mahasiswa')->name('v2.mahasiswa.')->group(function () {
         Route::get('dashboard', [App\Http\Controllers\V2\Mahasiswa\DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('kuisioner', [QuestionnaireResponseController::class, 'index'])->name('kuisioner.index');
 
         // Nilai & KHS
         Route::prefix('nilai')->name('nilai.')->group(function () {
