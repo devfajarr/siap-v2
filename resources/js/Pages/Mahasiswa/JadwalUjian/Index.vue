@@ -40,6 +40,14 @@ const props = defineProps({
   uas: {
     type: Object,
     required: true
+  },
+  is_uts_open: {
+    type: Boolean,
+    default: false
+  },
+  is_uas_open: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -47,6 +55,11 @@ const page = usePage()
 
 // Tab Active State ('uts' atau 'uas')
 const activeTab = ref('uts')
+
+// Check if current active tab period is open
+const isPeriodOpen = computed(() => {
+  return activeTab.value === 'uts' ? props.is_uts_open : props.is_uas_open
+})
 
 // Bulan list
 const months = [
@@ -232,6 +245,20 @@ const formatDate = (dateStr) => {
         </div>
       </div>
 
+      <!-- Warning Alert if Period is Closed -->
+      <div 
+        v-if="!isPeriodOpen" 
+        class="p-4 rounded-2xl border border-amber-200 bg-amber-50/50 flex items-start gap-3 shadow-xs"
+      >
+        <AlertCircle class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <h4 class="font-bold text-sm text-amber-950">Periode Pengajuan Kartu Ujian {{ activeTab.toUpperCase() }} Ditutup</h4>
+          <p class="text-xs text-amber-800 mt-1 leading-relaxed">
+            Periode pengunggahan berkas dan pengajuan kartu ujian fisik untuk pelaksanaan ujian <b>{{ activeTab.toUpperCase() }}</b> saat ini sedang ditutup atau belum diaktifkan oleh bagian akademik. Silakan hubungi bagian keuangan/akademik kampus untuk informasi lebih lanjut.
+          </p>
+        </div>
+      </div>
+
       <!-- Main Layout Checklist & Form -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Checklist & Request Form (Left Column) -->
@@ -400,8 +427,8 @@ const formatDate = (dateStr) => {
                 </div>
               </div>
 
-              <!-- UPLOAD FORM (Tampil jika belum mengajukan OR ditolak) -->
-              <div v-if="!currentData.pengajuan || currentData.pengajuan.status === 2" class="space-y-4 pt-2 border-t border-gray-100">
+              <!-- UPLOAD FORM (Tampil jika belum mengajukan OR ditolak, DAN periode dibuka) -->
+              <div v-if="(!currentData.pengajuan || currentData.pengajuan.status === 2) && isPeriodOpen" class="space-y-4 pt-2 border-t border-gray-100">
                 <h3 class="font-bold text-[#1F1F1F] text-base">Unggah Bukti Pembayaran</h3>
                 <p class="text-xs text-gray-500">Silakan unggah bukti SPP bulan berjalan beserta bukti pembayaran ujian (UTS/UAS).</p>
                 
@@ -507,6 +534,17 @@ const formatDate = (dateStr) => {
                     <UploadCloud class="w-4 h-4 shrink-0" /> Kirim Berkas Pengajuan
                   </button>
                 </div>
+              </div>
+
+              <!-- UTS/UAS Period Closed Banner (Tampil jika belum mengajukan OR ditolak, DAN periode ditutup) -->
+              <div v-else-if="(!currentData.pengajuan || currentData.pengajuan.status === 2) && !isPeriodOpen" class="p-6 text-center border border-dashed border-[#CDD1E1] bg-gray-50/75 rounded-2xl space-y-3 py-8">
+                <div class="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-600 border border-amber-100 shadow-xs">
+                  <Lock class="w-5 h-5" />
+                </div>
+                <div class="text-base font-bold text-gray-700">Periode Pengajuan Ditutup</div>
+                <p class="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                  Mohon maaf, pengunggahan bukti pembayaran dan pengajuan kartu ujian <b>{{ activeTab.toUpperCase() }}</b> saat ini sedang ditutup atau belum dibuka oleh bagian akademik. Silakan hubungi pihak kampus untuk informasi lebih lanjut.
+                </p>
               </div>
 
               <!-- VIEW UPLOADED FILES (Tampil jika sudah diajukan & status pending/selesai) -->

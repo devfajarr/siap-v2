@@ -38,6 +38,10 @@ class DashboardController extends Controller
         // Notifikasi Jadwal Harian Status
         $dailyScheduleStatus = Settings::where('key', 'daily_schedule')->value('value') ?? 0;
 
+        // Status Buka-Tutup Periode Kartu Ujian (UTS & UAS)
+        $utsCardStatus = Settings::where('key', 'buka_kartu_uts')->value('value') ?? 0;
+        $uasCardStatus = Settings::where('key', 'buka_kartu_uas')->value('value') ?? 0;
+
         // Rekap Per Prodi
         $programStudi = Prodi::all();
         $rekapProdi = $programStudi->map(function ($prodi) use ($today) {
@@ -67,6 +71,8 @@ class DashboardController extends Controller
                 'totalTidakHadir' => $totalTidakHadir,
             ],
             'dailyScheduleStatus' => (int) $dailyScheduleStatus,
+            'utsCardStatus' => (int) $utsCardStatus,
+            'uasCardStatus' => (int) $uasCardStatus,
             'rekapProdi' => $rekapProdi,
         ]);
     }

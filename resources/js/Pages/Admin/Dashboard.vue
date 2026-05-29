@@ -12,7 +12,8 @@ import {
   Calendar, 
   CheckCircle2, 
   XCircle,
-  Bell
+  Bell,
+  CreditCard
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -27,10 +28,20 @@ const props = defineProps({
   dailyScheduleStatus: {
     type: Number,
     required: true
+  },
+  utsCardStatus: {
+    type: Number,
+    required: true
+  },
+  uasCardStatus: {
+    type: Number,
+    required: true
   }
 })
 
 const isNotificationEnabled = ref(props.dailyScheduleStatus === 1)
+const isUtsEnabled = ref(props.utsCardStatus === 1)
+const isUasEnabled = ref(props.uasCardStatus === 1)
 const showToast = ref(false)
 const toastMessage = ref('')
 
@@ -52,6 +63,58 @@ const toggleNotification = async (val) => {
     isNotificationEnabled.value = !val
     
     toastMessage.value = 'Gagal memperbarui status notifikasi!'
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, 3000)
+  }
+}
+
+const toggleUtsPeriod = async (val) => {
+  try {
+    await axios.post('/v2/admin/settings/toggle-exam-card', {
+      jenis: 'uts',
+      status: val ? 1 : 0
+    })
+    
+    toastMessage.value = val 
+      ? 'Periode pengajuan kartu UTS berhasil dibuka!' 
+      : 'Periode pengajuan kartu UTS berhasil ditutup!'
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, 3000)
+  } catch (error) {
+    console.error('Failed to update UTS period status:', error)
+    isUtsEnabled.value = !val
+    
+    toastMessage.value = 'Gagal memperbarui status periode UTS!'
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, 3000)
+  }
+}
+
+const toggleUasPeriod = async (val) => {
+  try {
+    await axios.post('/v2/admin/settings/toggle-exam-card', {
+      jenis: 'uas',
+      status: val ? 1 : 0
+    })
+    
+    toastMessage.value = val 
+      ? 'Periode pengajuan kartu UAS berhasil dibuka!' 
+      : 'Periode pengajuan kartu UAS berhasil ditutup!'
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, 3000)
+  } catch (error) {
+    console.error('Failed to update UAS period status:', error)
+    isUasEnabled.value = !val
+    
+    toastMessage.value = 'Gagal memperbarui status periode UAS!'
     showToast.value = true
     setTimeout(() => {
       showToast.value = false
@@ -96,7 +159,7 @@ const cards = [
       </div>
 
       <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card v-for="card in cards" :key="card.title" class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
           <CardContent class="p-4 sm:p-6">
             <div class="flex items-center justify-between">
@@ -111,30 +174,84 @@ const cards = [
             <p class="text-xs text-[#9CA3AF] mt-4">{{ card.description }}</p>
           </CardContent>
         </Card>
+      </div>
 
-        <!-- Notification Toggle Card -->
-        <Card class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
-          <CardContent class="p-4 sm:p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-[#6B7280]">Notifikasi Harian</p>
-                <div class="flex items-center gap-2 mt-2">
-                  <span class="text-xs font-semibold" :class="isNotificationEnabled ? 'text-green-600' : 'text-gray-400'">
-                    {{ isNotificationEnabled ? 'AKTIF' : 'NON-AKTIF' }}
-                  </span>
-                  <Switch 
-                    v-model:checked="isNotificationEnabled" 
-                    @update:checked="toggleNotification"
-                  />
+      <!-- System Controls Section -->
+      <div class="space-y-3">
+        <h2 class="text-lg font-bold text-[#1F2937]">Kontrol & Pengaturan Sistem</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Notification Toggle Card -->
+          <Card class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
+            <CardContent class="p-4 sm:p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#6B7280]">Notifikasi Harian</p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="text-xs font-semibold" :class="isNotificationEnabled ? 'text-green-600' : 'text-gray-400'">
+                      {{ isNotificationEnabled ? 'AKTIF' : 'NON-AKTIF' }}
+                    </span>
+                    <Switch 
+                      v-model:checked="isNotificationEnabled" 
+                      @update:checked="toggleNotification"
+                    />
+                  </div>
+                </div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-white group-hover:scale-110 transition-transform duration-300">
+                  <Bell class="w-6 h-6" />
                 </div>
               </div>
-              <div class="bg-amber-500 p-3 rounded-2xl text-white group-hover:scale-110 transition-transform duration-300">
-                <Bell class="w-6 h-6" />
+              <p class="text-xs text-[#9CA3AF] mt-4">Kontrol notifikasi jadwal harian</p>
+            </CardContent>
+          </Card>
+
+          <!-- UTS Exam Card Period Toggle -->
+          <Card class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
+            <CardContent class="p-4 sm:p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#6B7280]">Periode Kartu UTS</p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="text-xs font-semibold" :class="isUtsEnabled ? 'text-green-600' : 'text-gray-400'">
+                      {{ isUtsEnabled ? 'BUKA' : 'TUTUP' }}
+                    </span>
+                    <Switch 
+                      v-model:checked="isUtsEnabled" 
+                      @update:checked="toggleUtsPeriod"
+                    />
+                  </div>
+                </div>
+                <div class="bg-[#4B49AC] p-3 rounded-2xl text-white group-hover:scale-110 transition-transform duration-300">
+                  <CreditCard class="w-6 h-6" />
+                </div>
               </div>
-            </div>
-            <p class="text-xs text-[#9CA3AF] mt-4">Kontrol notifikasi jadwal harian</p>
-          </CardContent>
-        </Card>
+              <p class="text-xs text-[#9CA3AF] mt-4">Kontrol periode pengajuan kartu UTS</p>
+            </CardContent>
+          </Card>
+
+          <!-- UAS Exam Card Period Toggle -->
+          <Card class="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
+            <CardContent class="p-4 sm:p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#6B7280]">Periode Kartu UAS</p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="text-xs font-semibold" :class="isUasEnabled ? 'text-green-600' : 'text-gray-400'">
+                      {{ isUasEnabled ? 'BUKA' : 'TUTUP' }}
+                    </span>
+                    <Switch 
+                      v-model:checked="isUasEnabled" 
+                      @update:checked="toggleUasPeriod"
+                    />
+                  </div>
+                </div>
+                <div class="bg-[#FF4747] p-3 rounded-2xl text-white group-hover:scale-110 transition-transform duration-300">
+                  <CreditCard class="w-6 h-6" />
+                </div>
+              </div>
+              <p class="text-xs text-[#9CA3AF] mt-4">Kontrol periode pengajuan kartu UAS</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <!-- Attendance Today -->

@@ -7,7 +7,10 @@ use App\Models\Kelas;
 use App\Models\Mahasiswa;
 use App\Models\PengajuanCetakKartuUjian;
 use App\Models\Prodi;
+use App\Models\Questionnaire;
+use App\Models\QuestionnaireResponse;
 use App\Models\Semester;
+use App\Models\Settings;
 use App\Models\TahunAkademik;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
@@ -34,8 +37,8 @@ class KartuUjianTest extends TestCase
         Storage::fake('public');
 
         // Clear existing questionnaires to isolate the check behavior
-        \App\Models\Questionnaire::query()->delete();
-        \App\Models\QuestionnaireResponse::query()->delete();
+        Questionnaire::query()->delete();
+        QuestionnaireResponse::query()->delete();
 
         $prodi = Prodi::create([
             'nama_prodi' => 'Teknik Elektro',
@@ -107,6 +110,9 @@ class KartuUjianTest extends TestCase
      */
     public function test_student_can_submit_exam_card_request_with_proofs(): void
     {
+        // Open period
+        Settings::updateOrCreate(['key' => 'buka_kartu_uts'], ['value' => 1]);
+
         // Mock files
         $buktiSpp = UploadedFile::fake()->image('spp.jpg');
         $buktiUjian = UploadedFile::fake()->image('ujian.jpg');
@@ -129,6 +135,58 @@ class KartuUjianTest extends TestCase
             'bulan_spp' => 'Mei',
             'tahun_spp' => 2026,
             'status' => 0, // Pending
+        ]);
+    }
+
+    /**
+     * Test student cannot submit exam card request when UTS period is closed.
+     */
+    public function test_student_cannot_submit_exam_card_request_when_period_closed(): void
+    {
+        // Close period
+        Settings::updateOrCreate(['key' => 'buka_kartu_uts'], ['value' => 0]);
+
+        // Mock files
+        $buktiSpp = UploadedFile::fake()->image('spp.jpg');
+        $buktiUjian = UploadedFile::fake()->image('ujian.jpg');
+
+        $response = $this->actingAs($this->mahasiswa, 'mahasiswa')
+            ->post('/v2/mahasiswa/jadwal-ujian/ajukan', [
+                'jenis_ujian' => 'uts',
+                'bulan_spp' => 'Mei',
+                'tahun_spp' => 2026,
+                'bukti_spp' => $buktiSpp,
+                'bukti_pembayaran_ujian' => $buktiUjian,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Mohon maaf, periode pengajuan kartu ujian UTS saat ini sedang ditutup.');
+
+        $this->assertDatabaseMissing('pengajuan_cetak_kartu_ujians', [
+            'mahasiswa_id' => $this->mahasiswa->id,
+            'jenis_ujian' => 'uts',
+        ]);
+    }
+
+    /**
+     * Test admin can toggle exam card period.
+     */
+    public function test_admin_can_toggle_exam_card_period(): void
+    {
+        $response = $this->actingAs($this->admin, 'admin')
+            ->post('/v2/admin/settings/toggle-exam-card', [
+                'jenis' => 'uts',
+                'status' => 1,
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 1,
+        ]);
+
+        $this->assertDatabaseHas('settings', [
+            'key' => 'buka_kartu_uts',
+            'value' => 1,
         ]);
     }
 

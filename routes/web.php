@@ -704,6 +704,9 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::get('/', [PengajuanKartuUjianController::class, 'index'])->name('index');
             Route::put('{id}/status', [PengajuanKartuUjianController::class, 'updateStatus'])->name('update-status');
         });
+
+        // Saklar Periode Kartu Ujian (UTS & UAS)
+        Route::post('settings/toggle-exam-card', [SettingsController::class, 'toggleExamCardPeriod'])->name('v2.admin.settings.toggle-exam-card');
     });
 
     // Admin & BPMI Questionnaire Routes

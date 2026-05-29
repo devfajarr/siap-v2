@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Settings;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 
 class SettingsController extends Controller
 {
@@ -14,6 +14,7 @@ class SettingsController extends Controller
 
         return response()->json(['status' => (int) $status]);
     }
+
     public function toggleDailySchedule(Request $request)
     {
         $status = $request->input('status');
@@ -24,5 +25,26 @@ class SettingsController extends Controller
         );
 
         return response()->json(['message' => 'Status jadwal harian diperbarui!', 'status' => $status]);
+    }
+
+    public function toggleExamCardPeriod(Request $request): JsonResponse
+    {
+        $request->validate([
+            'jenis' => 'required|in:uts,uas',
+            'status' => 'required|boolean',
+        ]);
+
+        $key = 'buka_kartu_'.$request->jenis;
+        $status = $request->input('status');
+
+        Settings::updateOrInsert(
+            ['key' => $key],
+            ['value' => $status]
+        );
+
+        return response()->json([
+            'message' => 'Periode kartu ujian '.strtoupper($request->jenis).' berhasil diperbarui!',
+            'status' => (int) $status,
+        ]);
     }
 }

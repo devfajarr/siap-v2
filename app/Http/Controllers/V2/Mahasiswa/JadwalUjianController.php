@@ -9,6 +9,7 @@ use App\Models\Mahasiswa;
 use App\Models\PengajuanCetakKartuUjian;
 use App\Models\Questionnaire;
 use App\Models\QuestionnaireResponse;
+use App\Models\Settings;
 use App\Models\TahunAkademik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,9 @@ class JadwalUjianController extends Controller
      */
     public function index(Request $request): Response
     {
+        $isUtsOpen = Settings::where('key', 'buka_kartu_uts')->value('value') ?? 0;
+        $isUasOpen = Settings::where('key', 'buka_kartu_uas')->value('value') ?? 0;
+
         $user = auth()->guard('mahasiswa')->user();
         $mahasiswa = Mahasiswa::with(['kelas.prodi', 'kelas.semester'])->findOrFail($user->id);
         $kelas = $mahasiswa->kelas;
@@ -36,6 +40,8 @@ class JadwalUjianController extends Controller
                     'semester' => '-',
                 ],
                 'tahun_akademik' => null,
+                'is_uts_open' => (bool) $isUtsOpen,
+                'is_uas_open' => (bool) $isUasOpen,
                 'uts' => [
                     'questionnaire_completed' => false,
                     'schedules' => [],
@@ -168,6 +174,8 @@ class JadwalUjianController extends Controller
                 'semester' => $kelas->semester->nama_semester ?? '-',
             ],
             'tahun_akademik' => $tahunAkademikStr,
+            'is_uts_open' => (bool) $isUtsOpen,
+            'is_uas_open' => (bool) $isUasOpen,
             'uts' => [
                 'questionnaire_completed' => $utsQuestionnaireCompleted,
                 'schedules' => $utsSchedules,
@@ -204,6 +212,14 @@ class JadwalUjianController extends Controller
      */
     public function ajukan(Request $request): RedirectResponse
     {
+        $jenisUjian = $request->input('jenis_ujian');
+        if ($jenisUjian && in_array($jenisUjian, ['uts', 'uas'])) {
+            $isOpen = Settings::where('key', 'buka_kartu_'.$jenisUjian)->value('value') ?? false;
+            if (! $isOpen) {
+                return redirect()->back()->with('error', 'Mohon maaf, periode pengajuan kartu ujian '.strtoupper($jenisUjian).' saat ini sedang ditutup.');
+            }
+        }
+
         $request->validate([
             'jenis_ujian' => 'required|in:uts,uas',
             'bulan_spp' => 'required|string',
