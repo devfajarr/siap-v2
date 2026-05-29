@@ -75,7 +75,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert'
 const props = defineProps({
   jadwals: Object,
   filters: Object,
-  pengawass: Array,
+  dosens: Array,
+  pegawais: Array,
   kelass: Array,
   matkuls: Array,
   ruangans: Array,
@@ -87,9 +88,30 @@ const page = usePage()
 
 // Filters & Search
 const search = ref(props.filters.search || '')
-const filterPengawas = ref(props.filters.pengawas_id || 'all')
+const filterPengawas = ref(props.filters.pengawas_value || 'all')
 const filterKelas = ref(props.filters.kelas_id || 'all')
 const filterJenis = ref(props.filters.jenis || 'all')
+
+const allPengawas = computed(() => {
+  const list = []
+  if (props.dosens) {
+    props.dosens.forEach(d => {
+      list.push({
+        value: `dosen-${d.id}`,
+        label: `${d.nama} (Dosen)`
+      })
+    })
+  }
+  if (props.pegawais) {
+    props.pegawais.forEach(p => {
+      list.push({
+        value: `pegawai-${p.id}`,
+        label: `${p.nama} (Pegawai/Staf)`
+      })
+    })
+  }
+  return list.sort((a, b) => a.label.localeCompare(b.label))
+})
 
 let filterTimeout = null
 const updateFilters = () => {
@@ -97,7 +119,7 @@ const updateFilters = () => {
   filterTimeout = setTimeout(() => {
     router.get('/v2/admin/jadwal-ujian', {
       search: search.value,
-      pengawas_id: filterPengawas.value === 'all' ? '' : filterPengawas.value,
+      pengawas_value: filterPengawas.value === 'all' ? '' : filterPengawas.value,
       kelas_id: filterKelas.value === 'all' ? '' : filterKelas.value,
       jenis: filterJenis.value === 'all' ? '' : filterJenis.value,
     }, {
@@ -147,7 +169,7 @@ watch(() => page.props.flash, (flash) => {
 const form = useForm({
   kelas_id: '',
   matkuls_id: '',
-  pegawais_id: '',
+  pengawas_value: '',
   ruangans_id: '',
   jenis_ujian: '',
   tanggal: '',
@@ -160,7 +182,7 @@ const editForm = useForm({
   id: null,
   kelas_id: '',
   matkuls_id: '',
-  pegawais_id: '',
+  pengawas_value: '',
   ruangans_id: '',
   jenis_ujian: '',
   tanggal: '',
@@ -174,12 +196,21 @@ const openPopoverKelasAdd = ref(false)
 const openPopoverMatkulAdd = ref(false)
 const openPopoverKelasEdit = ref(false)
 const openPopoverMatkulEdit = ref(false)
+const openPopoverPengawasFilter = ref(false)
+const openPopoverPengawasAdd = ref(false)
+const openPopoverPengawasEdit = ref(false)
 
 const getKelasLabel = (kelasId) => {
   if (!kelasId) return 'Pilih Kelas'
   const k = props.kelass.find(x => String(x.id) === String(kelasId))
   if (!k) return 'Pilih Kelas'
   return `${k.nama_kelas} (Smt ${k.semester?.semester || '-'} - ${k.prodi?.singkatan || '-'})`
+}
+
+const getPengawasLabel = (value) => {
+  if (!value) return 'Pilih Pengawas'
+  const p = allPengawas.value.find(x => x.value === String(value))
+  return p ? p.label : 'Pilih Pengawas'
 }
 
 const getMatkulLabel = (matkulId) => {
@@ -227,7 +258,7 @@ const openEditModal = (jadwal) => {
     editForm.matkuls_id = String(jadwal.matkuls_id)
   }, 50)
   
-  editForm.pegawais_id = String(jadwal.pegawais_id)
+  editForm.pengawas_value = `${jadwal.pengawas_type === 'App\\Models\\Dosen' ? 'dosen' : 'pegawai'}-${jadwal.pengawas_id}`
   editForm.ruangans_id = String(jadwal.ruangans_id)
   editForm.jenis_ujian = jadwal.jenis_ujian
   editForm.tanggal = jadwal.tanggal
@@ -338,17 +369,58 @@ const formatDate = (dateString) => {
           <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div class="flex flex-wrap items-center gap-3 flex-1">
               <div class="w-full md:w-[200px]">
-                <Select v-model="filterPengawas">
-                  <SelectTrigger class="bg-gray-50 border-gray-200">
-                    <SelectValue placeholder="Semua Pengawas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Pengawas</SelectItem>
-                    <SelectItem v-for="pengawas in pengawass" :key="pengawas.id" :value="String(pengawas.id)">
-                      {{ pengawas.nama }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover :open="openPopoverPengawasFilter" @update:open="openPopoverPengawasFilter = $event">
+                  <PopoverTrigger as-child>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      :aria-expanded="openPopoverPengawasFilter"
+                      class="w-full justify-between bg-gray-50 border-gray-200 text-left font-normal"
+                      :class="filterPengawas === 'all' ? 'text-gray-500' : 'text-gray-900'"
+                    >
+                      {{ filterPengawas === 'all' ? 'Semua Pengawas' : getPengawasLabel(filterPengawas) }}
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[250px] p-0 bg-white border border-gray-200 shadow-lg" align="start">
+                    <Command>
+                      <CommandInput placeholder="Cari pengawas..." />
+                      <CommandEmpty>Pengawas tidak ditemukan.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          <CommandItem
+                            value="all"
+                            @select="() => {
+                              filterPengawas = 'all'
+                              openPopoverPengawasFilter = false
+                            }"
+                          >
+                            <Check
+                              :class="filterPengawas === 'all' ? 'opacity-100' : 'opacity-0'"
+                              class="mr-2 h-4 w-4"
+                            />
+                            Semua Pengawas
+                          </CommandItem>
+                          <CommandItem
+                            v-for="pengawas in allPengawas"
+                            :key="pengawas.value"
+                            :value="pengawas.label"
+                            @select="() => {
+                              filterPengawas = pengawas.value
+                              openPopoverPengawasFilter = false
+                            }"
+                          >
+                            <Check
+                              :class="filterPengawas === pengawas.value ? 'opacity-100' : 'opacity-0'"
+                              class="mr-2 h-4 w-4"
+                            />
+                            {{ pengawas.label }}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div class="w-full md:w-[200px]">
@@ -436,7 +508,12 @@ const formatDate = (dateString) => {
                 <TableCell>
                   <div class="flex items-center gap-2">
                     <User class="w-4 h-4 text-gray-400 shrink-0" />
-                    <span class="font-medium text-[#374151]">{{ jadwal.pegawai?.nama }}</span>
+                    <span class="font-medium text-[#374151]">
+                      {{ jadwal.pengawas?.nama }}
+                      <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-md ml-1 shrink-0">
+                        {{ jadwal.pengawas_type === 'App\\Models\\Dosen' ? 'Dosen' : 'Staff' }}
+                      </span>
+                    </span>
                   </div>
                 </TableCell>
 
@@ -662,17 +739,47 @@ const formatDate = (dateString) => {
 
               <div class="space-y-2">
                 <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pengawas Ujian</Label>
-                <Select v-model="form.pegawais_id" required>
-                  <SelectTrigger class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20">
-                    <SelectValue placeholder="Pilih Pengawas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="pengawas in pengawass" :key="pengawas.id" :value="String(pengawas.id)">
-                      {{ pengawas.nama }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p v-if="form.errors.pegawais_id" class="text-xs text-red-500 font-medium mt-1">{{ form.errors.pegawais_id }}</p>
+                <Popover :open="openPopoverPengawasAdd" @update:open="openPopoverPengawasAdd = $event">
+                  <PopoverTrigger as-child>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      :aria-expanded="openPopoverPengawasAdd"
+                      class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal"
+                      :class="!form.pengawas_value ? 'text-gray-500' : 'text-gray-900'"
+                    >
+                      {{ getPengawasLabel(form.pengawas_value) }}
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[380px] p-0 bg-white border border-gray-200 shadow-lg" align="start">
+                    <Command>
+                      <CommandInput placeholder="Cari pengawas..." />
+                      <CommandEmpty>Pengawas tidak ditemukan.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          <CommandItem
+                            v-for="pengawas in allPengawas"
+                            :key="pengawas.value"
+                            :value="pengawas.label"
+                            @select="() => {
+                              form.pengawas_value = pengawas.value
+                              openPopoverPengawasAdd = false
+                            }"
+                          >
+                            <Check
+                              :class="form.pengawas_value === pengawas.value ? 'opacity-100' : 'opacity-0'"
+                              class="mr-2 h-4 w-4"
+                            />
+                            {{ pengawas.label }}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <p v-if="form.errors.pengawas_value" class="text-xs text-red-500 font-medium mt-1">{{ form.errors.pengawas_value }}</p>
               </div>
 
               <div class="space-y-2">
@@ -867,17 +974,47 @@ const formatDate = (dateString) => {
 
               <div class="space-y-2">
                 <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pengawas Ujian</Label>
-                <Select v-model="editForm.pegawais_id" required>
-                  <SelectTrigger class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20">
-                    <SelectValue placeholder="Pilih Pengawas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="pengawas in pengawass" :key="pengawas.id" :value="String(pengawas.id)">
-                      {{ pengawas.nama }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p v-if="editForm.errors.pegawais_id" class="text-xs text-red-500 font-medium mt-1">{{ editForm.errors.pegawais_id }}</p>
+                <Popover :open="openPopoverPengawasEdit" @update:open="openPopoverPengawasEdit = $event">
+                  <PopoverTrigger as-child>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      :aria-expanded="openPopoverPengawasEdit"
+                      class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal"
+                      :class="!editForm.pengawas_value ? 'text-gray-500' : 'text-gray-900'"
+                    >
+                      {{ getPengawasLabel(editForm.pengawas_value) }}
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[380px] p-0 bg-white border border-gray-200 shadow-lg" align="start">
+                    <Command>
+                      <CommandInput placeholder="Cari pengawas..." />
+                      <CommandEmpty>Pengawas tidak ditemukan.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          <CommandItem
+                            v-for="pengawas in allPengawas"
+                            :key="pengawas.value"
+                            :value="pengawas.label"
+                            @select="() => {
+                              editForm.pengawas_value = pengawas.value
+                              openPopoverPengawasEdit = false
+                            }"
+                          >
+                            <Check
+                              :class="editForm.pengawas_value === pengawas.value ? 'opacity-100' : 'opacity-0'"
+                              class="mr-2 h-4 w-4"
+                            />
+                            {{ pengawas.label }}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <p v-if="editForm.errors.pengawas_value" class="text-xs text-red-500 font-medium mt-1">{{ editForm.errors.pengawas_value }}</p>
               </div>
 
               <div class="space-y-2">

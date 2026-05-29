@@ -61,7 +61,7 @@ class JadwalUjianController extends Controller
             ->where('jenis_ujian', 'uts')
             ->first();
 
-        $utsSchedules = JadwalUjian::with(['pegawai', 'ruangan', 'matkul'])
+        $utsSchedules = JadwalUjian::with(['pengawas', 'ruangan', 'matkul'])
             ->where('kelas_id', $kelas->id)
             ->where('jenis_ujian', 'uts')
             ->where('tahun', $tahunAkademikStr)
@@ -73,7 +73,7 @@ class JadwalUjianController extends Controller
                     'id' => $j->id,
                     'matkul' => $j->matkul->nama_matkul ?? '-',
                     'kode_matkul' => $j->matkul->kode ?? '-',
-                    'pengawas' => $j->pegawai->nama ?? '-',
+                    'pengawas' => $j->pengawas->nama ?? '-',
                     'ruangan' => $j->ruangan->nama ?? '-',
                     'tanggal' => $j->tanggal,
                     'waktu' => substr($j->waktu_mulai, 0, 5).' - '.substr($j->waktu_selesai, 0, 5),
@@ -106,7 +106,7 @@ class JadwalUjianController extends Controller
             ->where('jenis_ujian', 'uas')
             ->first();
 
-        $uasSchedules = JadwalUjian::with(['pegawai', 'ruangan', 'matkul'])
+        $uasSchedules = JadwalUjian::with(['pengawas', 'ruangan', 'matkul'])
             ->where('kelas_id', $kelas->id)
             ->where('jenis_ujian', 'uas')
             ->where('tahun', $tahunAkademikStr)
@@ -118,7 +118,7 @@ class JadwalUjianController extends Controller
                     'id' => $j->id,
                     'matkul' => $j->matkul->nama_matkul ?? '-',
                     'kode_matkul' => $j->matkul->kode ?? '-',
-                    'pengawas' => $j->pegawai->nama ?? '-',
+                    'pengawas' => $j->pengawas->nama ?? '-',
                     'ruangan' => $j->ruangan->nama ?? '-',
                     'tanggal' => $j->tanggal,
                     'waktu' => substr($j->waktu_mulai, 0, 5).' - '.substr($j->waktu_selesai, 0, 5),
