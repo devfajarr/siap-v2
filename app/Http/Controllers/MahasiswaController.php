@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
-use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Jadwal;
-use App\Models\Mahasiswa;
-use Illuminate\Http\Request;
+use App\Exports\AllMahasiswaExport;
 use App\Exports\MahasiswaExport;
 use App\Imports\MahasiswaImport;
+use App\Models\Dosen;
+use App\Models\Jadwal;
+use App\Models\Kelas;
+use App\Models\Mahasiswa;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Exports\AllMahasiswaExport;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MahasiswaController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-
     public function index()
     {
         $kelass = Kelas::with([
@@ -32,10 +29,11 @@ class MahasiswaController extends Controller
             'semester' => function ($query) {
                 $query->withTrashed();
             },
-            'mahasiswa'
+            'mahasiswa',
         ])
             ->get();
         $kelasAll = Jadwal::all();
+
         return view('pages.data-mahasiswa.index', compact('kelass', 'kelasAll'));
     }
 
@@ -103,12 +101,11 @@ class MahasiswaController extends Controller
             'kelas_id' => $request->kelas_id,
             'dosen_pembimbing_id' => $request->pembimbing_akademik,
             'is_first_login' => true,
-            'tahun_masuk' => $request->tahun_masuk
+            'tahun_masuk' => $request->tahun_masuk,
         ]);
 
         return response()->json(['success' => 'Mahasiswa berhasil ditambahkan']);
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -185,33 +182,26 @@ class MahasiswaController extends Controller
             $updateData['is_first_login'] = true;
         }
 
-
         $mahasiswa->update($updateData);
 
         return response()->json(['success' => 'Data mahasiswa berhasil diperbarui'], 200);
     }
 
-
-
     /**
      * Remove the specified resource from storage.
      */
-
     public function destroy($id)
     {
         $mahasiswa = Mahasiswa::findOrFail($id);
 
-        if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/' . $mahasiswa->profile_picture)) {
-            Storage::delete('public/profile_pictures/' . $mahasiswa->profile_picture);
+        if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/'.$mahasiswa->profile_picture)) {
+            Storage::delete('public/profile_pictures/'.$mahasiswa->profile_picture);
         }
 
         $mahasiswa->delete();
 
         return response()->json(['message' => 'Data mahasiswa berhasil dihapus'], 200);
     }
-
-
-
 
     public function kelas($id)
     {
@@ -231,9 +221,9 @@ class MahasiswaController extends Controller
             ->where('jenis_kelas', $namaKelas->jenis_kelas)
             ->get();
         $kelasAlls = Kelas::where('id_prodi', $namaKelas->id_prodi)->first();
+
         return view('pages.data-mahasiswa.detail', compact('mahasiswas', 'kelass', 'namaKelas', 'dosens', 'kelasAlls', 'kelasAll', 'kelasSem', 'kelasId'));
     }
-
 
     public function pindahKelas(Request $request)
     {
@@ -262,8 +252,8 @@ class MahasiswaController extends Controller
         $mahasiswas = Mahasiswa::whereIn('id', $mahasiswaIds)->get();
 
         foreach ($mahasiswas as $mahasiswa) {
-            if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/' . $mahasiswa->profile_picture)) {
-                Storage::delete('public/profile_pictures/' . $mahasiswa->profile_picture);
+            if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/'.$mahasiswa->profile_picture)) {
+                Storage::delete('public/profile_pictures/'.$mahasiswa->profile_picture);
             }
 
             $mahasiswa->delete();
@@ -271,8 +261,6 @@ class MahasiswaController extends Controller
 
         return response()->json(['status' => 'success']);
     }
-
-
 
     public function search(Request $request)
     {
@@ -306,14 +294,15 @@ class MahasiswaController extends Controller
         DB::commit();
 
         return response()->json([
-            'success' => 'Data mahasiswa berhasil diimpor'
+            'success' => 'Data mahasiswa berhasil diimpor',
         ]);
     }
 
     public function exportSetiapKelas($id)
     {
         $kelas = Kelas::findOrFail($id);
-        return Excel::download(new MahasiswaExport($id), 'mahasiswa_' . $kelas->nama_kelas . '.xlsx');
+
+        return Excel::download(new MahasiswaExport($id), 'mahasiswa_'.$kelas->nama_kelas.'.xlsx');
     }
 
     public function export()

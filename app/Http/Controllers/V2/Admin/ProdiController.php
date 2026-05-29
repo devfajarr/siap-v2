@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Prodi;
-use App\Models\Kelas;
-use App\Models\Kaprodi;
 use App\Http\Requests\V2\Admin\Prodi\StoreProdiRequest;
 use App\Http\Requests\V2\Admin\Prodi\UpdateProdiRequest;
+use App\Models\Kaprodi;
+use App\Models\Kelas;
+use App\Models\Prodi;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ProdiController extends Controller
@@ -22,12 +21,12 @@ class ProdiController extends Controller
         $search = $request->input('search');
 
         $prodis = Prodi::when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('nama_prodi', 'like', "%{$search}%")
-                        ->orWhere('kode_prodi', 'like', "%{$search}%")
-                        ->orWhere('singkatan', 'like', "%{$search}%");
-                });
-            })
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_prodi', 'like', "%{$search}%")
+                    ->orWhere('kode_prodi', 'like', "%{$search}%")
+                    ->orWhere('singkatan', 'like', "%{$search}%");
+            });
+        })
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -66,11 +65,11 @@ class ProdiController extends Controller
     public function destroy($id)
     {
         $prodi = Prodi::findOrFail($id);
-        
+
         // Follow legacy behavior: cleanup related records
         Kelas::where('id_prodi', $prodi->id)->delete();
         Kaprodi::where('prodis_id', $prodi->id)->delete();
-        
+
         $prodi->delete();
 
         return redirect()->back()->with('success', 'Program studi berhasil dihapus.');

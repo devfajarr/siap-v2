@@ -6,6 +6,7 @@ use App\Models\Dosen;
 use App\Models\Jabatan;
 use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
+use App\Models\OrangTua;
 use App\Models\Pegawai;
 use App\Models\Wadir;
 
@@ -80,6 +81,10 @@ return [
             'driver' => 'session',
             'provider' => 'jabatans',
         ],
+        'orang_tua' => [
+            'driver' => 'session',
+            'provider' => 'orang_tuas',
+        ],
     ],
     /*
     |--------------------------------------------------------------------------
@@ -130,6 +135,10 @@ return [
         'jabatans' => [
             'driver' => 'eloquent',
             'model' => Jabatan::class,
+        ],
+        'orang_tuas' => [
+            'driver' => 'eloquent',
+            'model' => OrangTua::class,
         ],
     ],
 

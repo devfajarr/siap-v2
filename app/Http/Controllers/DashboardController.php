@@ -2,28 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absen;
+use App\Models\Admin;
+use App\Models\Dosen;
+use App\Models\Jadwal;
+use App\Models\Kelas;
+use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use App\Models\NilaiHuruf;
 use App\Models\PengajuanRekapBerita;
 use App\Models\PengajuanRekapkontrak;
-use Carbon\Carbon;
-use App\Models\Absen;
-use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Prodi;
-use App\Models\Jadwal;
-use App\Models\Matkul;
-use App\Models\Admin;
-use App\Models\Mahasiswa;
-use App\Models\NilaiHuruf;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\PengajuanRekapPresensi;
+use App\Models\Prodi;
+use App\Models\Semester;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     protected $userId;
+
     protected $prodiId;
+
     protected $role;
 
     public function __construct()
@@ -32,9 +33,11 @@ class DashboardController extends Controller
             $this->userId = Session::get('user.id');
             $this->prodiId = Session::get('user.prodiId');
             $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         Carbon::setLocale('id');
@@ -46,7 +49,6 @@ class DashboardController extends Controller
             ->with('semester')
             ->groupBy('semester_id')
             ->get();
-
 
         // DOSEN
         if (Auth::guard('dosen')->check()) {
@@ -61,9 +63,8 @@ class DashboardController extends Controller
             $totalMatakuliah = $jadwalsDosenHariIni->groupBy('matkuls_id')->count();
             $totalPresensiHariIni = Absen::whereDate('created_at', Carbon::today())
                 ->where('dosens_id', $dosen->id)
-                ->distinct('kelas_id') 
-                ->count('kelas_id');   
-
+                ->distinct('kelas_id')
+                ->count('kelas_id');
 
             return view('pages.dashboard.index', compact('jadwalsDosenHariIni', 'totalKelas', 'totalMatakuliah', 'totalPresensiHariIni', 'kelasAll'));
         }
@@ -160,7 +161,7 @@ class DashboardController extends Controller
             $mahasiswaUser = Mahasiswa::findOrFail($this->userId);
             $kelas = Kelas::findOrFail($mahasiswaUser->kelas_id);
 
-            $totalKehadiran  = Absen::where('mahasiswas_id', $this->userId)
+            $totalKehadiran = Absen::where('mahasiswas_id', $this->userId)
                 ->where('kelas_id', $kelas->id)
                 ->whereIn('status', ['H', 'T'])
                 ->count();
@@ -183,16 +184,16 @@ class DashboardController extends Controller
 
             // New Logic: Fetch semesters based on current semester level
             $currentSemesterLevel = $mahasiswaUser->kelas->semester->semester ?? 0;
-            $semesters = \App\Models\Semester::where('semester', '<=', $currentSemesterLevel)
+            $semesters = Semester::where('semester', '<=', $currentSemesterLevel)
                 ->orderBy('semester', 'asc')
                 ->get();
 
             return view('pages.dashboard.index', compact('totalKehadiran', 'totalMatakuliah', 'jadwalsMahasiswa', 'semesters', 'absensHariIni'));
 
-
             // DOSEN
         } elseif (Auth::guard('dosen')->check()) {
             $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
             return view('pages.dashboard.index', compact('kelasAll'));
 
             // ADMIN
@@ -205,7 +206,6 @@ class DashboardController extends Controller
                 })->count();
 
             $totalDosen = Dosen::where('status', 1)->count();
-
 
             $totalHadir = Absen::whereDate('created_at', Carbon::today())
                 ->whereIn('status', ['H', 'T'])
@@ -234,6 +234,7 @@ class DashboardController extends Controller
                     'total_tidak_hadir' => $totalTidakHadir,
                 ];
             });
+
             return view('pages.dashboard.index', compact('totalMahaiswa', 'totalKelas', 'totalDosen', 'totalHadir', 'totalTidakHadir', 'data'));
 
             // WADIR DAN DIREKTUR
@@ -319,6 +320,7 @@ class DashboardController extends Controller
                     $query->where('setuju_wadir', 0);
                 })
                 ->count();
+
             return view('pages.dashboard.index', compact('persentaseKehadiran', 'totalDosen', 'totalMahaiswa', 'presensis', 'kontrak', 'resume'));
         } else {
             return view('pages.dashboard.index');

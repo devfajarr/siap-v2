@@ -16,16 +16,17 @@ class Kelas extends Model
 
     public function prodi()
     {
-        return  $this->belongsTo(Prodi::class, 'id_prodi');
+        return $this->belongsTo(Prodi::class, 'id_prodi');
     }
+
     public function semester()
     {
-        return  $this->belongsTo(Semester::class, 'id_semester');
+        return $this->belongsTo(Semester::class, 'id_semester');
     }
 
     public function mahasiswa()
     {
-        return  $this->hasMany(Mahasiswa::class);
+        return $this->hasMany(Mahasiswa::class);
     }
 
     public function matkul()
@@ -53,26 +54,32 @@ class Kelas extends Model
     {
         return $this->hasMany(Resume::class);
     }
+
     public function tugas()
     {
         return $this->hasMany(Tugas::class);
     }
+
     public function uas()
     {
         return $this->hasMany(Uas::class);
     }
+
     public function pengajuanPresensi()
     {
         return $this->hasMany(PengajuanRekapPresensi::class);
     }
+
     public function pengajuanBerita()
     {
         return $this->hasMany(PengajuanRekapBerita::class);
     }
+
     public function pengajuanKontreak()
     {
         return $this->hasMany(PengajuanRekapkontrak::class);
     }
+
     public function uts()
     {
         return $this->hasMany(Uts::class);
@@ -87,6 +94,7 @@ class Kelas extends Model
     {
         return $this->hasMany(Aktif::class);
     }
+
     public function pengajuanNilai()
     {
         return $this->hasMany(PengajuanRekapNilai::class);
@@ -102,7 +110,8 @@ class Kelas extends Model
         return $this->hasMany(Pembayaran::class);
     }
 
-    public function krs(){
+    public function krs()
+    {
         return $this->hasMany(Krs::class);
     }
 

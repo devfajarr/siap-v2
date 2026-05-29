@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\V2\Dosen;
 
 use App\Http\Controllers\Controller;
-use App\Models\Absen;
+use App\Models\Admin;
 use App\Models\Aktif;
 use App\Models\Etika;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
-use App\Models\NilaiHuruf;
 use App\Models\PengajuanRekapNilai;
 use App\Models\TahunAkademik;
 use App\Models\Tugas;
@@ -34,9 +33,9 @@ class NilaiController extends Controller
         $dosen = Auth::guard('dosen')->user();
 
         $jadwals = Jadwal::with([
-            'matkul'   => fn($q) => $q->withTrashed(),
-            'kelas'    => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
         ])
             ->where('dosens_id', $dosen->id)
             ->latest()
@@ -46,11 +45,11 @@ class NilaiController extends Controller
         // Menggunakan groupBy + selectRaw untuk menghindari N+1 query
         $jadwalIds = $jadwals->pluck('id');
 
-        $tugasExists  = Tugas::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
-        $utsExists    = Uts::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
-        $uasExists    = Uas::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
-        $etikaExists  = Etika::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
-        $aktifExists  = Aktif::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
+        $tugasExists = Tugas::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
+        $utsExists = Uts::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
+        $uasExists = Uas::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
+        $etikaExists = Etika::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
+        $aktifExists = Aktif::whereIn('jadwal_id', $jadwalIds)->pluck('jadwal_id')->unique();
 
         // Status pengajuan verifikasi per jadwal
         $pengajuanStatuses = PengajuanRekapNilai::whereIn('jadwal_id', $jadwalIds)
@@ -66,8 +65,8 @@ class NilaiController extends Controller
             $pengajuanStatuses
         ) {
             $hasTugas = $tugasExists->contains($jadwal->id);
-            $hasUts   = $utsExists->contains($jadwal->id);
-            $hasUas   = $uasExists->contains($jadwal->id);
+            $hasUts = $utsExists->contains($jadwal->id);
+            $hasUas = $uasExists->contains($jadwal->id);
             $hasEtika = $etikaExists->contains($jadwal->id);
             $hasAktif = $aktifExists->contains($jadwal->id);
 
@@ -79,32 +78,32 @@ class NilaiController extends Controller
 
             // Tentukan status nilai keseluruhan
             $statusNilai = match (true) {
-                $pengajuan && $pengajuan->status == 1         => 'disetujui',
-                $pengajuan && $pengajuan->status == 0         => 'diajukan',
-                $completedComponents === 5                    => 'lengkap',
-                $completedComponents > 0                     => 'sebagian',
-                default                                      => 'belum',
+                $pengajuan && $pengajuan->status == 1 => 'disetujui',
+                $pengajuan && $pengajuan->status == 0 => 'diajukan',
+                $completedComponents === 5 => 'lengkap',
+                $completedComponents > 0 => 'sebagian',
+                default => 'belum',
             };
 
             return [
-                'id'                   => $jadwal->id,
-                'kelas_id'             => $jadwal->kelas_id,
-                'matkul_id'            => $jadwal->matkuls_id,
-                'matkul'               => $jadwal->matkul?->nama_matkul ?? '-',
-                'sks'                  => ($jadwal->matkul?->teori ?? 0) + ($jadwal->matkul?->praktek ?? 0),
-                'kelas'                => $jadwal->kelas?->nama_kelas ?? '-',
-                'prodi'                => $jadwal->kelas?->prodi?->nama_prodi ?? '-',
-                'hari'                 => $jadwal->hari,
-                'completion'           => [
+                'id' => $jadwal->id,
+                'kelas_id' => $jadwal->kelas_id,
+                'matkul_id' => $jadwal->matkuls_id,
+                'matkul' => $jadwal->matkul?->nama_matkul ?? '-',
+                'sks' => ($jadwal->matkul?->teori ?? 0) + ($jadwal->matkul?->praktek ?? 0),
+                'kelas' => $jadwal->kelas?->nama_kelas ?? '-',
+                'prodi' => $jadwal->kelas?->prodi?->nama_prodi ?? '-',
+                'hari' => $jadwal->hari,
+                'completion' => [
                     'tugas' => $hasTugas,
-                    'uts'   => $hasUts,
-                    'uas'   => $hasUas,
+                    'uts' => $hasUts,
+                    'uas' => $hasUas,
                     'etika' => $hasEtika,
                     'aktif' => $hasAktif,
                     'total' => $completedComponents,
                 ],
-                'status_nilai'         => $statusNilai,
-                'pengajuan_id'         => $pengajuan?->id,
+                'status_nilai' => $statusNilai,
+                'pengajuan_id' => $pengajuan?->id,
             ];
         });
 
@@ -123,17 +122,17 @@ class NilaiController extends Controller
 
         // Verifikasi kepemilikan jadwal — dosen tidak bisa akses data jadwal milik dosen lain
         $jadwal = Jadwal::with([
-            'matkul'          => fn($q) => $q->withTrashed(),
-            'kelas'           => fn($q) => $q->withTrashed(),
-            'kelas.prodi'     => fn($q) => $q->withTrashed(),
-            'kelas.semester'  => fn($q) => $q->withTrashed(),
-            'dosen'           => fn($q) => $q->withTrashed(),
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'kelas.semester' => fn ($q) => $q->withTrashed(),
+            'dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
-        $kelas_id  = $jadwal->kelas_id;
+        $kelas_id = $jadwal->kelas_id;
         $matkul_id = $jadwal->matkuls_id;
 
         // Ambil semua data nilai sekaligus via NilaiService (bulk-load, no N+1)
@@ -154,28 +153,29 @@ class NilaiController extends Controller
         // Cek kelengkapan komponen nilai (dari data yang sudah di-load, tanpa extra query)
         $completionStatus = [
             'tugas' => $rekapData['tugass']->count() > 0,
-            'uts'   => $rekapData['utss']->count() > 0,
-            'uas'   => $rekapData['uass']->count() > 0,
+            'uts' => $rekapData['utss']->count() > 0,
+            'uas' => $rekapData['uass']->count() > 0,
             'etika' => $rekapData['etikas']->count() > 0,
             'aktif' => $rekapData['aktifs']->count() > 0,
         ];
-        $completionStatus['semua_lengkap'] = !in_array(false, $completionStatus, true);
+        $completionStatus['semua_lengkap'] = ! in_array(false, $completionStatus, true);
 
         // Hitung nilai akhir setiap mahasiswa dari data yang sudah di-load (zero extra DB query)
         $nilaiAkhir = $rekapData['mahasiswas']->mapWithKeys(function ($mhs) use ($rekapData) {
             $total = NilaiService::calculateTotalNilai(
-                mahasiswaId:   $mhs->id,
-                groupedTugas:  $rekapData['groupedTugas'],
-                utss:          $rekapData['utss'],
-                uass:          $rekapData['uass'],
-                etikas:        $rekapData['etikas'],
-                aktifs:        $rekapData['aktifs'],
-                dataAbsensi:   $rekapData['dataAbsensi'],
+                mahasiswaId: $mhs->id,
+                groupedTugas: $rekapData['groupedTugas'],
+                utss: $rekapData['utss'],
+                uass: $rekapData['uass'],
+                etikas: $rekapData['etikas'],
+                aktifs: $rekapData['aktifs'],
+                dataAbsensi: $rekapData['dataAbsensi'],
             );
+
             return [
                 $mhs->id => [
-                    'total'  => round($total, 2),
-                    'huruf'  => NilaiService::getNilaiHuruf($total),
+                    'total' => round($total, 2),
+                    'huruf' => NilaiService::getNilaiHuruf($total),
                 ],
             ];
         });
@@ -189,51 +189,51 @@ class NilaiController extends Controller
 
         // Format data tugas per mahasiswa untuk frontend
         $tugasGrouped = $rekapData['tugass']->groupBy('mahasiswa_id')->map(
-            fn($items) => $items->sortBy('tugas_ke')->values()->map(
-                fn($t) => ['tugas_ke' => $t->tugas_ke, 'nilai' => $t->nilai, 'id' => $t->id]
+            fn ($items) => $items->sortBy('tugas_ke')->values()->map(
+                fn ($t) => ['tugas_ke' => $t->tugas_ke, 'nilai' => $t->nilai, 'id' => $t->id]
             )
         );
 
         return Inertia::render('Dosen/Nilai/Show', [
             'jadwal' => [
-                'id'            => $jadwal->id,
-                'matkul_id'     => $matkul_id,
-                'kelas_id'      => $kelas_id,
-                'matkul'        => $jadwal->matkul?->nama_matkul ?? '-',
-                'kelas'         => $jadwal->kelas?->nama_kelas ?? '-',
-                'prodi'         => $jadwal->kelas?->prodi?->nama_prodi ?? '-',
-                'semester'      => $jadwal->kelas?->semester?->nama_semester ?? '-',
-                'dosen'         => $jadwal->dosen?->nama ?? '-',
-                'hari'          => $jadwal->hari,
-                'sks'           => ($jadwal->matkul?->teori ?? 0) + ($jadwal->matkul?->praktek ?? 0),
+                'id' => $jadwal->id,
+                'matkul_id' => $matkul_id,
+                'kelas_id' => $kelas_id,
+                'matkul' => $jadwal->matkul?->nama_matkul ?? '-',
+                'kelas' => $jadwal->kelas?->nama_kelas ?? '-',
+                'prodi' => $jadwal->kelas?->prodi?->nama_prodi ?? '-',
+                'semester' => $jadwal->kelas?->semester?->nama_semester ?? '-',
+                'dosen' => $jadwal->dosen?->nama ?? '-',
+                'hari' => $jadwal->hari,
+                'sks' => ($jadwal->matkul?->teori ?? 0) + ($jadwal->matkul?->praktek ?? 0),
             ],
-            'mahasiswas'       => $rekapData['mahasiswas']->map(fn($m) => [
-                'id'           => $m->id,
-                'nim'          => $m->nim,
+            'mahasiswas' => $rekapData['mahasiswas']->map(fn ($m) => [
+                'id' => $m->id,
+                'nim' => $m->nim,
                 'nama_lengkap' => $m->nama_lengkap,
             ]),
-            'mahasiswaAktif'   => $mahasiswaAktif->map(fn($m) => [
-                'id'           => $m->id,
-                'nim'          => $m->nim,
+            'mahasiswaAktif' => $mahasiswaAktif->map(fn ($m) => [
+                'id' => $m->id,
+                'nim' => $m->nim,
                 'nama_lengkap' => $m->nama_lengkap,
             ]),
-            'tugasGrouped'     => $tugasGrouped,
-            'jumlahTugas'      => $rekapData['jumlahTugas'],
-            'utss'             => $rekapData['utss']->map(fn($u) => ['nilai' => $u->nilai, 'id' => $u->id]),
-            'uass'             => $rekapData['uass']->map(fn($u) => ['nilai' => $u->nilai, 'id' => $u->id]),
-            'etikas'           => $rekapData['etikas']->map(fn($e) => ['nilai' => $e->nilai, 'id' => $e->id]),
-            'aktifs'           => $rekapData['aktifs']->map(fn($a) => ['nilai' => $a->nilai, 'id' => $a->id]),
-            'dataAbsensi'      => $rekapData['dataAbsensi'],
-            'totalPertemuan'   => $rekapData['totalPertemuan'],
-            'nilaiAkhir'       => $nilaiAkhir,
+            'tugasGrouped' => $tugasGrouped,
+            'jumlahTugas' => $rekapData['jumlahTugas'],
+            'utss' => $rekapData['utss']->map(fn ($u) => ['nilai' => $u->nilai, 'id' => $u->id]),
+            'uass' => $rekapData['uass']->map(fn ($u) => ['nilai' => $u->nilai, 'id' => $u->id]),
+            'etikas' => $rekapData['etikas']->map(fn ($e) => ['nilai' => $e->nilai, 'id' => $e->id]),
+            'aktifs' => $rekapData['aktifs']->map(fn ($a) => ['nilai' => $a->nilai, 'id' => $a->id]),
+            'dataAbsensi' => $rekapData['dataAbsensi'],
+            'totalPertemuan' => $rekapData['totalPertemuan'],
+            'nilaiAkhir' => $nilaiAkhir,
             'completionStatus' => $completionStatus,
-            'pengajuan'        => $pengajuan ? [
-                'id'     => $pengajuan->id,
+            'pengajuan' => $pengajuan ? [
+                'id' => $pengajuan->id,
                 'status' => $pengajuan->status,
-                'tahun'  => $pengajuan->tahun,
+                'tahun' => $pengajuan->tahun,
             ] : null,
             'kaprodi' => $kaprodi ? ['nama' => $kaprodi->nama] : null,
-            'wadir'   => $wadir ? ['nama' => $wadir->nama, 'nip' => $wadir->nip ?? null] : null,
+            'wadir' => $wadir ? ['nama' => $wadir->nama, 'nip' => $wadir->nip ?? null] : null,
         ]);
     }
 
@@ -243,51 +243,51 @@ class NilaiController extends Controller
 
     public function storeTugas(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'tugas_ke'       => 'required|integer|min:1',
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'tugas_ke' => 'required|integer|min:1',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $rows = [];
-        $now  = now();
+        $now = now();
         foreach ($request->mahasiswas_id as $index => $mhsId) {
             $rows[] = [
                 'mahasiswa_id' => $mhsId,
-                'matkul_id'    => $jadwal->matkuls_id,
-                'kelas_id'     => $jadwal->kelas_id,
-                'jadwal_id'    => $jadwal_id,
-                'tugas_ke'     => $request->tugas_ke,
-                'nilai'        => $request->nilai[$index] ?? 0,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'matkul_id' => $jadwal->matkuls_id,
+                'kelas_id' => $jadwal->kelas_id,
+                'jadwal_id' => $jadwal_id,
+                'tugas_ke' => $request->tugas_ke,
+                'nilai' => $request->nilai[$index] ?? 0,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
         Tugas::insert($rows);
 
-        return back()->with('success', 'Nilai tugas ke-' . $request->tugas_ke . ' berhasil disimpan.');
+        return back()->with('success', 'Nilai tugas ke-'.$request->tugas_ke.' berhasil disimpan.');
     }
 
     public function updateTugas(Request $request, int $jadwal_id, int $tugas_ke)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
@@ -296,25 +296,27 @@ class NilaiController extends Controller
                 Tugas::updateOrCreate(
                     [
                         'mahasiswa_id' => $mhsId,
-                        'kelas_id'     => $jadwal->kelas_id,
-                        'jadwal_id'    => $jadwal_id,
-                        'matkul_id'    => $jadwal->matkuls_id,
-                        'tugas_ke'     => $tugas_ke,
+                        'kelas_id' => $jadwal->kelas_id,
+                        'jadwal_id' => $jadwal_id,
+                        'matkul_id' => $jadwal->matkuls_id,
+                        'tugas_ke' => $tugas_ke,
                     ],
                     ['nilai' => $request->nilai[$index] ?? 0]
                 );
             }
             DB::commit();
-            return back()->with('success', 'Nilai tugas ke-' . $tugas_ke . ' berhasil diperbarui.');
+
+            return back()->with('success', 'Nilai tugas ke-'.$tugas_ke.' berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Gagal memperbarui nilai tugas.');
         }
     }
 
     public function destroyTugas(int $jadwal_id, int $tugas_ke)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
@@ -325,7 +327,7 @@ class NilaiController extends Controller
             ->where('tugas_ke', $tugas_ke)
             ->delete();
 
-        return back()->with('success', 'Nilai tugas ke-' . $tugas_ke . ' berhasil dihapus.');
+        return back()->with('success', 'Nilai tugas ke-'.$tugas_ke.' berhasil dihapus.');
     }
 
     // =========================================================================
@@ -334,29 +336,29 @@ class NilaiController extends Controller
 
     public function storeUts(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $rows = [];
-        $now  = now();
+        $now = now();
         foreach ($request->mahasiswas_id as $index => $mhsId) {
             $rows[] = [
                 'mahasiswa_id' => $mhsId,
-                'matkul_id'    => $jadwal->matkuls_id,
-                'kelas_id'     => $jadwal->kelas_id,
-                'jadwal_id'    => $jadwal_id,
-                'nilai'        => $request->nilai[$index] ?? 0,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'matkul_id' => $jadwal->matkuls_id,
+                'kelas_id' => $jadwal->kelas_id,
+                'jadwal_id' => $jadwal_id,
+                'nilai' => $request->nilai[$index] ?? 0,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
@@ -367,16 +369,16 @@ class NilaiController extends Controller
 
     public function updateUts(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
@@ -385,17 +387,19 @@ class NilaiController extends Controller
                 Uts::updateOrCreate(
                     [
                         'mahasiswa_id' => $mhsId,
-                        'kelas_id'     => $jadwal->kelas_id,
-                        'jadwal_id'    => $jadwal_id,
-                        'matkul_id'    => $jadwal->matkuls_id,
+                        'kelas_id' => $jadwal->kelas_id,
+                        'jadwal_id' => $jadwal_id,
+                        'matkul_id' => $jadwal->matkuls_id,
                     ],
                     ['nilai' => $request->nilai[$index] ?? 0]
                 );
             }
             DB::commit();
+
             return back()->with('success', 'Nilai UTS berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Gagal memperbarui nilai UTS.');
         }
     }
@@ -406,29 +410,29 @@ class NilaiController extends Controller
 
     public function storeUas(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $rows = [];
-        $now  = now();
+        $now = now();
         foreach ($request->mahasiswas_id as $index => $mhsId) {
             $rows[] = [
                 'mahasiswa_id' => $mhsId,
-                'matkul_id'    => $jadwal->matkuls_id,
-                'kelas_id'     => $jadwal->kelas_id,
-                'jadwal_id'    => $jadwal_id,
-                'nilai'        => $request->nilai[$index] ?? 0,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'matkul_id' => $jadwal->matkuls_id,
+                'kelas_id' => $jadwal->kelas_id,
+                'jadwal_id' => $jadwal_id,
+                'nilai' => $request->nilai[$index] ?? 0,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
@@ -439,16 +443,16 @@ class NilaiController extends Controller
 
     public function updateUas(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
@@ -457,17 +461,19 @@ class NilaiController extends Controller
                 Uas::updateOrCreate(
                     [
                         'mahasiswa_id' => $mhsId,
-                        'kelas_id'     => $jadwal->kelas_id,
-                        'jadwal_id'    => $jadwal_id,
-                        'matkul_id'    => $jadwal->matkuls_id,
+                        'kelas_id' => $jadwal->kelas_id,
+                        'jadwal_id' => $jadwal_id,
+                        'matkul_id' => $jadwal->matkuls_id,
                     ],
                     ['nilai' => $request->nilai[$index] ?? 0]
                 );
             }
             DB::commit();
+
             return back()->with('success', 'Nilai UAS berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Gagal memperbarui nilai UAS.');
         }
     }
@@ -478,29 +484,29 @@ class NilaiController extends Controller
 
     public function storeEtika(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $rows = [];
-        $now  = now();
+        $now = now();
         foreach ($request->mahasiswas_id as $index => $mhsId) {
             $rows[] = [
                 'mahasiswa_id' => $mhsId,
-                'matkul_id'    => $jadwal->matkuls_id,
-                'kelas_id'     => $jadwal->kelas_id,
-                'jadwal_id'    => $jadwal_id,
-                'nilai'        => $request->nilai[$index] ?? 0,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'matkul_id' => $jadwal->matkuls_id,
+                'kelas_id' => $jadwal->kelas_id,
+                'jadwal_id' => $jadwal_id,
+                'nilai' => $request->nilai[$index] ?? 0,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
@@ -511,16 +517,16 @@ class NilaiController extends Controller
 
     public function updateEtika(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
@@ -529,17 +535,19 @@ class NilaiController extends Controller
                 Etika::updateOrCreate(
                     [
                         'mahasiswa_id' => $mhsId,
-                        'kelas_id'     => $jadwal->kelas_id,
-                        'jadwal_id'    => $jadwal_id,
-                        'matkul_id'    => $jadwal->matkuls_id,
+                        'kelas_id' => $jadwal->kelas_id,
+                        'jadwal_id' => $jadwal_id,
+                        'matkul_id' => $jadwal->matkuls_id,
                     ],
                     ['nilai' => $request->nilai[$index] ?? 0]
                 );
             }
             DB::commit();
+
             return back()->with('success', 'Nilai etika berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Gagal memperbarui nilai etika.');
         }
     }
@@ -550,29 +558,29 @@ class NilaiController extends Controller
 
     public function storeAktif(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $rows = [];
-        $now  = now();
+        $now = now();
         foreach ($request->mahasiswas_id as $index => $mhsId) {
             $rows[] = [
                 'mahasiswa_id' => $mhsId,
-                'matkul_id'    => $jadwal->matkuls_id,
-                'kelas_id'     => $jadwal->kelas_id,
-                'jadwal_id'    => $jadwal_id,
-                'nilai'        => $request->nilai[$index] ?? 0,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'matkul_id' => $jadwal->matkuls_id,
+                'kelas_id' => $jadwal->kelas_id,
+                'jadwal_id' => $jadwal_id,
+                'nilai' => $request->nilai[$index] ?? 0,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
@@ -583,16 +591,16 @@ class NilaiController extends Controller
 
     public function updateAktif(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
         $request->validate([
-            'mahasiswas_id'  => 'required|array|min:1',
-            'mahasiswas_id.*'=> 'exists:mahasiswas,id',
-            'nilai'          => 'required|array',
-            'nilai.*'        => 'nullable|numeric|min:0|max:100',
+            'mahasiswas_id' => 'required|array|min:1',
+            'mahasiswas_id.*' => 'exists:mahasiswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
@@ -601,17 +609,19 @@ class NilaiController extends Controller
                 Aktif::updateOrCreate(
                     [
                         'mahasiswa_id' => $mhsId,
-                        'kelas_id'     => $jadwal->kelas_id,
-                        'jadwal_id'    => $jadwal_id,
-                        'matkul_id'    => $jadwal->matkuls_id,
+                        'kelas_id' => $jadwal->kelas_id,
+                        'jadwal_id' => $jadwal_id,
+                        'matkul_id' => $jadwal->matkuls_id,
                     ],
                     ['nilai' => $request->nilai[$index] ?? 0]
                 );
             }
             DB::commit();
+
             return back()->with('success', 'Nilai keaktifan berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Gagal memperbarui nilai keaktifan.');
         }
     }
@@ -622,17 +632,17 @@ class NilaiController extends Controller
 
     public function pengajuanRekap(Request $request, int $jadwal_id)
     {
-        $dosen  = Auth::guard('dosen')->user();
+        $dosen = Auth::guard('dosen')->user();
         $jadwal = Jadwal::where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
             ->firstOrFail();
 
-        $kelas_id  = $jadwal->kelas_id;
+        $kelas_id = $jadwal->kelas_id;
         $matkul_id = $jadwal->matkuls_id;
 
         // Guard: cek apakah semua komponen nilai sudah terisi
         $completion = NilaiService::getCompletionStatus($kelas_id, $matkul_id, $jadwal_id);
-        if (!$completion['semua_lengkap']) {
+        if (! $completion['semua_lengkap']) {
             return back()->with('error', 'Semua komponen nilai (Tugas, UTS, UAS, Etika, Keaktifan) harus diisi sebelum mengajukan verifikasi.');
         }
 
@@ -648,31 +658,33 @@ class NilaiController extends Controller
 
         // Guard: cek tahun akademik aktif (null-safe)
         $tahun = TahunAkademik::where('status', 1)->first();
-        if (!$tahun) {
+        if (! $tahun) {
             return back()->with('error', 'Tahun akademik aktif belum ditetapkan. Hubungi admin.');
         }
 
         DB::beginTransaction();
         try {
             $pengajuan = PengajuanRekapNilai::create([
-                'kelas_id'  => $kelas_id,
+                'kelas_id' => $kelas_id,
                 'matkul_id' => $matkul_id,
                 'jadwal_id' => $jadwal_id,
-                'tahun'     => $tahun->tahun_akademik,
-                'status'    => 0,
+                'tahun' => $tahun->tahun_akademik,
+                'status' => 0,
             ]);
 
             // Notifikasi ke semua admin
-            $admins = \App\Models\Admin::all();
+            $admins = Admin::all();
             foreach ($admins as $admin) {
                 $admin->notify(new PengajuanNilaiNotification($pengajuan, null));
             }
 
             DB::commit();
+
             return back()->with('success', 'Pengajuan verifikasi rekap nilai berhasil dikirim.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal mengajukan verifikasi: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal mengajukan verifikasi: '.$e->getMessage());
         }
     }
 }

@@ -2,20 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Uas;
-use App\Models\Uts;
 use App\Models\Absen;
 use App\Models\Aktif;
 use App\Models\Dosen;
 use App\Models\Etika;
-use App\Models\Kelas;
-use App\Models\Nilai;
-use App\Models\Tugas;
-use App\Models\Wadir;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
-use Illuminate\Http\Request;
+use App\Models\Tugas;
+use App\Models\Uas;
+use App\Models\Uts;
+use App\Models\Wadir;
 use Illuminate\Support\Facades\Session;
 
 class NilaiController extends Controller
@@ -23,18 +20,20 @@ class NilaiController extends Controller
     /**
      * Display a listing of the resource.
      */
-
     protected $userId;
+
     protected $role;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $this->userId = Session::get("user.id");
-            $this->role = Session::get("user.role");
+            $this->userId = Session::get('user.id');
+            $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
+
     public function index($kelas_id)
     {
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
@@ -42,6 +41,7 @@ class NilaiController extends Controller
             ->where('kelas_id', $kelas_id)
             ->where('dosens_id', $this->userId)
             ->get();
+
         return view('pages.dosen.data-nilai.index', compact('kelasAll', 'jadwals'));
     }
 
@@ -86,10 +86,8 @@ class NilaiController extends Controller
                 ->pluck('total', 'dosens_id');
         }
 
-
         return view('pages.data-nilai.index', compact('getDosen', 'dosenMatkulCount'));
     }
-
 
     public function detailMatkul($id)
     {
@@ -123,6 +121,7 @@ class NilaiController extends Controller
             $pertemuan = Absen::where('jadwals_id', $jadwal->id)->max('pertemuan');
             $pertemuanCounts[$jadwal->id] = $pertemuan ?? 0;
         }
+
         return view('pages.data-nilai.matkul', compact('jadwals', 'pertemuanCounts'));
     }
 
@@ -167,7 +166,6 @@ class NilaiController extends Controller
             ->concat($uts_mahasiswa_ids)
             ->concat($uas_mahasiswa_ids)
             ->unique();
-
 
         $mahasiswas = Mahasiswa::withTrashed()
             ->whereIn('id', $mahasiswa_ids)
@@ -221,7 +219,6 @@ class NilaiController extends Controller
             ->where('jadwals_id', $jadwal_id)
             ->get();
 
-
         $dataAbsensi = $absens->groupBy('mahasiswas_id');
 
         $totalPertemuan = Absen::where('kelas_id', $kelas_id)
@@ -244,12 +241,11 @@ class NilaiController extends Controller
             },
             'kelas.semester' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->withTrashed()
             ->where('id', $jadwal_id)
             ->first();
-
 
         $dataAbsensi = $dataAbsensi->map(function ($absensiGroup, $mahasiswaId) use ($totalPertemuan) {
             $totalKehadiran = $absensiGroup->whereIn('status', ['H', 'T'])->count();

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dosen;
 use App\Models\Jadwal;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DataNilaiController extends Controller
@@ -29,7 +28,7 @@ class DataNilaiController extends Controller
             });
 
         return Inertia::render('Admin/DataNilai/Index', [
-            'dosens' => $dosens
+            'dosens' => $dosens,
         ]);
     }
 
@@ -44,7 +43,7 @@ class DataNilaiController extends Controller
             'matkul',
             'matkul.prodi',
             'matkul.semester',
-            'kelas.prodi'
+            'kelas.prodi',
         ])
             ->where('dosens_id', $id)
             ->withMax('absen as pertemuan_max', 'pertemuan')
@@ -75,7 +74,7 @@ class DataNilaiController extends Controller
                 'id' => $dosen->id,
                 'nama' => $dosen->nama,
             ],
-            'jadwals' => $formattedJadwals
+            'jadwals' => $formattedJadwals,
         ]);
     }
 }

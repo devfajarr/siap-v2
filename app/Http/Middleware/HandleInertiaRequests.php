@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Mahasiswa;
+use App\Models\OrangTua;
 use App\Models\PengajuanCetakKartuUjian;
 use App\Models\PengajuanCetakKhs;
 use App\Models\PermohonanSurat;
@@ -45,7 +46,7 @@ class HandleInertiaRequests extends Middleware
 
         // Fallback for multiple guards
         if (! $user) {
-            foreach (['admin', 'dosen', 'pegawai', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur', 'jabatan'] as $guard) {
+            foreach (['admin', 'dosen', 'pegawai', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur', 'jabatan', 'orang_tua'] as $guard) {
                 if (auth()->guard($guard)->check()) {
                     $user = auth()->guard($guard)->user();
                     break;
@@ -56,6 +57,8 @@ class HandleInertiaRequests extends Middleware
         $role = 'Guest';
         $avatar = '/images/user.png';
         $semesters = [];
+        $childrenShared = [];
+        $activeChildShared = null;
 
         if ($user) {
             // Determine Role based on guard or session
@@ -83,6 +86,52 @@ class HandleInertiaRequests extends Middleware
                             'href' => '/v2/mahasiswa/riwayat/'.$semester->id,
                         ];
                     })->toArray();
+            } elseif (auth()->guard('orang_tua')->check()) {
+                $role = 'Orang Tua';
+
+                $activeChildId = session('user.activeChildId');
+
+                // Fetch associated students
+                $orangTua = OrangTua::with('mahasiswas.kelas.semester')->find($user->id);
+                $children = $orangTua ? $orangTua->mahasiswas : collect();
+
+                if (! $activeChildId && $children->isNotEmpty()) {
+                    $activeChildId = $children->first()->id;
+                    session(['user.activeChildId' => $activeChildId]);
+                }
+
+                $activeChild = $children->firstWhere('id', $activeChildId);
+
+                if ($activeChild) {
+                    $currentSemesterLevel = $activeChild->kelas->semester->semester ?? 0;
+                    $semesters = Semester::where('semester', '<=', $currentSemesterLevel)
+                        ->orderBy('semester', 'asc')
+                        ->get()
+                        ->map(function ($semester) {
+                            return [
+                                'id' => $semester->id,
+                                'title' => 'Semester '.$semester->semester,
+                                'href' => '/v2/orang-tua/nilai/riwayat/'.$semester->id,
+                            ];
+                        })->toArray();
+
+                    $activeChildShared = [
+                        'id' => $activeChild->id,
+                        'nama_lengkap' => $activeChild->nama_lengkap,
+                        'nim' => $activeChild->nim,
+                        'kelas_id' => $activeChild->kelas_id,
+                        'kelas_name' => $activeChild->kelas->nama_kelas ?? '-',
+                        'prodi_name' => $activeChild->kelas->prodi->nama_prodi ?? '-',
+                    ];
+                }
+
+                $childrenShared = $children->map(function ($c) {
+                    return [
+                        'id' => $c->id,
+                        'nama_lengkap' => $c->nama_lengkap,
+                        'nim' => $c->nim,
+                    ];
+                })->toArray();
             } elseif (auth()->guard('kaprodi')->check()) {
                 $role = 'Kaprodi';
             } elseif (auth()->guard('direktur')->check()) {
@@ -142,6 +191,8 @@ class HandleInertiaRequests extends Middleware
                     'is_dosen' => ! empty($user->dosens_id) || auth()->guard('dosen')->check(),
                     'is_pegawai' => ! empty($user->pegawais_id) || auth()->guard('pegawai')->check(),
                     'status_pa' => auth()->guard('dosen')->check() ? auth()->guard('dosen')->user()->pembimbing_akademik : session('user.status_pa', 0),
+                    'children' => $childrenShared,
+                    'active_child' => $activeChildShared,
                 ] : null,
                 'semesters' => $semesters,
             ],

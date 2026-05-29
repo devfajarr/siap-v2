@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Resume extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     public function dosen()
@@ -25,8 +26,8 @@ class Resume extends Model
         return $this->belongsTo(Kelas::class, 'kelas_id');
     }
 
-    public function jadwal(){
-        return $this->belongsTo(Jadwal::class,'jadwals_id');
+    public function jadwal()
+    {
+        return $this->belongsTo(Jadwal::class, 'jadwals_id');
     }
-
 }

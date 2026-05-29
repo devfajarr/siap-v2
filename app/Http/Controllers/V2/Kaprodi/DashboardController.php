@@ -5,11 +5,11 @@ namespace App\Http\Controllers\V2\Kaprodi;
 use App\Http\Controllers\Controller;
 use App\Models\Jadwal;
 use App\Models\Mahasiswa;
-use App\Models\Prodi;
-use App\Models\PengajuanRekapPresensi;
-use App\Models\PengajuanRekapkontrak;
 use App\Models\PengajuanRekapBerita;
+use App\Models\PengajuanRekapkontrak;
 use App\Models\PengajuanRekapNilai;
+use App\Models\PengajuanRekapPresensi;
+use App\Models\Prodi;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -77,7 +77,7 @@ class DashboardController extends Controller
                 'matkul' => $jadwal->matkul->nama_matkul,
                 'dosen' => $jadwal->dosen->nama,
                 'ruangan' => $jadwal->ruangan->nama,
-                'jam' => $mulai->format('H:i') . ' - ' . $selesai->format('H:i'),
+                'jam' => $mulai->format('H:i').' - '.$selesai->format('H:i'),
                 'status' => $status,
                 'status_variant' => $variant,
             ];

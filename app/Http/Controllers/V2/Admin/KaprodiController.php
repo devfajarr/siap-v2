@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dosen;
-use App\Models\Prodi;
-use App\Models\Kaprodi;
 use App\Http\Requests\V2\Admin\Kaprodi\StoreKaprodiRequest;
 use App\Http\Requests\V2\Admin\Kaprodi\UpdateKaprodiRequest;
+use App\Models\Dosen;
+use App\Models\Kaprodi;
+use App\Models\Prodi;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
@@ -77,7 +76,7 @@ class KaprodiController extends Controller
             'email' => $dosen->email,
             'status' => 1,
             'password' => $password,
-            'is_first_login' => ($request->password_mode === 'custom')
+            'is_first_login' => ($request->password_mode === 'custom'),
         ]);
 
         $kaprodi->prodis()->sync($request->prodis_id);
@@ -90,7 +89,7 @@ class KaprodiController extends Controller
         $kaprodi = Kaprodi::findOrFail($id);
 
         $dosen = Dosen::findOrFail($request->dosens_id);
-        
+
         $updateData = [
             'nama' => $dosen->nama,
             'dosens_id' => $request->dosens_id,

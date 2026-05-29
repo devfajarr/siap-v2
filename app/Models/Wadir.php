@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -13,16 +12,18 @@ class Wadir extends Authenticatable
 
     protected $guarded = ['id'];
 
-    public function sentMessages() 
+    public function sentMessages()
     {
         return $this->morphMany(Message::class, 'sender');
     }
 
-    public function receivMessages() 
+    public function receivMessages()
     {
         return $this->morphMany(Message::class, 'receiver');
     }
-    public function dosen(){
-        return $this->belongsTo(Dosen::class,'dosens_id','id');
+
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class, 'dosens_id', 'id');
     }
 }

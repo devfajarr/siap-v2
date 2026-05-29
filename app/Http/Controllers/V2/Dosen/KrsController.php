@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\V2\Dosen;
 
+use App\Http\Controllers\Controller;
+use App\Jobs\SendKrsNotificationJob;
 use App\Models\Krs;
 use App\Models\Matkul;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use App\Jobs\SendKrsNotificationJob;
 
 class KrsController extends Controller
 {
@@ -24,13 +24,13 @@ class KrsController extends Controller
 
         if ($tab === 'diajukan') {
             $query->where('status_krs', 0)
-                  ->where('setuju_pa', 0)
-                  ->where('setuju_mahasiswa', 1);
+                ->where('setuju_pa', 0)
+                ->where('setuju_mahasiswa', 1);
         } else {
             // Disetujui
             $query->where('status_krs', 1)
-                  ->where('setuju_pa', 1)
-                  ->where('setuju_mahasiswa', 1);
+                ->where('setuju_pa', 1)
+                ->where('setuju_mahasiswa', 1);
         }
 
         $krss = $query->latest()->get()->map(function ($krs) {
@@ -59,10 +59,10 @@ class KrsController extends Controller
     public function detail(Request $request, $id)
     {
         $dosenId = Auth::guard('dosen')->id();
-        
+
         $krs = Krs::with(['mahasiswa', 'kelas', 'prodi', 'semester'])->find($id);
 
-        if (!$krs || $krs->mahasiswa->dosen_pembimbing_id !== $dosenId) {
+        if (! $krs || $krs->mahasiswa->dosen_pembimbing_id !== $dosenId) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -74,7 +74,7 @@ class KrsController extends Controller
                     'kode_matkul' => $mk->kode,
                     'nama_matkul' => $mk->nama_matkul,
                     'sks' => $mk->teori + $mk->praktek,
-                    'semester' => $mk->semester_id
+                    'semester' => $mk->semester_id,
                 ];
             });
 
@@ -87,17 +87,17 @@ class KrsController extends Controller
                 'prodi' => $krs->prodi->nama_prodi,
                 'semester' => $krs->semester->nama_semester ?? '-',
             ],
-            'matkuls' => $matkulKrs
+            'matkuls' => $matkulKrs,
         ]);
     }
 
     public function approve(Request $request, $id)
     {
         $dosenId = Auth::guard('dosen')->id();
-        
+
         $krs = Krs::with('mahasiswa')->find($id);
 
-        if (!$krs || $krs->mahasiswa->dosen_pembimbing_id !== $dosenId) {
+        if (! $krs || $krs->mahasiswa->dosen_pembimbing_id !== $dosenId) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memverifikasi KRS ini.');
         }
 
@@ -106,15 +106,15 @@ class KrsController extends Controller
         }
 
         $krs->setuju_pa = 1;
-        
+
         if ($krs->setuju_mahasiswa == 1) {
             $krs->status_krs = 1;
-            
+
             $mahasiswa = $krs->mahasiswa;
             $mahasiswa->status_krs = true;
             $mahasiswa->save();
         }
-        
+
         $krs->save();
 
         if ($krs->status_krs == 1) {

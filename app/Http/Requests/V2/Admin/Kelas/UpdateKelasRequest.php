@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V2\Admin\Kelas;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class UpdateKelasRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -29,8 +30,8 @@ class UpdateKelasRequest extends FormRequest
             'kode_kelas' => [
                 'required',
                 'string',
-                Rule::unique('kelas', 'kode_kelas')->ignore($this->route('data_kela'))->whereNull('deleted_at')
-            ]
+                Rule::unique('kelas', 'kode_kelas')->ignore($this->route('data_kela'))->whereNull('deleted_at'),
+            ],
         ];
     }
 

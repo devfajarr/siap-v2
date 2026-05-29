@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Kelas;
-use App\Models\Semester;
 use App\Http\Requests\V2\Admin\Semester\StoreSemesterRequest;
 use App\Http\Requests\V2\Admin\Semester\ToggleSemesterStatusRequest;
-use Illuminate\Http\Request;
+use App\Models\Kelas;
+use App\Models\Semester;
 use Inertia\Inertia;
 
 class SemesterController extends Controller
@@ -18,7 +17,7 @@ class SemesterController extends Controller
     public function index()
     {
         $semesters = Semester::orderBy('semester', 'asc')->get();
-        
+
         $ganjilActive = Semester::where('status', 1)
             ->whereRaw('semester % 2 = 1')
             ->exists();
@@ -59,7 +58,7 @@ class SemesterController extends Controller
 
         Semester::create([
             'semester' => $validated['semester'],
-            'status' => $status
+            'status' => $status,
         ]);
 
         return redirect()->back()->with('success', 'Semester berhasil ditambahkan.');
@@ -71,10 +70,10 @@ class SemesterController extends Controller
     public function destroy($id)
     {
         $semester = Semester::findOrFail($id);
-        
+
         // Cleanup related records in Kelas
         Kelas::where('id_semester', $semester->id)->delete();
-        
+
         $semester->delete();
 
         return redirect()->back()->with('success', 'Semester berhasil dihapus.');
@@ -95,18 +94,21 @@ class SemesterController extends Controller
                 $countGenap = Semester::whereRaw('semester % 2 = 0')->count();
                 if ($countGenap > 0) {
                     Semester::whereRaw('semester % 2 = 0')->update(['status' => 1]);
+
                     return redirect()->back()->with('success', 'Semester Genap berhasil diaktifkan.');
                 } else {
                     // Fallback to ganjil if no genap exists
                     Semester::whereRaw('semester % 2 != 0')->update(['status' => 1]);
+
                     return redirect()->back()->with('error', 'Tidak ada semester genap yang tersedia, semester ganjil tetap diaktifkan.');
                 }
             } else {
                 Semester::whereRaw('semester % 2 != 0')->update(['status' => 1]);
+
                 return redirect()->back()->with('success', 'Semester Ganjil berhasil diaktifkan.');
             }
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengubah status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengubah status: '.$e->getMessage());
         }
     }
 }

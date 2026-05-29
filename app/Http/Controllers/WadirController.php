@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Wadir;
 use App\Models\Jadwal;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -19,9 +18,9 @@ class WadirController extends Controller
         $wadirs = Wadir::latest()->get();
         $dosens = Dosen::all();
         $kelasAll = Jadwal::all();
+
         return view('pages.data-master.data-wadir', compact('wadirs', 'dosens', 'kelasAll'));
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -31,19 +30,19 @@ class WadirController extends Controller
         $request->validate([
             'dosens_id' => 'required|unique:wadirs',
             'password' => 'required',
-            'no' => 'required'
+            'no' => 'required',
         ], [
             'dosens_id.required' => 'Wakil Direktur harus diisi',
             'dosens_id.unique' => 'Dosen sudah menjadi wakil Direktur',
             'password.required' => 'Password harus diisi',
-            'no.required' => 'Posisi harus diisi'
+            'no.required' => 'Posisi harus diisi',
         ]);
 
         if (in_array($request->no, [1, 2]) && Wadir::where('no', $request->no)->exists()) {
             return response()->json([
                 'errors' => [
-                    'no' => ['Wadir dengan nomor ' . $request->no . ' sudah ada, tidak bisa menambah lagi']
-                ]
+                    'no' => ['Wadir dengan nomor '.$request->no.' sudah ada, tidak bisa menambah lagi'],
+                ],
             ], 400);
         }
 
@@ -56,13 +55,12 @@ class WadirController extends Controller
             'status' => 1,
             'no' => $request->no,
             'password' => Hash::make($request->password),
-            'is_first_login' => true
+            'is_first_login' => true,
 
         ]);
 
         return response()->json(['success' => 'Wakil direktur berhasil ditambahkan']);
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -83,7 +81,6 @@ class WadirController extends Controller
             'no.required' => 'Posisi wajib diisi',
         ]);
 
-
         $dosen = Dosen::where('id', $request->dosens_id)->first();
 
         $wadir->nama = $dosen->nama;
@@ -93,21 +90,15 @@ class WadirController extends Controller
         $wadir->status = $request->status;
         $wadir->no = $request->no;
 
-
         if ($request->filled('password')) {
             $wadir->password = Hash::make($request->password);
-		$wadir->is_first_login = true;
+            $wadir->is_first_login = true;
         }
-
 
         $wadir->save();
 
         return response()->json(['success' => 'Data Wadir berhasil diperbarui']);
     }
-
-
-
-
 
     /**
      * Remove the specified resource from storage.
@@ -116,6 +107,7 @@ class WadirController extends Controller
     {
         $wadir = Wadir::findOrFail($id);
         $wadir->delete();
+
         return response()->json(['success' => 'Wadir berhasil dihapus.']);
     }
 }

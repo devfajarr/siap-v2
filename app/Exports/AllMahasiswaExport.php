@@ -4,17 +4,18 @@ namespace App\Exports;
 
 use App\Models\Mahasiswa;
 use Illuminate\Support\Carbon;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class AllMahasiswaExport implements FromCollection,  WithHeadings, WithStyles
+class AllMahasiswaExport implements FromCollection, WithHeadings, WithStyles
 {
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return Collection
+     */
     public function collection()
     {
         return Mahasiswa::select(
@@ -33,29 +34,29 @@ class AllMahasiswaExport implements FromCollection,  WithHeadings, WithStyles
             'status_krs',
             'alamat'
         )
-        ->with('kelas')
-        ->orderBy('nim', 'asc')
-        ->get()
-        ->map(function ($mahasiswa) {
-            return [
-                'nim' => $mahasiswa->nim,
-                'nama_lengkap' => $mahasiswa->nama_lengkap,
-                'tahun_masuk'=> $mahasiswa->tahun_masuk,
-                'tempat_lahir' => $mahasiswa->tempat_lahir,
-                'tanggal_lahir' => $mahasiswa->tanggal_lahir
-                    ? Carbon::parse($mahasiswa->tanggal_lahir)->translatedFormat('d F Y')
-                    : '',
-                'jenis_kelamin' => $mahasiswa->jenis_kelamin,
-                'nik' => "'" . $mahasiswa->nik,
-                'nisn' => "'" . $mahasiswa->nisn,
-                'email' => $mahasiswa->email,
-                'no_telephone' => $mahasiswa->no_telephone,
-                'nama_ibu' => $mahasiswa->nama_ibu,
-                'kelas' => optional($mahasiswa->kelas)->nama_kelas,
-                'status_krs' => $mahasiswa->status_krs ? 'Aktif' : 'Tidak Aktif',
-                'alamat' => $mahasiswa->alamat,
-            ];
-        });
+            ->with('kelas')
+            ->orderBy('nim', 'asc')
+            ->get()
+            ->map(function ($mahasiswa) {
+                return [
+                    'nim' => $mahasiswa->nim,
+                    'nama_lengkap' => $mahasiswa->nama_lengkap,
+                    'tahun_masuk' => $mahasiswa->tahun_masuk,
+                    'tempat_lahir' => $mahasiswa->tempat_lahir,
+                    'tanggal_lahir' => $mahasiswa->tanggal_lahir
+                        ? Carbon::parse($mahasiswa->tanggal_lahir)->translatedFormat('d F Y')
+                        : '',
+                    'jenis_kelamin' => $mahasiswa->jenis_kelamin,
+                    'nik' => "'".$mahasiswa->nik,
+                    'nisn' => "'".$mahasiswa->nisn,
+                    'email' => $mahasiswa->email,
+                    'no_telephone' => $mahasiswa->no_telephone,
+                    'nama_ibu' => $mahasiswa->nama_ibu,
+                    'kelas' => optional($mahasiswa->kelas)->nama_kelas,
+                    'status_krs' => $mahasiswa->status_krs ? 'Aktif' : 'Tidak Aktif',
+                    'alamat' => $mahasiswa->alamat,
+                ];
+            });
     }
 
     public function headings(): array
@@ -74,7 +75,7 @@ class AllMahasiswaExport implements FromCollection,  WithHeadings, WithStyles
             'Nama Ibu',
             'Kelas',
             'Status KRS',
-            'Alamat'
+            'Alamat',
         ];
     }
 
@@ -91,4 +92,4 @@ class AllMahasiswaExport implements FromCollection,  WithHeadings, WithStyles
             ],
         ];
     }
-    }
+}

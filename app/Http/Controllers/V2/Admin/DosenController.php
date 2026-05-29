@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Exports\DosenExport;
 use App\Http\Controllers\Controller;
-use App\Models\Dosen;
-use App\Models\Wadir;
-use App\Models\Direktur;
-use App\Models\Kaprodi;
 use App\Http\Requests\V2\Admin\Dosen\StoreDosenRequest;
 use App\Http\Requests\V2\Admin\Dosen\UpdateDosenRequest;
-use App\Exports\DosenExport;
 use App\Imports\DosenImport;
+use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Kaprodi;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DosenController extends Controller
 {
@@ -27,13 +27,13 @@ class DosenController extends Controller
         $search = $request->input('search');
 
         $dosens = Dosen::when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%")
-                        ->orWhere('nidn', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('no_telephone', 'like', "%{$search}%");
-                });
-            })
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nidn', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('no_telephone', 'like', "%{$search}%");
+            });
+        })
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -60,7 +60,7 @@ class DosenController extends Controller
             'status' => 1,
             'password' => Hash::make($validated['password']),
             'pembimbing_akademik' => $validated['pembimbing_akademik'],
-            'is_first_login' => true
+            'is_first_login' => true,
         ]);
 
         return redirect()->back()->with('success', 'Data dosen berhasil ditambahkan.');
@@ -100,12 +100,12 @@ class DosenController extends Controller
     public function destroy($id)
     {
         $dosen = Dosen::findOrFail($id);
-        
+
         // Cascading delete for related jabatan
         Wadir::where('dosens_id', $dosen->id)->delete();
         Direktur::where('dosens_id', $dosen->id)->delete();
         Kaprodi::where('dosens_id', $dosen->id)->delete();
-        
+
         $dosen->delete();
 
         return redirect()->back()->with('success', 'Data dosen berhasil dihapus.');
@@ -117,9 +117,10 @@ class DosenController extends Controller
     public function downloadFormat()
     {
         $filePath = public_path('format/import_dosen.xlsx');
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return redirect()->back()->with('error', 'Template import tidak ditemukan.');
         }
+
         return response()->download($filePath, 'Format_Import_Dosen.xlsx');
     }
 
@@ -134,12 +135,14 @@ class DosenController extends Controller
 
         DB::beginTransaction();
         try {
-            Excel::import(new DosenImport(), $request->file('file'));
+            Excel::import(new DosenImport, $request->file('file'));
             DB::commit();
+
             return redirect()->back()->with('success', 'Data dosen berhasil diimpor.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal mengimpor data: '.$e->getMessage());
         }
     }
 

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { usePage, Link } from '@inertiajs/vue3'
+import { usePage, Link, router } from '@inertiajs/vue3'
 import axios from 'axios'
 
 import { 
@@ -39,6 +39,14 @@ const toggleMenu = (title) => {
   } else {
     expandedMenus.value.push(title)
   }
+}
+
+const handleChildChange = (event) => {
+  router.post('/v2/orang-tua/switch-child', {
+    child_id: event.target.value
+  }, {
+    preserveScroll: true
+  })
 }
 
 const isMenuActive = (item) => {
@@ -128,6 +136,26 @@ const getBadgeValue = (badge) => {
 
 const menuItems = computed(() => {
   const role = page.props.auth?.user?.role
+  if (role === 'Orang Tua') {
+    const riwayatChildren = (page.props.auth?.semesters || []).map(s => ({
+      title: s.title,
+      href: s.href
+    }))
+
+    return [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/v2/orang-tua/dashboard' },
+      { title: 'Absensi Anak', icon: ClipboardCheck, href: '/v2/orang-tua/absensi' },
+      { title: 'Nilai KHS', icon: Star, href: '/v2/orang-tua/nilai' },
+      { 
+        title: 'Riwayat Nilai', 
+        icon: Folder, 
+        children: riwayatChildren.length > 0 ? riwayatChildren : [{ title: 'Belum ada riwayat', href: '#' }]
+      },
+      { title: 'KRS Kuliah', icon: KrsIcon, href: '/v2/orang-tua/krs' },
+      { title: 'Keuangan & SPP', icon: CreditCard, href: '/v2/orang-tua/keuangan' },
+    ]
+  }
+
   if (role === 'Mahasiswa') {
     const riwayatChildren = (page.props.auth?.semesters || []).map(s => ({
       title: s.title,
@@ -401,6 +429,24 @@ const menuItems = computed(() => {
       isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
     ]"
   >
+    <!-- Child Selector for Parents (only when sidebar is expanded) -->
+    <div v-if="page.props.auth?.user?.role === 'Orang Tua' && isOpen && page.props.auth?.user?.children?.length > 1" class="px-6 py-4 border-b border-[#CDD1E1]">
+      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Memantau Anak:</label>
+      <select 
+        @change="handleChildChange"
+        :value="page.props.auth?.user?.active_child?.id"
+        class="w-full bg-[#F5F7FF] text-[#1F1F1F] border border-[#CDD1E1] rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#4B49AC]"
+      >
+        <option 
+          v-for="child in page.props.auth.user.children" 
+          :key="child.id" 
+          :value="child.id"
+        >
+          {{ child.nama_lengkap }}
+        </option>
+      </select>
+    </div>
+
     <ul class="py-4">
       <li v-for="item in menuItems" :key="item.title" class="mb-1">
         <!-- Separator -->

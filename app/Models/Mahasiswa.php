@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -19,6 +20,16 @@ class Mahasiswa extends Authenticatable
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'kelas_id');
+    }
+
+    /**
+     * Relasi ke Orang Tua (Many to Many).
+     */
+    public function orangTuas(): BelongsToMany
+    {
+        return $this->belongsToMany(OrangTua::class, 'mahasiswa_parent', 'mahasiswa_id', 'orang_tua_id')
+            ->withPivot('relationship_type')
+            ->withTimestamps();
     }
 
     public function absen()

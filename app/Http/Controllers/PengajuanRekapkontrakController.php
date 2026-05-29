@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\Direktur;
 use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Wadir;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
+use App\Models\Kelas;
 use App\Models\Kontrak;
-use App\Models\Direktur;
-use Illuminate\Http\Request;
 use App\Models\PengajuanRekapkontrak;
-use Illuminate\Support\Facades\Session;
+use App\Models\Wadir;
 use App\Notifications\PengajuanKontrakNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class PengajuanRekapkontrakController extends Controller
 {
@@ -21,6 +20,7 @@ class PengajuanRekapkontrakController extends Controller
      * Display a listing of the resource.
      */
     protected $prodiId;
+
     protected $role;
 
     public function __construct()
@@ -28,9 +28,11 @@ class PengajuanRekapkontrakController extends Controller
         $this->middleware(function ($request, $next) {
             $this->prodiId = Session::get('user.prodiId');
             $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         $prodiId = $this->prodiId;
@@ -50,7 +52,7 @@ class PengajuanRekapkontrakController extends Controller
                 },
                 'matkul' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 0)
                 ->when($prodiId, function ($query) use ($prodiId) {
@@ -76,7 +78,7 @@ class PengajuanRekapkontrakController extends Controller
                 },
                 'matkul' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 0)
                 ->latest()
@@ -84,9 +86,9 @@ class PengajuanRekapkontrakController extends Controller
         }
 
         $kelasAll = Jadwal::all();
+
         return view('pages.pengajuanRekapKontrak.index', compact('kontraks', 'kelasAll'));
     }
-
 
     public function confirm()
     {
@@ -107,7 +109,7 @@ class PengajuanRekapkontrakController extends Controller
                 },
                 'matkul' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 1)
                 ->when($prodiId, function ($query) use ($prodiId) {
@@ -133,7 +135,7 @@ class PengajuanRekapkontrakController extends Controller
                 },
                 'matkul' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 1)
                 ->latest()
@@ -141,6 +143,7 @@ class PengajuanRekapkontrakController extends Controller
         }
 
         $kelasAll = Jadwal::all();
+
         return view('pages.pengajuanRekapKontrak.disetujui', compact('kontraks', 'kelasAll'));
     }
 
@@ -156,13 +159,13 @@ class PengajuanRekapkontrakController extends Controller
         $validateData = $request->validate([
             'jadwal_id' => 'required',
             'kelas_id' => 'required',
-            'matkul_id' => 'required'
+            'matkul_id' => 'required',
         ]);
 
         $kontrak = PengajuanRekapkontrak::create([
             'jadwal_id' => $validateData['jadwal_id'],
             'kelas_id' => $validateData['kelas_id'],
-            'matkul_id' => $validateData['matkul_id']
+            'matkul_id' => $validateData['matkul_id'],
         ]);
         foreach ($wadirs as $wadir) {
             $wadir->notify(new PengajuanKontrakNotification($kontrak));
@@ -171,9 +174,9 @@ class PengajuanRekapkontrakController extends Controller
             $direktur->notify(new PengajuanKontrakNotification($kontrak));
         }
         $kaprodi->notify(new PengajuanKontrakNotification($kontrak));
+
         return redirect()->back()->with('success', 'Pengajuan Kontrak Kuliah Berhasil');
     }
-
 
     /**
      * Show the form for editing the specified resource.
@@ -195,6 +198,7 @@ class PengajuanRekapkontrakController extends Controller
         $kelas = Kelas::with('prodi')->where('id', $kelas_id)->first();
         $kaprodi = Kaprodi::where('prodis_id', $kelas->id_prodi)->first();
         $wadir = Wadir::where('no', 1)->first();
+
         return view('pages.pengajuanRekapKontrak.rekap', compact('kontraks', 'kaprodi', 'wadir'));
     }
 
@@ -233,10 +237,10 @@ class PengajuanRekapkontrakController extends Controller
                     $kontrak->setuju_wadir = false;
                 }
 
-                if (!$kontrak->setuju_kaprodi) {
+                if (! $kontrak->setuju_kaprodi) {
                     $allKaprodiApproved = false;
                 }
-                if (!$kontrak->setuju_wadir) {
+                if (! $kontrak->setuju_wadir) {
                     $allWadirApproved = false;
                 }
 
@@ -249,7 +253,7 @@ class PengajuanRekapkontrakController extends Controller
                 $kontrak->update(['status' => $statusKontrak]);
             }
 
-            $pengajuan = PengajuanRekapKontrak::where('jadwal_id', $jadwal_id)
+            $pengajuan = PengajuanRekapkontrak::where('jadwal_id', $jadwal_id)
                 ->where('matkul_id', $matkul_id)
                 ->where('kelas_id', $kelas_id)
                 ->first();
@@ -265,10 +269,9 @@ class PengajuanRekapkontrakController extends Controller
 
             return redirect()->back()->with('success', 'Status persetujuan kontrak berhasil diperbarui.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memperbarui status persetujuan kontrak: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui status persetujuan kontrak: '.$e->getMessage());
         }
     }
-
 
     /**
      * Remove the specified resource from storage.

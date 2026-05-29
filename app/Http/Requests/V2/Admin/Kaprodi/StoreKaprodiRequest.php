@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\V2\Admin\Kaprodi;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class StoreKaprodiRequest extends FormRequest
@@ -19,7 +19,7 @@ class StoreKaprodiRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -38,10 +38,10 @@ class StoreKaprodiRequest extends FormRequest
                     if ($exists) {
                         $fail('Dosen ini sudah menjabat sebagai Kaprodi di prodi tersebut.');
                     }
-                }
+                },
             ],
             'password_mode' => 'required|in:dosen,existing,custom',
-            'password' => 'required_if:password_mode,custom|nullable|min:6'
+            'password' => 'required_if:password_mode,custom|nullable|min:6',
         ];
     }
 

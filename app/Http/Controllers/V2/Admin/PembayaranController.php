@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pembayaran;
-use App\Models\Mahasiswa;
 use App\Models\Krs;
+use App\Models\Mahasiswa;
+use App\Models\Pembayaran;
 use App\Models\TahunAkademik;
 use App\Notifications\PembayaranNotification;
 use Illuminate\Http\Request;
@@ -23,14 +23,14 @@ class PembayaranController extends Controller
             'mahasiswa.kelas.semester',
             'prodi',
             'kelas',
-            'semester'
+            'semester',
         ])
             ->where('status_pembayaran', 0)
             ->latest()
             ->paginate(10);
 
         return Inertia::render('Admin/Pembayaran/Diajukan', [
-            'pembayarans' => $pembayarans
+            'pembayarans' => $pembayarans,
         ]);
     }
 
@@ -44,14 +44,14 @@ class PembayaranController extends Controller
             'mahasiswa.kelas.semester',
             'prodi',
             'kelas',
-            'semester'
+            'semester',
         ])
             ->where('status_pembayaran', 1)
             ->latest()
             ->paginate(10);
 
         return Inertia::render('Admin/Pembayaran/Disetujui', [
-            'pembayarans' => $pembayarans
+            'pembayarans' => $pembayarans,
         ]);
     }
 
@@ -67,7 +67,7 @@ class PembayaranController extends Controller
 
         $pembayaran = Pembayaran::find($id);
 
-        if (!$pembayaran) {
+        if (! $pembayaran) {
             return redirect()->back()->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
@@ -85,7 +85,7 @@ class PembayaranController extends Controller
             Krs::firstOrCreate([
                 'mahasiswa_id' => $pembayaran->mahasiswa_id,
                 'semester_id' => $pembayaran->semester_id,
-                'tahun_ajaran' => $tahunAjaran
+                'tahun_ajaran' => $tahunAjaran,
             ], [
                 'prodi_id' => $pembayaran->prodi_id,
                 'kelas_id' => $pembayaran->kelas_id,

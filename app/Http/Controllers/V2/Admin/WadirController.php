@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dosen;
-use App\Models\Wadir;
-use App\Models\Direktur;
-use App\Models\Kaprodi;
 use App\Http\Requests\V2\Admin\Wadir\StoreWadirRequest;
 use App\Http\Requests\V2\Admin\Wadir\UpdateWadirRequest;
+use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Kaprodi;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class WadirController extends Controller
@@ -33,12 +32,12 @@ class WadirController extends Controller
             ->withQueryString();
 
         $dosens = Dosen::orderBy('nama', 'asc')->get();
-        
+
         // Get IDs of lecturers who already have a structural position
         $existingKaprodiDosenIds = Kaprodi::pluck('dosens_id');
         $existingDirekturDosenIds = Direktur::pluck('dosens_id');
         $existingWadirDosenIds = Wadir::pluck('dosens_id');
-        
+
         $hasAnyPositionIds = $existingKaprodiDosenIds
             ->concat($existingDirekturDosenIds)
             ->concat($existingWadirDosenIds)
@@ -63,9 +62,9 @@ class WadirController extends Controller
             $password = $dosen->password;
         } elseif ($request->password_mode === 'existing') {
             // Check in Kaprodi, then Direktur
-            $existing = Kaprodi::where('dosens_id', $request->dosens_id)->first() 
+            $existing = Kaprodi::where('dosens_id', $request->dosens_id)->first()
                       ?? Direktur::where('dosens_id', $request->dosens_id)->first();
-            
+
             if ($existing) {
                 $password = $existing->password;
             } else {
@@ -83,7 +82,7 @@ class WadirController extends Controller
             'status' => 1,
             'no' => $request->no,
             'password' => $password,
-            'is_first_login' => ($request->password_mode === 'custom')
+            'is_first_login' => ($request->password_mode === 'custom'),
         ]);
 
         return redirect()->back()->with('success', 'Wakil Direktur berhasil ditambahkan.');
@@ -95,7 +94,7 @@ class WadirController extends Controller
 
         $updateData = [
             'status' => $request->status,
-            'no' => $request->no
+            'no' => $request->no,
         ];
 
         if ($request->filled('password')) {

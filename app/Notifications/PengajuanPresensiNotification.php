@@ -3,10 +3,8 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Auth;
 
 class PengajuanPresensiNotification extends Notification
 {
@@ -16,6 +14,7 @@ class PengajuanPresensiNotification extends Notification
      * Create a new notification instance.
      */
     protected $presensi;
+
     public function __construct($presensi)
     {
         $this->presensi = $presensi;
@@ -31,7 +30,6 @@ class PengajuanPresensiNotification extends Notification
         return ['database'];
     }
 
-
     /**
      * Get the array representation of the notification.
      *
@@ -46,7 +44,7 @@ class PengajuanPresensiNotification extends Notification
                 'title' => 'Pengajuan Rekap Presensi',
                 'name' => $this->presensi->jadwal->dosen->nama,
                 'matkul' => $this->presensi->matkul->nama_matkul,
-                'class' => $this->presensi->kelas->nama_kelas
+                'class' => $this->presensi->kelas->nama_kelas,
             ];
         } else {
             return [
@@ -55,7 +53,7 @@ class PengajuanPresensiNotification extends Notification
                 'title' => 'Pengajuan Rekap Presensi',
                 'name' => $this->presensi->jadwal->dosen->nama,
                 'matkul' => $this->presensi->matkul->nama_matkul,
-                'class' => $this->presensi->kelas->nama_kelas
+                'class' => $this->presensi->kelas->nama_kelas,
             ];
         }
     }

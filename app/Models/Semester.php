@@ -14,21 +14,24 @@ class Semester extends Model
 
     protected $dates = ['deleted_at'];
 
-    public function kelas(){
+    public function kelas()
+    {
 
         return $this->hasMany(Kelas::class);
     }
 
     public function getNamaSemesterAttribute()
     {
-        return $this->semester ? 'Semester ' . $this->semester : '-';
+        return $this->semester ? 'Semester '.$this->semester : '-';
     }
 
-    public function nilaiHuruf(){
-        return $this->hasMany(NilaiHuruf::class);   
+    public function nilaiHuruf()
+    {
+        return $this->hasMany(NilaiHuruf::class);
     }
 
-    public function matkul(){
+    public function matkul()
+    {
         return $this->hasMany(Matkul::class);
     }
 
@@ -37,7 +40,8 @@ class Semester extends Model
         return $this->hasMany(Pembayaran::class);
     }
 
-    public function krs(){
+    public function krs()
+    {
         return $this->hasMany(Krs::class);
     }
 }

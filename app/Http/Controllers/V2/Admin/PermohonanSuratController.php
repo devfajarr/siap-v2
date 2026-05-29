@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\PermohonanSurat;
-use App\Models\Mahasiswa;
 use App\Models\Direktur;
-use App\Models\Wadir;
+use App\Models\Mahasiswa;
+use App\Models\PermohonanSurat;
 use App\Models\TahunAkademik;
+use App\Models\Wadir;
 use App\Services\WhatsappService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PermohonanSuratController extends Controller
 {
@@ -22,7 +22,7 @@ class PermohonanSuratController extends Controller
     {
         $query = PermohonanSurat::with([
             'mahasiswa.kelas.prodi',
-            'mahasiswa.kelas.semester'
+            'mahasiswa.kelas.semester',
         ])
             ->where('setuju_kaprodi', 1)
             ->where('status', 0);
@@ -46,7 +46,7 @@ class PermohonanSuratController extends Controller
             'filters' => [
                 'search' => $request->search ?? '',
                 'jenis' => $request->jenis ?? '',
-            ]
+            ],
         ]);
     }
 
@@ -57,7 +57,7 @@ class PermohonanSuratController extends Controller
     {
         $query = PermohonanSurat::with([
             'mahasiswa.kelas.prodi',
-            'mahasiswa.kelas.semester'
+            'mahasiswa.kelas.semester',
         ])
             ->where('setuju_kaprodi', 1)
             ->where('status', 1);
@@ -81,7 +81,7 @@ class PermohonanSuratController extends Controller
             'filters' => [
                 'search' => $request->search ?? '',
                 'jenis' => $request->jenis ?? '',
-            ]
+            ],
         ]);
     }
 
@@ -96,7 +96,7 @@ class PermohonanSuratController extends Controller
 
         $permohonan = PermohonanSurat::with([
             'mahasiswa.kelas.prodi',
-            'mahasiswa.kelas.semester'
+            'mahasiswa.kelas.semester',
         ])->findOrFail($id);
 
         if ($permohonan->status == 1) {
@@ -113,14 +113,14 @@ class PermohonanSuratController extends Controller
             if ($permohonan->mahasiswa && $permohonan->mahasiswa->no_telephone) {
                 WhatsappService::kirim(
                     $permohonan->mahasiswa->no_telephone,
-                    "📢 *Pemberitahuan Surat Permohonan* 📢\n\n" .
-                        "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n" .
-                        "📌 Status: *Segera Dicetak* ✅\n\n" .
-                        "📍 Mohon segera menghubungi akademik untuk pengambilan surat. Terima kasih. 🙏"
+                    "📢 *Pemberitahuan Surat Permohonan* 📢\n\n".
+                        "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
+                        "📌 Status: *Segera Dicetak* ✅\n\n".
+                        '📍 Mohon segera menghubungi akademik untuk pengambilan surat. Terima kasih. 🙏'
                 );
             }
         } catch (\Exception $e) {
-            Log::error('Gagal mengirim WhatsApp penerbitan surat: ' . $e->getMessage());
+            Log::error('Gagal mengirim WhatsApp penerbitan surat: '.$e->getMessage());
         }
 
         return redirect()->back()->with('success', 'Nomor surat berhasil diterbitkan dan notifikasi telah dikirim.');
@@ -134,20 +134,20 @@ class PermohonanSuratController extends Controller
         // Eager load lengkap untuk mencegah N+1 Query pada saat rendering view cetak
         $permohonan = PermohonanSurat::with([
             'mahasiswa.kelas.prodi',
-            'mahasiswa.kelas.semester'
+            'mahasiswa.kelas.semester',
         ])->findOrFail($id);
 
         $anggotaTim = null;
-        if (!empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
+        if (! empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
             $anggotaTim = Mahasiswa::with(['kelas.prodi', 'kelas.semester'])
                 ->whereIn('id', $permohonan->anggota_tim)
                 ->get();
         }
 
         // Fallback objek default jika data master aktif belum diatur di database
-        $direktur = Direktur::where('status', 1)->first() ?? (object)['nama' => 'Direktur (Belum Diatur)'];
-        $wadir = Wadir::where('status', 1)->where('no', 1)->first() ?? (object)['nama' => 'Wakil Direktur I (Belum Diatur)'];
-        $tahunAkademik = TahunAkademik::where('status', 1)->first() ?? (object)['tahun_akademik' => '2025/2026'];
+        $direktur = Direktur::where('status', 1)->first() ?? (object) ['nama' => 'Direktur (Belum Diatur)'];
+        $wadir = Wadir::where('status', 1)->where('no', 1)->first() ?? (object) ['nama' => 'Wakil Direktur I (Belum Diatur)'];
+        $tahunAkademik = TahunAkademik::where('status', 1)->first() ?? (object) ['tahun_akademik' => '2025/2026'];
 
         $kelas_baru = '';
         if ($permohonan->mahasiswa && $permohonan->mahasiswa->kelas) {
@@ -188,7 +188,7 @@ class PermohonanSuratController extends Controller
             return $kelas;
         }
 
-        return $this->pisahDuaHurufTerakhir(substr($kelas, 0, -1) . $huruf_baru);
+        return $this->pisahDuaHurufTerakhir(substr($kelas, 0, -1).$huruf_baru);
     }
 
     protected function pisahDuaHurufTerakhir($kelas)
@@ -197,8 +197,9 @@ class PermohonanSuratController extends Controller
             $dua_terakhir = substr($kelas, -2);
             $bagian_awal = substr($kelas, 0, -2);
 
-            return $bagian_awal . ' ' . $dua_terakhir;
+            return $bagian_awal.' '.$dua_terakhir;
         }
+
         return $kelas;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V2\Admin\Pegawai;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class UpdatePegawaiRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -46,7 +47,7 @@ class UpdatePegawaiRequest extends FormRequest
                 'email',
                 Rule::unique('pegawais')->ignore($this->route('data_pegawai'))->whereNull('deleted_at'),
             ],
-            'password' => 'nullable|min:6'
+            'password' => 'nullable|min:6',
         ];
     }
 

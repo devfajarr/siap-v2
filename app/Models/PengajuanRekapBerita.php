@@ -11,7 +11,6 @@ class PengajuanRekapBerita extends Model
 
     protected $guarded = ['id'];
 
-
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'kelas_id');
@@ -27,7 +26,8 @@ class PengajuanRekapBerita extends Model
         return $this->belongsTo(Dosen::class, 'dosens_id');
     }
 
-    public function matkul(){
-        return $this->belongsTo(Matkul::class,'matkuls_id');
+    public function matkul()
+    {
+        return $this->belongsTo(Matkul::class, 'matkuls_id');
     }
 }

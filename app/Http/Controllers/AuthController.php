@@ -8,6 +8,7 @@ use App\Models\Dosen;
 use App\Models\Jabatan;
 use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
+use App\Models\OrangTua;
 use App\Models\Pegawai;
 use App\Models\Wadir;
 use Illuminate\Http\Request;
@@ -32,9 +33,10 @@ class AuthController extends Controller
             'perpustakaan' => 'v2.pegawai.dashboard',
             'sarpras' => 'v2.pegawai.dashboard',
             'personalia' => 'v2.pegawai.dashboard',
+            'orang_tua' => 'v2.orang-tua.dashboard',
         ];
 
-        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'pegawai', 'kaprodi', 'jabatan'] as $guard) {
+        foreach (['admin', 'mahasiswa', 'direktur', 'wakil_direktur', 'dosen', 'pegawai', 'kaprodi', 'jabatan', 'orang_tua'] as $guard) {
             if (Auth::guard($guard)->check()) {
                 if ($guard === 'jabatan') {
                     $user = Auth::guard('jabatan')->user();
@@ -76,6 +78,9 @@ class AuthController extends Controller
         } elseif ($role === 'mahasiswa') {
             $user = Mahasiswa::where('nim', $request->username)->first();
             $guard = 'mahasiswa';
+        } elseif ($role === 'orang_tua') {
+            $user = OrangTua::where('username', $request->username)->first();
+            $guard = 'orang_tua';
         } elseif ($role === 'dosen') {
             $user = Dosen::where('email', $request->username)->first();
             $guard = 'dosen';
@@ -128,7 +133,7 @@ class AuthController extends Controller
                 'prodiId' => $role === 'kaprodi' ? $activeProdiId : ($user->prodis_id ?? null),
                 'prodiIds' => $prodiIds,
                 'activeProdiId' => $activeProdiId,
-                'email' => $user->email,
+                'email' => $user->email ?? $user->username ?? null,
                 'status_pa' => $user->pembimbing_akademik ?? null,
             ]]);
 
@@ -145,6 +150,7 @@ class AuthController extends Controller
                 'perpustakaan' => 'v2.pegawai.dashboard',
                 'sarpras' => 'v2.pegawai.dashboard',
                 'personalia' => 'v2.pegawai.dashboard',
+                'orang_tua' => 'v2.orang-tua.dashboard',
             ];
             $redirectRoute = $roleRedirects[$role] ?? 'dashboard';
 
@@ -188,6 +194,9 @@ class AuthController extends Controller
             case 'sarpras':
             case 'personalia':
                 Auth::guard('jabatan')->logout();
+                break;
+            case 'orang_tua':
+                Auth::guard('orang_tua')->logout();
                 break;
         }
 

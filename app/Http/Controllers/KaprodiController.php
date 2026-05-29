@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Prodi;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
+use App\Models\Prodi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Unique;
 
 class KaprodiController extends Controller
 {
@@ -22,9 +20,9 @@ class KaprodiController extends Controller
         $kaprodis = Kaprodi::with('prodi')->latest()->get();
         $dosens = Dosen::all();
         $prodis = Prodi::all();
+
         return view('pages.data-master.data-kaprodi', compact('dosens', 'prodis', 'kaprodis', 'kelasAll'));
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -34,7 +32,7 @@ class KaprodiController extends Controller
         $request->validate([
             'dosens_id' => 'required|unique:kaprodi,dosens_id',
             'prodis_id' => 'required|unique:kaprodi,prodis_id',
-            'password' => 'required'
+            'password' => 'required',
         ], [
             'dosens_id.required' => 'Kaprodi harus diisi',
             'dosens_id.unique' => 'Dosen ini sudah terdaftar sebagai kaprodi',
@@ -53,14 +51,13 @@ class KaprodiController extends Controller
             'email' => $dosen->email,
             'status' => 1,
             'password' => Hash::make($request->password),
-            'is_first_login' => true
+            'is_first_login' => true,
         ]);
 
         return response()->json([
             'success' => 'Kaprodi berhasil ditambahkan!',
         ]);
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -71,7 +68,7 @@ class KaprodiController extends Controller
 
         $request->validate([
             'dosens_id' => 'required|exists:dosens,id',
-            'prodis_id' => 'required|unique:kaprodi,prodis_id,' . $kaprodi->id,
+            'prodis_id' => 'required|unique:kaprodi,prodis_id,'.$kaprodi->id,
             'status' => 'required|in:0,1',
         ], [
             'dosens_id.required' => 'Dosen wajib dipilih',
@@ -92,16 +89,13 @@ class KaprodiController extends Controller
 
         if ($request->filled('password')) {
             $kaprodi->password = Hash::make($request->password);
-		$kaprodi->is_first_login = true;
+            $kaprodi->is_first_login = true;
         }
-
 
         $kaprodi->save();
 
         return response()->json(['success' => 'Kaprodi berhasil diupdate!']);
     }
-
-
 
     /**
      * Remove the specified resource from storage.
@@ -110,6 +104,7 @@ class KaprodiController extends Controller
     {
         $kaprodi = Kaprodi::findOrFail($id);
         $kaprodi->delete();
+
         return response()->json(['success' => 'Kaprodi berhasil dihapus']);
     }
 }

@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Wadir;
-use App\Models\Direktur;
-use App\Models\Kaprodi;
-use App\Models\Jadwal;
 use App\Exports\DosenExport;
 use App\Imports\DosenImport;
+use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Jadwal;
+use App\Models\Kaprodi;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class DosenController extends Controller
 {
@@ -26,13 +24,13 @@ class DosenController extends Controller
     {
         $kelasAll = Jadwal::all();
         $dosens = Dosen::latest()->get();
+
         return view('pages.data-master.data-dosen', compact('dosens', 'kelasAll'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-
     public function store(Request $request)
     {
         $validateData = $request->validate([
@@ -59,7 +57,7 @@ class DosenController extends Controller
                 'email',
                 Rule::unique('dosens')->whereNull('deleted_at'),
             ],
-            'password' => 'required'
+            'password' => 'required',
         ], [
             'nama.required' => 'Nama Dosen harus diisi',
             'nidn.numeric' => 'NUPTK harus berupa angka',
@@ -75,7 +73,7 @@ class DosenController extends Controller
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
-            'password.required' => 'Password harus diisi'
+            'password.required' => 'Password harus diisi',
         ]);
 
         Dosen::create([
@@ -90,12 +88,11 @@ class DosenController extends Controller
             'status' => 1,
             'password' => Hash::make($validateData['password']),
             'pembimbing_akademik' => $validateData['pembimbing_akademik'],
-            'is_first_login' => true
+            'is_first_login' => true,
         ]);
 
         return response()->json(['success' => 'Data dosen berhasil ditambahkan!'], 200);
     }
-
 
     public function update(Request $request, $id)
     {
@@ -139,7 +136,7 @@ class DosenController extends Controller
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
-$updateData['is_first_login'] = true;
+            $updateData['is_first_login'] = true;
         }
 
         $dosen->update($updateData);
@@ -168,7 +165,6 @@ $updateData['is_first_login'] = true;
         return response()->json(['success' => 'Data dosen berhasil diperbarui']);
     }
 
-
     /**
      * Remove the specified resource from storage.
      */
@@ -179,32 +175,37 @@ $updateData['is_first_login'] = true;
         Wadir::where('dosens_id', $dosen->id)->delete();
         Direktur::where('dosens_id', $dosen->id)->delete();
         Kaprodi::where('dosens_id', $dosen->id)->delete();
+
         return response()->json(['success' => 'Dosen berhasil dihapus.']);
     }
 
-    public function import(Request $request) {
+    public function import(Request $request)
+    {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ], ['file.mimes' => 'Format file tidak sesuai']);
 
         DB::beginTransaction();
 
-        Excel::import(new DosenImport(), $request->file('file'));
+        Excel::import(new DosenImport, $request->file('file'));
 
         DB::commit();
 
         return response()->json([
-            'success' => 'Data Dosen berhasil diimpor'
+            'success' => 'Data Dosen berhasil diimpor',
         ]);
     }
 
-    public function export(){
+    public function export()
+    {
 
         return Excel::download(new DosenExport, 'dosen.xlsx');
     }
 
-	public function downloadFormat() {
+    public function downloadFormat()
+    {
         $filePath = public_path('format/import_dosen.xlsx');
+
         return response()->download($filePath, 'Format_Import_dosen.xlsx');
-    	}
+    }
 }

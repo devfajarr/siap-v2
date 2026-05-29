@@ -13,6 +13,6 @@ class RequestEditPresensi extends Model
 
     public function jadwal()
     {
-        return $this->belongsTo(Jadwal::class,'jadwal_id'); 
+        return $this->belongsTo(Jadwal::class, 'jadwal_id');
     }
 }

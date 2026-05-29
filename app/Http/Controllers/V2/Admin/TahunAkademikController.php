@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\TahunAkademik;
 use App\Http\Requests\V2\Admin\TahunAkademik\StoreTahunAkademikRequest;
 use App\Http\Requests\V2\Admin\TahunAkademik\UpdateTahunAkademikRequest;
-use Illuminate\Http\Request;
+use App\Models\TahunAkademik;
 use Inertia\Inertia;
 
 class TahunAkademikController extends Controller

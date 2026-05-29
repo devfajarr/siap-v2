@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('materi')->nullable();
             $table->string('tahun');
             $table->string('pustaka')->nullable();
-            $table->boolean('setuju_wadir')->default(false); 
+            $table->boolean('setuju_wadir')->default(false);
             $table->boolean('setuju_kaprodi')->default(false);
             $table->timestamps();
         });

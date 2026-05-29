@@ -3,10 +3,8 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Auth;
 
 class PengajuanNilaiNotification extends Notification
 {
@@ -16,8 +14,10 @@ class PengajuanNilaiNotification extends Notification
      * Create a new notification instance.
      */
     protected $nilai;
+
     protected $value;
-    public function __construct($nilai,$value)
+
+    public function __construct($nilai, $value)
     {
         $this->nilai = $nilai;
         $this->value = $value;
@@ -33,7 +33,6 @@ class PengajuanNilaiNotification extends Notification
         return ['database'];
     }
 
-
     /**
      * Get the array representation of the notification.
      *
@@ -48,9 +47,9 @@ class PengajuanNilaiNotification extends Notification
                 'title' => 'Pengajuan Rekap Nilai',
                 'name' => $this->nilai->jadwal->dosen->nama,
                 'matkul' => $this->nilai->matkul->nama_matkul,
-                'class' => $this->nilai->kelas->nama_kelas
+                'class' => $this->nilai->kelas->nama_kelas,
             ];
-        } elseif(Auth::guard('admin')->check()) {
+        } elseif (Auth::guard('admin')->check()) {
             return [
                 'notification_type' => 'nilai',
                 'message_content' => 'Verifikasi Data nilai Berhasil',
@@ -58,9 +57,10 @@ class PengajuanNilaiNotification extends Notification
                 'name' => $this->nilai->jadwal->dosen->nama,
                 'matkul' => $this->nilai->matkul->nama_matkul,
                 'class' => $this->nilai->kelas->nama_kelas,
-                'nilai'=>$this->value->nilai_huruf ?? null
+                'nilai' => $this->value->nilai_huruf ?? null,
             ];
         }
+
         return [];
     }
 }

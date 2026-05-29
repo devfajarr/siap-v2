@@ -5,7 +5,6 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-
 class WhatsappService
 {
     public static function kirim(string $nomor, string $pesan): bool
@@ -17,19 +16,19 @@ class WhatsappService
             $nomor = self::formatNomor($nomor);
 
             $response = Http::withHeaders([
-                'x-api-key'     => $apiKey,
-                'Content-Type'  => 'application/json',
+                'x-api-key' => $apiKey,
+                'Content-Type' => 'application/json',
             ])->post($apiUrl, [
-                'number'  => $nomor,
+                'number' => $nomor,
                 'message' => $pesan,
             ]);
 
             // kalau gagal (misalnya 4xx atau 5xx), log errornya
             if (! $response->successful()) {
                 Log::error('WA API gagal', [
-                    'number'   => $nomor,
-                    'message'  => trim($pesan),
-                    'status'   => $response->status(),
+                    'number' => $nomor,
+                    'message' => trim($pesan),
+                    'status' => $response->status(),
                     'response' => $response->body(),
                 ]);
             }
@@ -37,10 +36,10 @@ class WhatsappService
             return $response->successful();
         } catch (\Throwable $e) {
             // simpan error ke laravel.log tapi jangan hentikan proses
-            Log::error('Kirim WA gagal: ' . $e->getMessage(), [
+            Log::error('Kirim WA gagal: '.$e->getMessage(), [
                 'number' => $nomor ?? null,
-                'pesan'  => $pesan ?? null,
-                'trace'  => $e->getTraceAsString(),
+                'pesan' => $pesan ?? null,
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // tetap return false agar proses lain tetap bisa lanjut
@@ -65,12 +64,12 @@ class WhatsappService
                 file_get_contents($filePath),
                 basename($filePath)
             )->post($apiUrl, [
-                'number'  => $nomor,
+                'number' => $nomor,
                 'message' => $pesan,
             ]);
         } else {
             $response = $request->post($apiUrl, [
-                'number'  => $nomor,
+                'number' => $nomor,
                 'message' => $pesan,
             ]);
         }
@@ -83,13 +82,13 @@ class WhatsappService
         $nomor = preg_replace('/[^0-9]/', '', $nomor);
 
         if (substr($nomor, 0, 1) === '0') {
-            return '62' . substr($nomor, 1);
+            return '62'.substr($nomor, 1);
         }
 
         if (substr($nomor, 0, 2) === '62') {
             return $nomor;
         }
 
-        return '62' . $nomor;
+        return '62'.$nomor;
     }
 }

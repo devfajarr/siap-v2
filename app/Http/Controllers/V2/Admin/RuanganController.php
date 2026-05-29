@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ruangan;
 use App\Http\Requests\V2\Admin\Ruangan\StoreRuanganRequest;
 use App\Http\Requests\V2\Admin\Ruangan\UpdateRuanganRequest;
-use Illuminate\Http\Request;
+use App\Models\Ruangan;
 use Inertia\Inertia;
 
 class RuanganController extends Controller

@@ -333,7 +333,9 @@ class DatabaseSeeder extends Seeder
         foreach ($matkuls as $matkul) {
             Matkul::create($matkul);
         }
+
         $this->call(AcademicStaffSeeder::class);
         $this->call(MahasiswaSeeder::class);
+        $this->call(OrangTuaSeeder::class);
     }
 }

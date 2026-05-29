@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Dosen;
-use App\Models\Pegawai;
-use App\Models\Kaprodi;
-use App\Models\Wadir;
 use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Kaprodi;
+use App\Models\Pegawai;
 use App\Models\Prodi;
+use App\Models\Wadir;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -25,15 +25,15 @@ class AcademicStaffSeeder extends Seeder
                 ['email' => "dosen.seeder.{$i}@email.com"],
                 [
                     'nama' => "Dosen Seeder {$i}",
-                    'nidn' => "9900100" . str_pad($i, 3, '0', STR_PAD_LEFT),
+                    'nidn' => '9900100'.str_pad($i, 3, '0', STR_PAD_LEFT),
                     'jenis_kelamin' => $i % 2 === 0 ? 'Perempuan' : 'Laki-Laki',
                     'pembimbing_akademik' => 1,
-                    'no_telephone' => "0891234567" . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'no_telephone' => '0891234567'.str_pad($i, 2, '0', STR_PAD_LEFT),
                     'agama' => 'islam',
                     'status' => 1,
-                    'tanggal_lahir' => '1980-01-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'tanggal_lahir' => '1980-01-'.str_pad($i, 2, '0', STR_PAD_LEFT),
                     'tempat_lahir' => 'Kota Seeder',
-                    'password' => Hash::make('password')
+                    'password' => Hash::make('password'),
                 ]
             );
         }
@@ -44,15 +44,15 @@ class AcademicStaffSeeder extends Seeder
                 ['email' => "pegawai.seeder.{$i}@email.com"],
                 [
                     'nama' => "Pegawai Seeder {$i}",
-                    'nuptk' => "8800100" . str_pad($i, 3, '0', STR_PAD_LEFT),
+                    'nuptk' => '8800100'.str_pad($i, 3, '0', STR_PAD_LEFT),
                     'jenis_kelamin' => $i % 2 === 0 ? 'Perempuan' : 'Laki-laki',
-                    'no_telephone' => "0881234567" . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'no_telephone' => '0881234567'.str_pad($i, 2, '0', STR_PAD_LEFT),
                     'agama' => 'islam',
                     'status' => 1,
-                    'tanggal_lahir' => '1985-05-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'tanggal_lahir' => '1985-05-'.str_pad($i, 2, '0', STR_PAD_LEFT),
                     'tempat_lahir' => 'Kota Seeder',
                     'password' => Hash::make('password'),
-                    'is_first_login' => false
+                    'is_first_login' => false,
                 ]
             );
         }
@@ -79,7 +79,7 @@ class AcademicStaffSeeder extends Seeder
                         'email' => $dosen->email,
                         'status' => 1,
                         'password' => $dosen->password,
-                        'is_first_login' => false
+                        'is_first_login' => false,
                     ]
                 );
                 $kaprodi->prodis()->sync([$prodi->id]);
@@ -97,7 +97,7 @@ class AcademicStaffSeeder extends Seeder
                 'status' => 1,
                 'email' => $dosenWadir->email,
                 'password' => $dosenWadir->password,
-                'is_first_login' => false
+                'is_first_login' => false,
             ]
         );
 
@@ -111,7 +111,7 @@ class AcademicStaffSeeder extends Seeder
                 'status' => 1,
                 'email' => $dosenDirektur->email,
                 'password' => $dosenDirektur->password,
-                'is_first_login' => false
+                'is_first_login' => false,
             ]
         );
     }

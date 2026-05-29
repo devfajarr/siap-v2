@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Wadir;
-use App\Models\Jadwal;
-use App\Models\Resume;
-use App\Models\Kaprodi;
 use App\Models\Direktur;
-use App\Models\Semester;
-use Illuminate\Http\Request;
-use App\Models\TahunAkademik;
+use App\Models\Dosen;
+use App\Models\Jadwal;
+use App\Models\Kaprodi;
+use App\Models\Kelas;
 use App\Models\PengajuanRekapBerita;
-use Illuminate\Support\Facades\Session;
+use App\Models\Resume;
+use App\Models\Semester;
+use App\Models\TahunAkademik;
+use App\Models\Wadir;
 use App\Notifications\PengajuanResumeNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class PengajuanRekapBeritaController extends Controller
 {
@@ -22,15 +22,19 @@ class PengajuanRekapBeritaController extends Controller
      * Display a listing of the resource.
      */
     protected $prodiId;
+
     protected $role;
+
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
             $this->prodiId = Session::get('user.prodiId');
             $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         if ($this->role == 'kaprodi') {
@@ -51,7 +55,7 @@ class PengajuanRekapBeritaController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 0)
                 ->when($prodiId, function ($query) use ($prodiId) {
@@ -78,13 +82,12 @@ class PengajuanRekapBeritaController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 0)
                 ->latest()
                 ->get();
         }
-
 
         $kelasAll = Jadwal::all();
 
@@ -110,7 +113,7 @@ class PengajuanRekapBeritaController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 1)
                 ->when($prodiId, function ($query) use ($prodiId) {
@@ -136,7 +139,7 @@ class PengajuanRekapBeritaController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 1)
                 ->latest()
@@ -158,11 +161,11 @@ class PengajuanRekapBeritaController extends Controller
         $direkturs = Direktur::all();
         $kaprodi = Kaprodi::where('prodis_id', $kelas->id_prodi)->first();
         $validateData = $request->validate([
-            "matkul_id" => "required",
-            "kelas_id" => "required",
-            "jadwal_id" => "required",
-            "rentang" => 'required|in:1-7,8-14',
-            "dosen_id" => 'required'
+            'matkul_id' => 'required',
+            'kelas_id' => 'required',
+            'jadwal_id' => 'required',
+            'rentang' => 'required|in:1-7,8-14',
+            'dosen_id' => 'required',
         ]);
 
         $resume = PengajuanRekapBerita::with('matkul', 'kelas', 'jadwal', 'dosen')->create([
@@ -179,6 +182,7 @@ class PengajuanRekapBeritaController extends Controller
             $direktur->notify(new PengajuanResumeNotification($resume));
         }
         $kaprodi->notify(new PengajuanResumeNotification($resume));
+
         return redirect()->back()->with('success', 'Pengajuan Rekap Berita Acara Perkuliahan Berhasil');
     }
 
@@ -209,9 +213,10 @@ class PengajuanRekapBeritaController extends Controller
 
         $semester = Semester::where('status', 1)->first();
         if ($semester) {
-            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+            $sem = ($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL';
         }
         $tahunAkademik = TahunAkademik::where('status', 1)->first();
+
         return view('pages.pengajuanRekapBerita.rekap', compact('beritas', 'tahunAkademik', 'sem', 'range'));
     }
 
@@ -254,10 +259,10 @@ class PengajuanRekapBeritaController extends Controller
                     $resume->setuju_wadir = false;
                 }
 
-                if (!$resume->setuju_kaprodi) {
+                if (! $resume->setuju_kaprodi) {
                     $allKaprodiApproved = false;
                 }
-                if (!$resume->setuju_wadir) {
+                if (! $resume->setuju_wadir) {
                     $allWadirApproved = false;
                 }
 
@@ -283,10 +288,9 @@ class PengajuanRekapBeritaController extends Controller
 
             return redirect()->back()->with('success', 'Status persetujuan berhasil diperbarui');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memperbarui status persetujuan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui status persetujuan: '.$e->getMessage());
         }
     }
-
 
     /**
      * Remove the specified resource from storage.

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\V2\Mahasiswa;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kelas;
+use App\Models\Krs;
 use App\Models\Mahasiswa;
 use App\Models\Matkul;
 use App\Models\Pembayaran;
-use App\Models\Krs;
-use App\Models\Kelas;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,12 +26,12 @@ class KrsPembayaranController extends Controller
         $mahasiswa = Mahasiswa::with([
             'kelas.semester',
             'kelas.prodi',
-            'pembimbingAkademik'
+            'pembimbingAkademik',
         ])->findOrFail($user->id);
 
         $kelas = $mahasiswa->kelas;
 
-        if (!$kelas || !$kelas->id_semester || !$kelas->id_prodi) {
+        if (! $kelas || ! $kelas->id_semester || ! $kelas->id_prodi) {
             return Inertia::render('Mahasiswa/KrsPembayaran/Index', [
                 'mahasiswa' => [
                     'nama_lengkap' => $mahasiswa->nama_lengkap,
@@ -112,7 +112,7 @@ class KrsPembayaranController extends Controller
         $user = auth()->guard('mahasiswa')->user();
         $mahasiswa = Mahasiswa::with('kelas.semester')->findOrFail($user->id);
 
-        if (!$mahasiswa->kelas || !$mahasiswa->kelas->id_semester) {
+        if (! $mahasiswa->kelas || ! $mahasiswa->kelas->id_semester) {
             return redirect()->back()->with('error', 'Data kelas atau semester aktif tidak ditemukan.');
         }
 
@@ -156,7 +156,7 @@ class KrsPembayaranController extends Controller
         $user = auth()->guard('mahasiswa')->user();
         $mahasiswa = Mahasiswa::with('kelas.semester', 'kelas.prodi')->findOrFail($user->id);
 
-        if (!$mahasiswa->kelas || !$mahasiswa->kelas->id_semester || !$mahasiswa->kelas->id_prodi) {
+        if (! $mahasiswa->kelas || ! $mahasiswa->kelas->id_semester || ! $mahasiswa->kelas->id_prodi) {
             return redirect()->back()->with('error', 'Data kelas, prodi, atau semester tidak lengkap.');
         }
 
@@ -169,7 +169,7 @@ class KrsPembayaranController extends Controller
             ->where('semester_id', $semesterId)
             ->first();
 
-        if (!$pembayaran || $pembayaran->status_pembayaran !== 1 || $pembayaran->keterangan !== 'Sudah') {
+        if (! $pembayaran || $pembayaran->status_pembayaran !== 1 || $pembayaran->keterangan !== 'Sudah') {
             return redirect()->back()->with('error', 'Pengajuan KRS hanya dapat dilakukan setelah pembayaran semester terverifikasi lunas.');
         }
 
@@ -181,7 +181,7 @@ class KrsPembayaranController extends Controller
             return redirect()->back()->with('error', 'Dokumen KRS untuk semester ini sudah pernah dibuat.');
         }
 
-        $tahunAjaran = $mahasiswa->kelas->semester->tahun_ajaran ?? date('Y') . '/' . (date('Y') + 1);
+        $tahunAjaran = $mahasiswa->kelas->semester->tahun_ajaran ?? date('Y').'/'.(date('Y') + 1);
 
         Krs::create([
             'mahasiswa_id' => $mahasiswa->id,
@@ -219,10 +219,10 @@ class KrsPembayaranController extends Controller
         if ($dosenPa && $dosenPa->no_telephone) {
             if (config('app.whatsapp_notification', true)) {
                 $pesanDosen = "Pemberitahuan Sistem Akademik:\n\n"
-                    . "Nama  : *{$krs->mahasiswa->nama_lengkap}*\n"
-                    . "Kelas : {$krs->kelas->nama_kelas}\n"
-                    . "Prodi : {$krs->prodi->nama_prodi}\n\n"
-                    . "Mahasiswa telah menandatangani KRS. Harap *periksa & verifikasi* KRS di sistem.";
+                    ."Nama  : *{$krs->mahasiswa->nama_lengkap}*\n"
+                    ."Kelas : {$krs->kelas->nama_kelas}\n"
+                    ."Prodi : {$krs->prodi->nama_prodi}\n\n"
+                    .'Mahasiswa telah menandatangani KRS. Harap *periksa & verifikasi* KRS di sistem.';
                 WhatsappService::kirim($dosenPa->no_telephone, $pesanDosen);
             }
         }
@@ -244,11 +244,11 @@ class KrsPembayaranController extends Controller
             'mahasiswa.kelas.prodi',
             'mahasiswa.pembimbingAkademik',
             'semester',
-            'prodi'
+            'prodi',
         ])
-        ->where('id', $id)
-        ->where('mahasiswa_id', $user->id)
-        ->firstOrFail();
+            ->where('id', $id)
+            ->where('mahasiswa_id', $user->id)
+            ->firstOrFail();
 
         $prodiId = $krs->prodi_id;
         $semesterId = $krs->semester_id;

@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\V2\Kaprodi;
 
 use App\Http\Controllers\Controller;
+use App\Models\Absen;
 use App\Models\Dosen;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
-use App\Models\TahunAkademik;
-use App\Models\Absen;
+use App\Models\Message;
 use App\Models\Resume;
 use App\Models\Semester;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Models\TahunAkademik;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class DataPerkuliahanController extends Controller
 {
@@ -23,7 +23,7 @@ class DataPerkuliahanController extends Controller
     {
         $user = Auth::guard('kaprodi')->user();
         $prodiId = session('user.activeProdiId');
-        
+
         // Ambil Tahun Akademik Aktif
         $tahunAkademikActive = TahunAkademik::where('status', 1)->first();
         $tahun = $tahunAkademikActive ? $tahunAkademikActive->tahun_akademik : null;
@@ -31,15 +31,15 @@ class DataPerkuliahanController extends Controller
         $dosens = Dosen::where('status', 1)
             ->whereHas('jadwal', function ($query) use ($prodiId, $tahun) {
                 $query->where('tahun', $tahun)
-                      ->whereHas('kelas', function ($q) use ($prodiId) {
-                          $q->where('id_prodi', $prodiId);
-                      });
+                    ->whereHas('kelas', function ($q) use ($prodiId) {
+                        $q->where('id_prodi', $prodiId);
+                    });
             })
             ->withCount(['jadwal as total_matkul' => function ($query) use ($prodiId, $tahun) {
                 $query->where('tahun', $tahun)
-                      ->whereHas('kelas', function ($q) use ($prodiId) {
-                          $q->where('id_prodi', $prodiId);
-                      });
+                    ->whereHas('kelas', function ($q) use ($prodiId) {
+                        $q->where('id_prodi', $prodiId);
+                    });
             }])
             ->get()
             ->map(function ($dosen) {
@@ -52,7 +52,7 @@ class DataPerkuliahanController extends Controller
 
         return Inertia::render('Kaprodi/DataPerkuliahan/Index', [
             'dosens' => $dosens,
-            'tahunAkademik' => $tahun
+            'tahunAkademik' => $tahun,
         ]);
     }
 
@@ -71,10 +71,10 @@ class DataPerkuliahanController extends Controller
                 $q->whereIn('id_prodi', $prodiIds);
             })
             ->exists();
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             abort(403, 'Unauthorized action.');
         }
-        
+
         $tahunAkademikActive = TahunAkademik::where('status', 1)->first();
         $tahun = $tahunAkademikActive ? $tahunAkademikActive->tahun_akademik : null;
 
@@ -84,7 +84,7 @@ class DataPerkuliahanController extends Controller
             'matkul',
             'matkul.prodi',
             'matkul.semester',
-            'kelas.prodi'
+            'kelas.prodi',
         ])
             ->where('dosens_id', $id)
             ->where('tahun', $tahun)
@@ -102,24 +102,24 @@ class DataPerkuliahanController extends Controller
             ->get();
 
         $formattedJadwals = $jadwals->map(function ($jadwal) use ($user) {
-            
+
             // Fix N+1 check for messages
             $receiverType = 'App\Models\Kaprodi';
             $dosenType = 'App\Models\Dosen';
 
-            $hasMessage = \App\Models\Message::where('jadwal_id', $jadwal->id)
+            $hasMessage = Message::where('jadwal_id', $jadwal->id)
                 ->whereNull('parent_id')
                 ->where(function ($query) use ($user, $jadwal, $receiverType, $dosenType) {
                     $query->where(function ($subQuery) use ($user, $jadwal, $receiverType, $dosenType) {
                         $subQuery->where('sender_id', $user->id)
-                                 ->where('sender_type', $receiverType)
-                                 ->where('receiver_id', $jadwal->dosens_id)
-                                 ->where('receiver_type', $dosenType);
+                            ->where('sender_type', $receiverType)
+                            ->where('receiver_id', $jadwal->dosens_id)
+                            ->where('receiver_type', $dosenType);
                     })->orWhere(function ($subQuery) use ($user, $jadwal, $receiverType, $dosenType) {
                         $subQuery->where('receiver_id', $user->id)
-                                 ->where('receiver_type', $receiverType)
-                                 ->where('sender_id', $jadwal->dosens_id)
-                                 ->where('sender_type', $dosenType);
+                            ->where('receiver_type', $receiverType)
+                            ->where('sender_id', $jadwal->dosens_id)
+                            ->where('sender_type', $dosenType);
                     });
                 })
                 ->exists();
@@ -137,7 +137,7 @@ class DataPerkuliahanController extends Controller
                 'matkuls_id' => $jadwal->matkuls_id,
                 'kelas_id' => $jadwal->kelas_id,
                 'dosens_id' => $jadwal->dosens_id,
-                'has_message' => $hasMessage
+                'has_message' => $hasMessage,
             ];
         });
 
@@ -147,7 +147,7 @@ class DataPerkuliahanController extends Controller
                 'nama' => $dosen->nama,
             ],
             'jadwals' => $formattedJadwals,
-            'tahunAkademik' => $tahun
+            'tahunAkademik' => $tahun,
         ]);
     }
 
@@ -179,7 +179,7 @@ class DataPerkuliahanController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('jadwals_id', $jadwal_id)
             ->where('matkuls_id', $matkul_id)
@@ -191,7 +191,7 @@ class DataPerkuliahanController extends Controller
             abort(404, 'Data presensi tidak ditemukan.');
         }
 
-        if (!in_array($absens->first()->prodis_id, session('user.prodiIds', []))) {
+        if (! in_array($absens->first()->prodis_id, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -201,8 +201,8 @@ class DataPerkuliahanController extends Controller
             $q->where('id', $absens->first()->prodis_id);
         })->first();
 
-        $viewName = $rentang === '1-7' 
-            ? 'pages.v2.kaprodi.data-perkuliahan.cek1to7' 
+        $viewName = $rentang === '1-7'
+            ? 'pages.v2.kaprodi.data-perkuliahan.cek1to7'
             : 'pages.v2.kaprodi.data-perkuliahan.cek8to14';
 
         return view($viewName, compact('absens', 'tahunAkademik', 'dosenPengampu', 'kaprodi'));
@@ -214,7 +214,7 @@ class DataPerkuliahanController extends Controller
     public function cetakBap($matkuls_id, $kelas_id, $jadwal_id, $rentang)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -238,7 +238,7 @@ class DataPerkuliahanController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkuls_id)
             ->where('kelas_id', $kelas_id)
@@ -247,14 +247,14 @@ class DataPerkuliahanController extends Controller
             ->get();
 
         $semester = Semester::where('status', 1)->first();
-        $sem = "GANJIL";
+        $sem = 'GANJIL';
         if ($semester) {
-            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+            $sem = ($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL';
         }
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
 
-        $viewName = $rentang === '1-7' 
-            ? 'pages.v2.kaprodi.data-perkuliahan.bap-cek1to7' 
+        $viewName = $rentang === '1-7'
+            ? 'pages.v2.kaprodi.data-perkuliahan.bap-cek1to7'
             : 'pages.v2.kaprodi.data-perkuliahan.bap-cek8to14';
 
         return view($viewName, compact('beritas', 'tahunAkademik', 'sem'));

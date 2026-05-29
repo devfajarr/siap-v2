@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\Dire;
 use App\Models\Absen;
 use App\Models\Admin;
 use App\Models\Dosen;
-use App\Models\Kelas;
 use App\Models\Jadwal;
-use App\Models\Resume;
 use App\Models\Kaprodi;
 use App\Models\Kontrak;
-use App\Models\Message;
-use App\Models\Semester;
 use App\Models\Mahasiswa;
-use Illuminate\Http\Request;
-use App\Models\TahunAkademik;
-use App\Services\WhatsappService;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use App\Models\RequestEditPresensi;
+use App\Models\Message;
 use App\Models\PengajuanRekapBerita;
 use App\Models\PengajuanRekapPresensi;
+use App\Models\RequestEditPresensi;
+use App\Models\Resume;
+use App\Models\Semester;
+use App\Models\TahunAkademik;
+use App\Services\WhatsappService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class PresensiController extends Controller
@@ -30,8 +27,8 @@ class PresensiController extends Controller
     /**
      * Display a listing of the resource.
      */
-
     protected $userid;
+
     protected $role;
 
     public function __construct()
@@ -39,9 +36,11 @@ class PresensiController extends Controller
         $this->middleware(function ($request, $next) {
             $this->userid = Session::get('user.id');
             $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         $kelasAll = Jadwal::where('dosens_id', $this->userid)->get();
@@ -59,7 +58,6 @@ class PresensiController extends Controller
 
         $berita = PengajuanRekapBerita::whereIn('jadwal_id', $jadwals->pluck('id'))->get()->groupBy('jadwal_id');
 
-
         $pesans = Message::with('sender')
             ->where('receiver_id', $this->userid)
             ->get();
@@ -69,7 +67,7 @@ class PresensiController extends Controller
         });
 
         $groupedPesans = $filteredPesans->groupBy(function ($pesan) {
-            return $pesan->sender_type . '-' . $pesan->sender_id;
+            return $pesan->sender_type.'-'.$pesan->sender_id;
         });
 
         $pesans = $groupedPesans->map(function (Collection $group) {
@@ -78,8 +76,6 @@ class PresensiController extends Controller
 
         return view('pages.dosen.data-presensi.index', compact('jadwals', 'pertemuanCounts', 'pengajuan', 'berita', 'kelasAll', 'pesans'));
     }
-
-
 
     public function absen($id)
     {
@@ -94,13 +90,13 @@ class PresensiController extends Controller
             ->get();
         $tahun = TahunAkademik::where('status', 1)->first();
         $kelasAll = Jadwal::where('dosens_id', $this->userid)->get();
+
         return view('pages.dosen.data-presensi.presensi', compact('jadwal', 'mahasiswas', 'pertemuan', 'tahun', 'kelasAll'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -134,12 +130,13 @@ class PresensiController extends Controller
                 'hadir' => $request->jumlahHadir,
             ]);
 
-
             DB::commit();
+
             return redirect('/presensi/data-presensi')->with('success', 'Data berhasil disimpan');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Data gagal disimpan: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Data gagal disimpan: '.$e->getMessage());
         }
     }
 
@@ -167,9 +164,8 @@ class PresensiController extends Controller
             ->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userid)->get();
 
-        return view('pages.dosen.data-presensi.edit', compact('resume',  'absens', 'mahasiswas', 'id', 'kelasAll'));
+        return view('pages.dosen.data-presensi.edit', compact('resume', 'absens', 'mahasiswas', 'id', 'kelasAll'));
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -183,7 +179,6 @@ class PresensiController extends Controller
             'mahasiswas_id' => 'required|array',
             'status' => 'required|array',
         ]);
-
 
         foreach ($request->mahasiswas_id as $index => $mahasiswa_id) {
             $absensi = Absen::where('kelas_id', $request->kelas_id)
@@ -235,7 +230,7 @@ class PresensiController extends Controller
             },
             'mahasiswa' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('jadwals_id', $jadwal_id)
             ->where('matkuls_id', $matkuls_id)
@@ -246,6 +241,7 @@ class PresensiController extends Controller
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
         $dosenPengampu = Dosen::where('id', $absens->first()->dosens_id)->first();
         $kaprodi = Kaprodi::where('prodis_id', $absens->first()->prodis_id)->first();
+
         return view('pages.dosen.data-presensi.rekap.presensi1-7', compact('absens', 'tahunAkademik', 'dosenPengampu', 'kaprodi'));
     }
 
@@ -269,7 +265,7 @@ class PresensiController extends Controller
             },
             'mahasiswa' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkuls_id)
             ->where('kelas_id', $kelas_id)
@@ -283,7 +279,6 @@ class PresensiController extends Controller
 
         return view('pages.dosen.data-presensi.rekap.presensi8-14', compact('absens', 'tahunAkademik', 'dosenPengampu', 'kaprodi'));
     }
-
 
     public function berita1to7($matkuls_id, $kelas_id, $jadwal_id)
     {
@@ -305,7 +300,7 @@ class PresensiController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkuls_id)
             ->where('kelas_id', $kelas_id)
@@ -315,9 +310,10 @@ class PresensiController extends Controller
 
         $semester = Semester::where('status', 1)->first();
         if ($semester) {
-            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+            $sem = ($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL';
         }
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
+
         return view('pages.dosen.data-presensi.rekap.berita1-7', compact('beritas', 'tahunAkademik', 'sem'));
     }
 
@@ -341,7 +337,7 @@ class PresensiController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkuls_id)
             ->where('kelas_id', $kelas_id)
@@ -351,9 +347,10 @@ class PresensiController extends Controller
 
         $semester = Semester::where('status', 1)->first();
         if ($semester) {
-            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+            $sem = ($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL';
         }
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
+
         return view('pages.dosen.data-presensi.rekap.berita8-14', compact('beritas', 'sem', 'tahunAkademik'));
     }
 
@@ -385,7 +382,6 @@ class PresensiController extends Controller
                 ->selectRaw('dosens_id, COUNT(*) as total')
                 ->pluck('total', 'dosens_id');
         }
-
 
         return view('pages.data-presensi.index', compact('getDosen', 'dosenMatkulCount'));
     }
@@ -434,9 +430,9 @@ class PresensiController extends Controller
             $kontrakCounts[$jadwal->id] = $kontrak ?? 0;
         }
 
-
         return view('pages.data-presensi.matkul', compact('jadwals', 'pertemuanCounts', 'beritaCounts', 'kontrakCounts'));
     }
+
     public function cekPresensi1to7($matkul_id, $kelas_id, $jadwal_id)
     {
         $absens = Absen::with([
@@ -460,7 +456,7 @@ class PresensiController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('jadwals_id', $jadwal_id)
             ->where('matkuls_id', $matkul_id)
@@ -471,6 +467,7 @@ class PresensiController extends Controller
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
         $dosenPengampu = Dosen::where('id', $absens->first()->dosens_id)->first();
         $kaprodi = Kaprodi::where('prodis_id', $absens->first()->prodis_id)->first();
+
         return view('pages.data-presensi.cek1to7', compact('absens', 'tahunAkademik', 'dosenPengampu', 'kaprodi'));
     }
 
@@ -497,7 +494,7 @@ class PresensiController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('jadwals_id', $jadwal_id)
             ->where('matkuls_id', $matkul_id)
@@ -508,6 +505,7 @@ class PresensiController extends Controller
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
         $dosenPengampu = Dosen::where('id', $absens->first()->dosens_id)->first();
         $kaprodi = Kaprodi::where('prodis_id', $absens->first()->prodis_id)->first();
+
         return view('pages.data-presensi.cek8to14', compact('absens', 'tahunAkademik', 'dosenPengampu', 'kaprodi'));
     }
 
@@ -539,6 +537,7 @@ class PresensiController extends Controller
                 ->selectRaw('dosens_id, COUNT(*) as total')
                 ->pluck('total', 'dosens_id');
         }
+
         return view('pages.data-resume.index', compact('getDosen', 'dosenMatkulCount'));
     }
 
@@ -575,8 +574,10 @@ class PresensiController extends Controller
             $pertemuan = Resume::where('jadwals_id', $jadwal->id)->max('pertemuan');
             $pertemuanCounts[$jadwal->id] = $pertemuan ?? 0;
         }
+
         return view('pages.data-resume.matkul', compact('jadwals', 'pertemuanCounts'));
     }
+
     public function cekResume1to7($matkuls_id, $kelas_id, $jadwal_id)
     {
         $beritas = Resume::with([
@@ -597,7 +598,7 @@ class PresensiController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkuls_id)
             ->where('kelas_id', $kelas_id)
@@ -607,11 +608,13 @@ class PresensiController extends Controller
 
         $semester = Semester::where('status', 1)->first();
         if ($semester) {
-            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+            $sem = ($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL';
         }
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
+
         return view('pages.data-resume.cek1to7', compact('beritas', 'tahunAkademik', 'sem'));
     }
+
     public function cekResume8to14($matkuls_id, $kelas_id, $jadwal_id)
     {
         $beritas = Resume::with([
@@ -632,7 +635,7 @@ class PresensiController extends Controller
             },
             'jadwal' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkuls_id)
             ->where('kelas_id', $kelas_id)
@@ -642,9 +645,10 @@ class PresensiController extends Controller
 
         $semester = Semester::where('status', 1)->first();
         if ($semester) {
-            $sem = ($semester->semester % 2 == 0) ? "GENAP" : "GANJIL";
+            $sem = ($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL';
         }
         $tahunAkademik = TahunAkademik::where('status', 1)->get();
+
         return view('pages.data-resume.cek8to14', compact('beritas', 'tahunAkademik', 'sem'));
     }
 
@@ -665,24 +669,24 @@ class PresensiController extends Controller
         $dosen = Dosen::findOrFail($this->userid);
         $jadwal = Jadwal::with('matkul', 'kelas')->findOrFail($request->jadwal_id);
         $request->validate([
-            'pertemuan' => 'required'
+            'pertemuan' => 'required',
         ], [
-            'pertemuan.required' => 'Pertemuan harus dipilih.'
+            'pertemuan.required' => 'Pertemuan harus dipilih.',
         ]);
 
         $success = RequestEditPresensi::create([
             'jadwal_id' => $request->jadwal_id,
-            'pertemuan' => $request->pertemuan
+            'pertemuan' => $request->pertemuan,
         ]);
         if ($success) {
             WhatsappService::kirim(
                 $nomor_akademik,
                 "📢 *Pengajuan Edit Presensi!*\n\n"
-                    . "📌 *Dosen:* {$dosen->nama}\n"
-                    . "📖 *Mata Kuliah:* {$jadwal->matkul->nama_matkul}\n"
-                    . "🏫 *Kelas:* {$jadwal->kelas->nama_kelas}\n"
-                    . "📅 *Pertemuan:* {$request->pertemuan}\n\n"
-                    . "Mohon segera lakukan verifikasi. ✅"
+                    ."📌 *Dosen:* {$dosen->nama}\n"
+                    ."📖 *Mata Kuliah:* {$jadwal->matkul->nama_matkul}\n"
+                    ."🏫 *Kelas:* {$jadwal->kelas->nama_kelas}\n"
+                    ."📅 *Pertemuan:* {$request->pertemuan}\n\n"
+                    .'Mohon segera lakukan verifikasi. ✅'
             );
         }
 
@@ -692,6 +696,7 @@ class PresensiController extends Controller
     public function requestEdit()
     {
         $pengajuans = RequestEditPresensi::with('jadwal')->where('disetujui', false)->latest()->paginate(6);
+
         return view('pages.data-presensi.request-edit', compact('pengajuans'));
     }
 
@@ -701,19 +706,20 @@ class PresensiController extends Controller
         $jadwal = Jadwal::with('dosen')->where('id', $pengajuan->jadwal_id)->first();
 
         $success = $pengajuan->update([
-            'disetujui' => true
+            'disetujui' => true,
         ]);
 
         if ($success) {
             WhatsappService::kirim(
                 $jadwal->dosen->no_telephone,
                 "✅ *Pengajuan Edit Presensi Disetujui!*\n\n"
-                    . "📖 *Mata Kuliah:* {$jadwal->matkul->nama_matkul}\n"
-                    . "🏫 *Kelas:* {$jadwal->kelas->nama_kelas}\n"
-                    . "📅 *Pertemuan:* {$pengajuan->pertemuan}\n\n"
-                    . "Akses untuk mengedit presensi telah dibuka. 🎯"
+                    ."📖 *Mata Kuliah:* {$jadwal->matkul->nama_matkul}\n"
+                    ."🏫 *Kelas:* {$jadwal->kelas->nama_kelas}\n"
+                    ."📅 *Pertemuan:* {$pengajuan->pertemuan}\n\n"
+                    .'Akses untuk mengedit presensi telah dibuka. 🎯'
             );
         }
+
         return redirect()->back()->with('success', 'Pengajuan Berhasil Disetujui');
     }
 
@@ -738,60 +744,60 @@ class PresensiController extends Controller
             ->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userid)->get();
 
-        return view('pages.dosen.data-presensi.edit-pertemuan', compact('resume',  'absens', 'mahasiswas', 'id', 'kelasAll'));
+        return view('pages.dosen.data-presensi.edit-pertemuan', compact('resume', 'absens', 'mahasiswas', 'id', 'kelasAll'));
     }
 
     public function updatePertemuan(Request $request)
-{
-    $pengajuanEdit = RequestEditPresensi::where('jadwal_id', $request->jadwals_id)
-                    ->where('disetujui', true)
-                    ->where('status', false)
-                    ->first();
-
-    $request->validate([
-        'pertemuan' => 'required',
-        'matkuls_id' => 'required',
-        'kelas_id' => 'required',
-        'mahasiswas_id' => 'required|array',
-        'status' => 'required|array',
-        'tanggal' => 'required|date',
-    ]);
-
-    foreach ($request->mahasiswas_id as $index => $mahasiswa_id) {
-        $absensi = Absen::where('kelas_id', $request->kelas_id)
-            ->where('mahasiswas_id', $mahasiswa_id)
-            ->where('pertemuan', $request->pertemuan)
-            ->where('matkuls_id', $request->matkuls_id)
-            ->where('jadwals_id', $request->jadwals_id)
+    {
+        $pengajuanEdit = RequestEditPresensi::where('jadwal_id', $request->jadwals_id)
+            ->where('disetujui', true)
+            ->where('status', false)
             ->first();
 
-        if ($absensi) {
-            $absensi->update([
-                'status' => $request->status[$mahasiswa_id],
+        $request->validate([
+            'pertemuan' => 'required',
+            'matkuls_id' => 'required',
+            'kelas_id' => 'required',
+            'mahasiswas_id' => 'required|array',
+            'status' => 'required|array',
+            'tanggal' => 'required|date',
+        ]);
+
+        foreach ($request->mahasiswas_id as $index => $mahasiswa_id) {
+            $absensi = Absen::where('kelas_id', $request->kelas_id)
+                ->where('mahasiswas_id', $mahasiswa_id)
+                ->where('pertemuan', $request->pertemuan)
+                ->where('matkuls_id', $request->matkuls_id)
+                ->where('jadwals_id', $request->jadwals_id)
+                ->first();
+
+            if ($absensi) {
+                $absensi->update([
+                    'status' => $request->status[$mahasiswa_id],
+                    'tanggal' => $request->tanggal,
+                ]);
+            }
+        }
+
+        $resume = Resume::where('kelas_id', $request->kelas_id)
+            ->where('matkuls_id', $request->matkuls_id)
+            ->where('pertemuan', $request->pertemuan)
+            ->first();
+
+        if ($resume) {
+            $resume->update([
+                'materi' => $request->materiResume,
                 'tanggal' => $request->tanggal,
             ]);
         }
+
+        if (isset($pengajuanEdit)) {
+            $pengajuanEdit->update([
+                'status' => true,
+            ]);
+        }
+
+        return redirect()->back()
+            ->with('success', 'Data presensi berhasil diperbarui.');
     }
-
-    $resume = Resume::where('kelas_id', $request->kelas_id)
-        ->where('matkuls_id', $request->matkuls_id)
-        ->where('pertemuan', $request->pertemuan)
-        ->first();
-
-    if ($resume) {
-        $resume->update([
-            'materi' => $request->materiResume,
-            'tanggal' => $request->tanggal,
-        ]);
-    }
-
-    if (isset($pengajuanEdit)) {
-        $pengajuanEdit->update([
-            'status' => true
-        ]);
-    }
-
-    return redirect()->back()
-        ->with('success', 'Data presensi berhasil diperbarui.');
-}
 }

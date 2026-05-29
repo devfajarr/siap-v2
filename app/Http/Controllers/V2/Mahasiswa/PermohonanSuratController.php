@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\V2\Mahasiswa;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\PermohonanSurat;
 use App\Models\Mahasiswa;
+use App\Models\PermohonanSurat;
 use App\Models\TahunAkademik;
 use App\Services\WhatsappService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PermohonanSuratController extends Controller
 {
@@ -26,7 +26,7 @@ class PermohonanSuratController extends Controller
         $permohonans = PermohonanSurat::with(['mahasiswa'])
             ->where(function ($query) use ($user) {
                 $query->where('mahasiswa_id', $user->id)
-                    ->orWhereJsonContains('anggota_tim', (string)$user->id)
+                    ->orWhereJsonContains('anggota_tim', (string) $user->id)
                     ->orWhereJsonContains('anggota_tim', $user->id);
             })
             ->latest()
@@ -48,7 +48,7 @@ class PermohonanSuratController extends Controller
         // Mengambil tahun akademik aktif
         $tahunAkademik = TahunAkademik::where('status', 1)->first();
         $tahunString = $tahunAkademik ? $tahunAkademik->tahun_akademik : '2025/2026';
-        
+
         $tahunAwal = '';
         $tahunAkhir = '';
         if (str_contains($tahunString, '/')) {
@@ -57,22 +57,22 @@ class PermohonanSuratController extends Controller
             $tahunAkhir = $parts[1];
         }
 
-        $tahunAkademikFormatted = ($tahunAwal && $tahunAkhir) 
+        $tahunAkademikFormatted = ($tahunAwal && $tahunAkhir)
             ? "{$tahunAwal}/GASAL /{$tahunAkhir}/GENAP"
             : $tahunString;
 
         // Mengambil seluruh pengajuan PKL/Observasi aktif pada tahun akademik ini
         $activePklSubmissions = PermohonanSurat::whereIn('jenis_permohonan', [
-            'Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA'
+            'Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA',
         ])
-        ->where('tahun_akademik', $tahunAkademikFormatted)
-        ->where('setuju_kaprodi', '!=', 2)
-        ->get();
+            ->where('tahun_akademik', $tahunAkademikFormatted)
+            ->where('setuju_kaprodi', '!=', 2)
+            ->get();
 
         $terdaftarIds = [];
         foreach ($activePklSubmissions as $sub) {
             $terdaftarIds[] = $sub->mahasiswa_id;
-            if (!empty($sub->anggota_tim) && is_array($sub->anggota_tim)) {
+            if (! empty($sub->anggota_tim) && is_array($sub->anggota_tim)) {
                 $terdaftarIds = array_merge($terdaftarIds, $sub->anggota_tim);
             }
         }
@@ -87,9 +87,9 @@ class PermohonanSuratController extends Controller
         if ($prodiId) {
             $queryMahasiswa->whereHas('kelas', function ($q) use ($prodiId, $minSemester) {
                 $q->where('id_prodi', $prodiId)
-                  ->whereHas('semester', function ($sq) use ($minSemester) {
-                      $sq->where('semester', '>=', $minSemester);
-                  });
+                    ->whereHas('semester', function ($sq) use ($minSemester) {
+                        $sq->where('semester', '>=', $minSemester);
+                    });
             });
         }
 
@@ -135,7 +135,7 @@ class PermohonanSuratController extends Controller
         // Normalisasi kata 'Izin' menjadi 'Ijin' untuk konsistensi database dan kompatibilitas template cetak legacy di Admin
         $jenis = str_replace('Izin', 'Ijin', $jenis);
 
-        $anggotaTim = (!empty($request->anggota_tim) && is_array($request->anggota_tim))
+        $anggotaTim = (! empty($request->anggota_tim) && is_array($request->anggota_tim))
             ? array_values(array_unique(array_map('intval', $request->anggota_tim)))
             : null;
 
@@ -151,7 +151,7 @@ class PermohonanSuratController extends Controller
             $allActiveIds = [];
             foreach ($activeSubmissions as $sub) {
                 $allActiveIds[] = $sub->mahasiswa_id;
-                if (!empty($sub->anggota_tim) && is_array($sub->anggota_tim)) {
+                if (! empty($sub->anggota_tim) && is_array($sub->anggota_tim)) {
                     $allActiveIds = array_merge($allActiveIds, $sub->anggota_tim);
                 }
             }
@@ -159,17 +159,18 @@ class PermohonanSuratController extends Controller
 
             if (in_array($mahasiswa->id, $allActiveIds)) {
                 return redirect()->back()->withErrors([
-                    'jenis_permohonan' => 'Anda sudah terdaftar dalam pengajuan PKL atau Observasi lain yang sedang aktif pada tahun akademik ini.'
+                    'jenis_permohonan' => 'Anda sudah terdaftar dalam pengajuan PKL atau Observasi lain yang sedang aktif pada tahun akademik ini.',
                 ]);
             }
 
             // 2. Validasi apakah ada anggota tim yang sudah terdaftar di pengajuan aktif
-            if (!empty($anggotaTim)) {
+            if (! empty($anggotaTim)) {
                 foreach ($anggotaTim as $anggotaId) {
                     if (in_array($anggotaId, $allActiveIds)) {
                         $mhsName = Mahasiswa::where('id', $anggotaId)->value('nama_lengkap') ?? "ID {$anggotaId}";
+
                         return redirect()->back()->withErrors([
-                            'anggota_tim' => "Mahasiswa atas nama {$mhsName} sudah terdaftar dalam kelompok pengajuan PKL/Observasi lain."
+                            'anggota_tim' => "Mahasiswa atas nama {$mhsName} sudah terdaftar dalam kelompok pengajuan PKL/Observasi lain.",
                         ]);
                     }
                 }
@@ -222,8 +223,8 @@ class PermohonanSuratController extends Controller
                 'alasan_cuti.required' => 'Alasan cuti wajib diisi.',
             ]);
 
-            $masaCuti = ($mahasiswa->kelas && $mahasiswa->kelas->semester) 
-                ? (string) $mahasiswa->kelas->semester->semester 
+            $masaCuti = ($mahasiswa->kelas && $mahasiswa->kelas->semester)
+                ? (string) $mahasiswa->kelas->semester->semester
                 : '1';
 
             $payload = array_merge($payload, [
@@ -316,18 +317,18 @@ class PermohonanSuratController extends Controller
             if (config('app.whatsapp_notification', true)) {
                 $kaprodi = $mahasiswa->kelas->prodi->kaprodi ?? null;
                 if ($kaprodi && $kaprodi->no_telephone) {
-                    $pesan = "📢 *Permohonan Surat Baru (Sistem V2)* 📢\n\n" .
-                        "📄 Jenis Surat: {$jenis}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n" .
-                        "🏛️ Prodi: " . ($mahasiswa->kelas->prodi->nama_prodi ?? '-') . "\n\n" .
-                        "📌 Mohon untuk memeriksa dan memverifikasi pengajuan di sistem. Terima kasih. 🙏";
-                    
+                    $pesan = "📢 *Permohonan Surat Baru (Sistem V2)* 📢\n\n".
+                        "📄 Jenis Surat: {$jenis}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n".
+                        '🏛️ Prodi: '.($mahasiswa->kelas->prodi->nama_prodi ?? '-')."\n\n".
+                        '📌 Mohon untuk memeriksa dan memverifikasi pengajuan di sistem. Terima kasih. 🙏';
+
                     WhatsappService::kirim($kaprodi->no_telephone, $pesan);
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Gagal mengirim notifikasi WA pengajuan surat: ' . $e->getMessage());
+            Log::error('Gagal mengirim notifikasi WA pengajuan surat: '.$e->getMessage());
         }
 
         return redirect()->back()->with('success', 'Formulir permohonan surat berhasil diajukan dan menunggu verifikasi.');
@@ -354,13 +355,13 @@ class PermohonanSuratController extends Controller
             ]);
         }
 
-        $anggotaTim = (!empty($request->anggota_tim) && is_array($request->anggota_tim))
+        $anggotaTim = (! empty($request->anggota_tim) && is_array($request->anggota_tim))
             ? array_values(array_unique(array_map('intval', $request->anggota_tim)))
             : null;
 
         $jenis = $permohonan->jenis_permohonan;
 
-        if (in_array($jenis, ['Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA']) && !empty($anggotaTim)) {
+        if (in_array($jenis, ['Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA']) && ! empty($anggotaTim)) {
             $otherSubmissions = PermohonanSurat::whereIn('jenis_permohonan', ['Ijin PKL', 'Ijin Memperoleh Data PKL', 'Ijin Memperoleh Data TA'])
                 ->where('tahun_akademik', $permohonan->tahun_akademik)
                 ->where('id', '!=', $id)
@@ -370,7 +371,7 @@ class PermohonanSuratController extends Controller
             $allOtherActiveIds = [];
             foreach ($otherSubmissions as $sub) {
                 $allOtherActiveIds[] = $sub->mahasiswa_id;
-                if (!empty($sub->anggota_tim) && is_array($sub->anggota_tim)) {
+                if (! empty($sub->anggota_tim) && is_array($sub->anggota_tim)) {
                     $allOtherActiveIds = array_merge($allOtherActiveIds, $sub->anggota_tim);
                 }
             }
@@ -379,8 +380,9 @@ class PermohonanSuratController extends Controller
             foreach ($anggotaTim as $anggotaId) {
                 if (in_array($anggotaId, $allOtherActiveIds)) {
                     $mhsName = Mahasiswa::where('id', $anggotaId)->value('nama_lengkap') ?? "ID {$anggotaId}";
+
                     return redirect()->back()->withErrors([
-                        'anggota_tim' => "Mahasiswa atas nama {$mhsName} sudah terdaftar dalam kelompok pengajuan PKL/Observasi lain."
+                        'anggota_tim' => "Mahasiswa atas nama {$mhsName} sudah terdaftar dalam kelompok pengajuan PKL/Observasi lain.",
                     ]);
                 }
             }

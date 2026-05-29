@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
 use App\Models\Jadwal;
-use Illuminate\Http\Request;
 use App\Models\TahunAkademik;
+use Illuminate\Http\Request;
 
 class TahunAkademikController extends Controller
 {
@@ -16,9 +15,9 @@ class TahunAkademikController extends Controller
     {
         $kelasAll = Jadwal::all();
         $tahuns = TahunAkademik::latest()->get();
-        return view('pages.data-master.data-tahun-akademik', compact('tahuns','kelasAll'));
-    }
 
+        return view('pages.data-master.data-tahun-akademik', compact('tahuns', 'kelasAll'));
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -28,7 +27,7 @@ class TahunAkademikController extends Controller
         $validateData = $request->validate([
             'tahun_akademik' => [
                 'required',
-                'regex:/^[0-9]{4}\/[0-9]{4}$/'
+                'regex:/^[0-9]{4}\/[0-9]{4}$/',
             ],
             'status' => 'required|boolean',
         ], [
@@ -43,7 +42,7 @@ class TahunAkademikController extends Controller
 
         if ($tahunKedua <= $tahunPertama) {
             return response()->json([
-                'errors' => ['tahun_akademik' => ['Tahun kedua harus lebih besar dari tahun pertama']]
+                'errors' => ['tahun_akademik' => ['Tahun kedua harus lebih besar dari tahun pertama']],
             ], 422);
         }
 
@@ -59,8 +58,6 @@ class TahunAkademikController extends Controller
         return response()->json(['success' => 'Tahun akademik berhasil ditambahkan', 'tahun' => $tahunAkademik]);
     }
 
-
-
     /**
      * Update the specified resource in storage.
      */
@@ -69,7 +66,7 @@ class TahunAkademikController extends Controller
         $validateData = $request->validate([
             'tahun_akademik' => [
                 'required',
-                'regex:/^[0-9]{4}\/[0-9]{4}$/'
+                'regex:/^[0-9]{4}\/[0-9]{4}$/',
             ],
             'status' => 'required|boolean',
         ], [
@@ -91,7 +88,6 @@ class TahunAkademikController extends Controller
         return response()->json(['success' => 'Tahun akademik berhasil diubah']);
     }
 
-
     /**
      * Remove the specified resource from storage.
      */
@@ -100,6 +96,7 @@ class TahunAkademikController extends Controller
         $hapus = TahunAkademik::findOrFail($id);
 
         $hapus->delete();
+
         return response()->json(['success', 'Tahun akademik berhasil dihapus']);
     }
 }

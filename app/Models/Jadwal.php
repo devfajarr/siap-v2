@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Jadwal extends Model
 {
@@ -37,8 +37,9 @@ class Jadwal extends Model
 
     public function absen()
     {
-        return $this->hasMany(Absen::class,'jadwals_id');
+        return $this->hasMany(Absen::class, 'jadwals_id');
     }
+
     public function resume()
     {
         return $this->hasMany(Resume::class, 'jadwals_id');
@@ -58,6 +59,7 @@ class Jadwal extends Model
     {
         return $this->hasOne(PengajuanRekapBerita::class);
     }
+
     public function pengajuanKontreak()
     {
         return $this->hasMany(PengajuanRekapkontrak::class);
@@ -82,6 +84,7 @@ class Jadwal extends Model
     {
         return $this->hasMany(Aktif::class);
     }
+
     public function pengajuanNilai()
     {
         return $this->hasMany(PengajuanRekapNilai::class);

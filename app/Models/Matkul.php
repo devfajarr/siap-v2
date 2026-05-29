@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Matkul extends Model
 {
@@ -19,7 +19,6 @@ class Matkul extends Model
         return $this->belongsTo(Kelas::class);
     }
 
-
     public function kontrak()
     {
         return $this->hasMany(Kontrak::class, 'matkuls_id');
@@ -30,11 +29,11 @@ class Matkul extends Model
         return $this->hasMany(Absen::class, 'matkuls_id');
     }
 
-
     public function resume()
     {
         return $this->hasMany(Resume::class);
     }
+
     public function pengajuanPresensi()
     {
         return $this->hasMany(PengajuanRekapPresensi::class);
@@ -49,10 +48,12 @@ class Matkul extends Model
     {
         return $this->hasMany(PengajuanRekapkontrak::class);
     }
+
     public function tugas()
     {
         return $this->hasMany(Tugas::class);
     }
+
     public function uas()
     {
         return $this->hasMany(Uas::class);
@@ -67,20 +68,22 @@ class Matkul extends Model
     {
         return $this->hasMany(Etika::class);
     }
+
     public function aktif()
     {
         return $this->hasMany(Aktif::class);
     }
+
     public function jadwal()
     {
         return $this->hasMany(Jadwal::class, 'matkuls_id');
     }
 
-
     public function pengajuanNilai()
     {
         return $this->hasMany(PengajuanRekapNilai::class);
     }
+
     public function nilaiHuruf()
     {
         return $this->hasMany(NilaiHuruf::class);

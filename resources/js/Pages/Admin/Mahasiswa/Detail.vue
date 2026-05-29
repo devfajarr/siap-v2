@@ -55,6 +55,48 @@ const isMoveDialogOpen = ref(false);
 const editingMahasiswa = ref(null);
 const targetKelasId = ref('');
 
+// Parent Management state
+const isParentSheetOpen = ref(false);
+const managingStudent = ref(null);
+
+const parentForm = useForm({
+    nama: '',
+    username: '',
+    password: '',
+    no_telephone: '',
+    alamat: '',
+    relationship_type: 'Ayah',
+});
+
+const openParentSheet = (mahasiswa) => {
+    managingStudent.value = mahasiswa;
+    isParentSheetOpen.value = true;
+    parentForm.reset();
+};
+
+const submitParent = () => {
+    parentForm.post(route('v2.admin.mahasiswa.orang-tua.store', managingStudent.value.id), {
+        onSuccess: () => {
+            parentForm.reset('password', 'username', 'nama', 'no_telephone', 'alamat');
+            const updatedMhs = props.mahasiswas.find(m => m.id === managingStudent.value.id);
+            if (updatedMhs) {
+                managingStudent.value = updatedMhs;
+            }
+        }
+    });
+};
+
+const deleteParentLink = (parentId) => {
+    router.delete(route('v2.admin.mahasiswa.orang-tua.destroy', [managingStudent.value.id, parentId]), {
+        onSuccess: () => {
+            const updatedMhs = props.mahasiswas.find(m => m.id === managingStudent.value.id);
+            if (updatedMhs) {
+                managingStudent.value = updatedMhs;
+            }
+        }
+    });
+};
+
 // Delete Confirmation state
 const isDeleteSingleDialogOpen = ref(false);
 const isDeleteBulkDialogOpen = ref(false);
@@ -513,6 +555,9 @@ const submitImport = () => {
                                     </TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
+                                            <Button variant="ghost" size="icon" class="h-9 w-9 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all" @click="openParentSheet(mhs)" title="Kelola Orang Tua">
+                                                <Users class="h-4 w-4" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" class="h-9 w-9 text-[#4B49AC] hover:text-[#3f3da0] hover:bg-indigo-50 rounded-lg transition-all" @click="openEditSheet(mhs)">
                                                 <UserPlus class="h-4 w-4" />
                                             </Button>
@@ -587,6 +632,130 @@ const submitImport = () => {
                     @success="isEditSheetOpen = false"
                     @cancel="isEditSheetOpen = false"
                 />
+            </SheetContent>
+        </Sheet>
+
+        <!-- Parent Management Sheet -->
+        <Sheet :open="isParentSheetOpen" @update:open="isParentSheetOpen = $event">
+            <SheetContent side="right" class="sm:max-w-[40%] w-full p-0 border-none shadow-2xl bg-white flex flex-col">
+                <div class="bg-[#4B49AC] p-6 text-white shrink-0">
+                    <SheetHeader>
+                        <SheetTitle class="text-xl font-bold text-white">Kelola Orang Tua / Wali</SheetTitle>
+                        <SheetDescription class="text-indigo-100 mt-1">
+                            Kelola data akun orang tua yang terhubung dengan mahasiswa <span class="font-bold text-white">"{{ managingStudent?.nama_lengkap }}"</span>.
+                        </SheetDescription>
+                    </SheetHeader>
+                </div>
+                
+                <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+                    <!-- Linked Parents Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Orang Tua Terhubung</h3>
+                        
+                        <div v-if="!managingStudent?.orang_tuas || managingStudent.orang_tuas.length === 0" class="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center text-sm text-gray-500">
+                            Belum ada akun orang tua yang terhubung dengan mahasiswa ini.
+                        </div>
+                        
+                        <div v-else class="space-y-3">
+                            <div 
+                                v-for="ortu in managingStudent.orang_tuas" 
+                                :key="ortu.id"
+                                class="p-4 border border-gray-200 rounded-xl flex items-start justify-between bg-white shadow-xs"
+                            >
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="font-bold text-gray-900 text-sm">{{ ortu.nama }}</h4>
+                                        <Badge variant="outline" class="bg-indigo-50 text-[#4B49AC] border-indigo-100 font-semibold px-2 py-0.5 text-[10px]">
+                                            {{ ortu.pivot?.relationship_type || 'Wali' }}
+                                        </Badge>
+                                    </div>
+                                    <p class="text-xs text-gray-500">Username: <span class="font-mono text-gray-750 font-semibold">{{ ortu.username }}</span></p>
+                                    <p class="text-xs text-gray-500" v-if="ortu.no_telephone">No. HP: {{ ortu.no_telephone }}</p>
+                                </div>
+                                
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg h-8 w-8"
+                                    @click="deleteParentLink(ortu.id)"
+                                >
+                                    <Trash2 class="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200" />
+
+                    <!-- Link/Create Parent Form -->
+                    <form @submit.prevent="submitParent" class="space-y-4">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Tambah / Tautkan Orang Tua</h3>
+                        
+                        <div class="space-y-1.5">
+                            <Label for="parent_relation" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hubungan</Label>
+                            <Select v-model="parentForm.relationship_type">
+                                <SelectTrigger id="parent_relation" class="h-11 rounded-lg border-gray-200">
+                                    <SelectValue placeholder="Pilih hubungan..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Ayah">Ayah</SelectItem>
+                                    <SelectItem value="Ibu">Ibu</SelectItem>
+                                    <SelectItem value="Wali">Wali</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="parent_name" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Lengkap</Label>
+                            <Input id="parent_name" v-model="parentForm.nama" placeholder="Nama Lengkap Orang Tua..." class="h-11 rounded-lg border-gray-200" required />
+                            <p v-if="parentForm.errors.nama" class="text-xs text-red-500">{{ parentForm.errors.nama }}</p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="parent_username" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Username</Label>
+                            <Input id="parent_username" v-model="parentForm.username" placeholder="Username untuk login..." class="h-11 rounded-lg border-gray-200" required />
+                            <p v-if="parentForm.errors.username" class="text-xs text-red-500">{{ parentForm.errors.username }}</p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="parent_password" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</Label>
+                            <Input id="parent_password" type="password" v-model="parentForm.password" placeholder="Password akun (min 8 karakter)..." class="h-11 rounded-lg border-gray-200" />
+                            <p class="text-[10px] text-gray-400">*) Kosongkan password jika hanya menautkan akun orang tua eksisting yang sudah pernah dibuat.</p>
+                            <p v-if="parentForm.errors.password" class="text-xs text-red-500">{{ parentForm.errors.password }}</p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="parent_phone" class="text-xs font-bold text-gray-500 uppercase tracking-wider">No. Telepon / HP</Label>
+                            <Input id="parent_phone" v-model="parentForm.no_telephone" placeholder="Contoh: 08123456789..." class="h-11 rounded-lg border-gray-200" />
+                            <p v-if="parentForm.errors.no_telephone" class="text-xs text-red-500">{{ parentForm.errors.no_telephone }}</p>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="parent_address" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Alamat</Label>
+                            <textarea id="parent_address" v-model="parentForm.alamat" placeholder="Alamat tinggal orang tua..." class="w-full min-h-[80px] p-3 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#4B49AC] font-sans" />
+                            <p v-if="parentForm.errors.alamat" class="text-xs text-red-500">{{ parentForm.errors.alamat }}</p>
+                        </div>
+
+                        <div class="flex gap-3 pt-2">
+                            <Button 
+                                type="button" 
+                                variant="ghost" 
+                                @click="isParentSheetOpen = false" 
+                                class="flex-1 h-11 rounded-lg font-semibold text-gray-500"
+                            >
+                                Tutup
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                :disabled="parentForm.processing" 
+                                class="flex-1 h-11 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg font-semibold shadow-md"
+                            >
+                                <Loader2 v-if="parentForm.processing" class="w-4 h-4 mr-2 animate-spin" />
+                                Tautkan Orang Tua
+                            </Button>
+                        </div>
+                    </form>
+                </div>
             </SheetContent>
         </Sheet>
 

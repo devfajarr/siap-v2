@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V2\Admin\Matkul;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class UpdateMatkulRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -30,7 +31,7 @@ class UpdateMatkulRequest extends FormRequest
                 Rule::unique('matkuls')->ignore($this->route('data_matkul'))->where(function ($query) {
                     return $query->where('semester_id', $this->semester_id)
                         ->where('prodi_id', $this->prodi_id);
-                })
+                }),
             ],
             'alias' => 'required|string|max:255',
             'kode' => [
@@ -40,7 +41,7 @@ class UpdateMatkulRequest extends FormRequest
                 Rule::unique('matkuls')->ignore($this->route('data_matkul'))->where(function ($query) {
                     return $query->where('semester_id', $this->semester_id)
                         ->where('prodi_id', $this->prodi_id);
-                })
+                }),
             ],
             'prodi_id' => 'required|exists:prodi,id',
             'semester_id' => 'required|exists:semesters,id',

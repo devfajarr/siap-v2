@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
 use App\Models\Jadwal;
 use App\Models\Ruangan;
 use Illuminate\Http\Request;
@@ -16,9 +15,9 @@ class RuanganController extends Controller
     {
         $kelasAll = Jadwal::all();
         $ruangans = Ruangan::latest()->get();
-        return view('pages.data-master.data-ruangan', compact('ruangans','kelasAll'));
-    }
 
+        return view('pages.data-master.data-ruangan', compact('ruangans', 'kelasAll'));
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -26,20 +25,18 @@ class RuanganController extends Controller
     public function store(Request $request)
     {
         $validateData = $request->validate([
-            'nama' => 'required'
-        ],['nama.required'=>'Nama ruangan harus diisi']);
+            'nama' => 'required',
+        ], ['nama.required' => 'Nama ruangan harus diisi']);
 
         $ruangan = Ruangan::create([
-            'nama' => $validateData['nama']
+            'nama' => $validateData['nama'],
         ]);
 
         return response()->json([
             'success' => 'Ruangan berhasil ditambahkan',
-            'ruangan' => $ruangan
+            'ruangan' => $ruangan,
         ]);
     }
-
-
 
     /**
      * Update the specified resource in storage.
@@ -49,20 +46,22 @@ class RuanganController extends Controller
         $edit = Ruangan::findOrFail($id);
 
         $validateData = $request->validate([
-            'nama' => 'required'
-        ],['nama.required'=>'Nama ruangan harus diisi']);
+            'nama' => 'required',
+        ], ['nama.required' => 'Nama ruangan harus diisi']);
 
         $edit->update($validateData);
-        return response()->json(['success'=>'Ruangan berhasil diedit']);
+
+        return response()->json(['success' => 'Ruangan berhasil diedit']);
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
-    {   
+    {
         $ruangan = Ruangan::findOrFail($id);
         $ruangan->delete();
-        return response()->json(['success'=>'Ruangan berhasil dihapus']);
+
+        return response()->json(['success' => 'Ruangan berhasil dihapus']);
     }
 }

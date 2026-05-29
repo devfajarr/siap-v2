@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
-use App\Models\Nilai;
-use App\Models\Tugas;
 use App\Models\Jadwal;
-use App\Models\Matkul;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use App\Models\Tugas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Validator;
 use Illuminate\Support\Facades\Session;
 
 class TugasController extends Controller
@@ -18,16 +15,17 @@ class TugasController extends Controller
     /**
      * Display a listing of the resource.
      */
-
     protected $userId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
             $this->userId = Session::get('user.id');
+
             return $next($request);
         });
     }
+
     public function index($kelas_id, $matkul_id, $jadwal_id)
     {
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
@@ -41,8 +39,6 @@ class TugasController extends Controller
 
         return view('pages.dosen.data-nilai.tugas.index', compact('kelasAll', 'tugas', 'kelas_id', 'matkul_id', 'jadwal_id'));
     }
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -84,7 +80,7 @@ class TugasController extends Controller
             'nilai' => 'required|array',
             'nilai.*' => 'numeric|min:0|max:100',
             'tugas_ke' => 'required|integer',
-            'jadwal_id' => 'required|exists:jadwals,id'
+            'jadwal_id' => 'required|exists:jadwals,id',
         ]);
 
         $mahasiswas_id = $request->mahasiswas_id;
@@ -107,6 +103,7 @@ class TugasController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -129,9 +126,9 @@ class TugasController extends Controller
             ->get();
 
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.data-nilai.tugas.edit', compact('mahasiswas', 'tugas', 'kelas_id', 'matkul_id', 'tugas_ke', 'kelasAll', 'jadwal_id'));
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -159,16 +156,14 @@ class TugasController extends Controller
             );
         }
 
-
         session()->flash('success', 'Data nilai berhasil diperbarui.');
         session()->flash('tab', 'tugas');
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
-
-
 
     /**
      * Remove the specified resource from storage.
@@ -190,6 +185,7 @@ class TugasController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 }

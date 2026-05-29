@@ -2,25 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Uas;
-use App\Models\Uts;
 use App\Models\Absen;
 use App\Models\Admin;
 use App\Models\Aktif;
 use App\Models\Dosen;
 use App\Models\Etika;
-use App\Models\Tugas;
-use App\Models\Wadir;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
 use App\Models\NilaiHuruf;
-use Illuminate\Http\Request;
-use App\Models\TahunAkademik;
-use Illuminate\Support\Facades\DB;
 use App\Models\PengajuanRekapNilai;
-use Illuminate\Support\Facades\Log;
+use App\Models\TahunAkademik;
+use App\Models\Tugas;
+use App\Models\Uas;
+use App\Models\Uts;
+use App\Models\Wadir;
 use App\Notifications\PengajuanNilaiNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RekapNilaiController extends Controller
 {
@@ -65,7 +64,6 @@ class RekapNilaiController extends Controller
             ->concat($uts_mahasiswa_ids)
             ->concat($uas_mahasiswa_ids)
             ->unique();
-
 
         $mahasiswas = Mahasiswa::withTrashed()
             ->whereIn('id', $mahasiswa_ids)
@@ -145,21 +143,21 @@ class RekapNilaiController extends Controller
             ->where('jadwal_id', $jadwal_id)
             ->exists() &&
             Uas::where('kelas_id', $kelas_id)
-            ->where('matkul_id', $matkul_id)
-            ->where('jadwal_id', $jadwal_id)
-            ->exists() &&
+                ->where('matkul_id', $matkul_id)
+                ->where('jadwal_id', $jadwal_id)
+                ->exists() &&
             Tugas::where('kelas_id', $kelas_id)
-            ->where('matkul_id', $matkul_id)
-            ->where('jadwal_id', $jadwal_id)
-            ->exists() &&
+                ->where('matkul_id', $matkul_id)
+                ->where('jadwal_id', $jadwal_id)
+                ->exists() &&
             Aktif::where('kelas_id', $kelas_id)
-            ->where('matkul_id', $matkul_id)
-            ->where('jadwal_id', $jadwal_id)
-            ->exists() &&
+                ->where('matkul_id', $matkul_id)
+                ->where('jadwal_id', $jadwal_id)
+                ->exists() &&
             Etika::where('kelas_id', $kelas_id)
-            ->where('matkul_id', $matkul_id)
-            ->where('jadwal_id', $jadwal_id)
-            ->exists();
+                ->where('matkul_id', $matkul_id)
+                ->where('jadwal_id', $jadwal_id)
+                ->exists();
 
         return view(
             'pages.dosen.data-nilai.rekap.index',
@@ -180,14 +178,13 @@ class RekapNilaiController extends Controller
         );
     }
 
-
     public function store(Request $request)
     {
         $admins = Admin::all();
         $validateData = $request->validate([
             'kelas_id' => 'required',
             'jadwal_id' => 'required',
-            'matkul_id' => 'required'
+            'matkul_id' => 'required',
         ]);
 
         $tahun = TahunAkademik::where('status', 1)->first();
@@ -196,10 +193,10 @@ class RekapNilaiController extends Controller
             'kelas_id' => $validateData['kelas_id'],
             'matkul_id' => $validateData['matkul_id'],
             'jadwal_id' => $validateData['jadwal_id'],
-            'tahun' => $tahun->tahun_akademik
+            'tahun' => $tahun->tahun_akademik,
         ]);
-        foreach($admins as $admin){
-            $admin->notify(new PengajuanNilaiNotification($nilai,null));
+        foreach ($admins as $admin) {
+            $admin->notify(new PengajuanNilaiNotification($nilai, null));
         }
 
         session()->flash('success', 'Pengajuan verifikasi nilai berhasil');
@@ -207,9 +204,9 @@ class RekapNilaiController extends Controller
         session()->flash('kelas_id', $validateData['kelas_id']);
         session()->flash('matkul_id', $validateData['matkul_id']);
         session()->flash('jadwal_id', $validateData['jadwal_id']);
+
         return redirect()->back();
     }
-
 
     public function pengajuan()
     {
@@ -228,13 +225,14 @@ class RekapNilaiController extends Controller
             },
             'matkul' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('status', 0)
             ->latest()
             ->get();
 
         $kelasAll = Jadwal::all();
+
         return view('pages.pengajuanRekapNilai.index', compact('pengajuans', 'kelasAll'));
     }
 
@@ -255,13 +253,14 @@ class RekapNilaiController extends Controller
             },
             'matkul' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('status', 1)
             ->latest()
             ->get();
 
         $kelasAll = Jadwal::all();
+
         return view('pages.pengajuanRekapNilai.disetujui', compact('pengajuans', 'kelasAll'));
     }
 
@@ -307,7 +306,6 @@ class RekapNilaiController extends Controller
             ->concat($uts_mahasiswa_ids)
             ->concat($uas_mahasiswa_ids)
             ->unique();
-
 
         $mahasiswas = Mahasiswa::withTrashed()
             ->whereIn('id', $mahasiswa_ids)
@@ -400,8 +398,6 @@ class RekapNilaiController extends Controller
         );
     }
 
-
-
     public function update(Request $request, $kelas_id, $matkul_id, $jadwal_id)
     {
         DB::beginTransaction();
@@ -466,7 +462,6 @@ class RekapNilaiController extends Controller
                 ->where('matkul_id', $matkul_id)
                 ->where('setuju', true)
                 ->exists();
-            
 
             if ($tugasSetuju && $etikaSetuju && $aktifSetuju && $uasSetuju && $utsSetuju) {
 
@@ -492,23 +487,24 @@ class RekapNilaiController extends Controller
                         'nilai_total' => $nilaiTotal,
                         'nilai_huruf' => $nilaiHuruf,
                     ]);
-                    $mahasiswa->notify(new PengajuanNilaiNotification($pengajuan,$nilai));
+                    $mahasiswa->notify(new PengajuanNilaiNotification($pengajuan, $nilai));
                 }
                 $dosen = Dosen::findOrFail($pengajuan->jadwal->dosens_id);
-                $dosen->notify(new PengajuanNilaiNotification($pengajuan,null));
+                $dosen->notify(new PengajuanNilaiNotification($pengajuan, null));
 
             }
 
             DB::commit();
+
             return redirect('/presensi/data-nilai/pengajuan/rekap-nilai')
                 ->with('success', 'Data berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect('/presensi/data-nilai/pengajuan/rekap-nilai')
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
-
 
     public function rekap($kelas_id, $matkul_id, $jadwal_id)
     {
@@ -551,7 +547,6 @@ class RekapNilaiController extends Controller
             ->concat($uts_mahasiswa_ids)
             ->concat($uas_mahasiswa_ids)
             ->unique();
-
 
         $mahasiswas = Mahasiswa::withTrashed()
             ->whereIn('id', $mahasiswa_ids)
@@ -605,7 +600,6 @@ class RekapNilaiController extends Controller
             ->where('jadwals_id', $jadwal_id)
             ->get();
 
-
         $dataAbsensi = $absens->groupBy('mahasiswas_id');
 
         $totalPertemuan = Absen::where('kelas_id', $kelas_id)
@@ -628,12 +622,11 @@ class RekapNilaiController extends Controller
             },
             'kelas.semester' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->withTrashed()
             ->where('id', $jadwal_id)
             ->first();
-
 
         $dataAbsensi = $dataAbsensi->map(function ($absensiGroup, $mahasiswaId) use ($totalPertemuan) {
             $totalKehadiran = $absensiGroup->whereIn('status', ['H', 'T'])->count();
@@ -695,59 +688,58 @@ class RekapNilaiController extends Controller
     }
 
     private function calculateTotalNilai($mahasiswa_id, $kelas_id, $matkul_id, $jadwal_id)
-{
-    $tugas = Tugas::where('mahasiswa_id', $mahasiswa_id)
-        ->where('kelas_id', $kelas_id)
-        ->where('matkul_id', $matkul_id)
-        ->where('jadwal_id', $jadwal_id)
-        ->sum('nilai'); 
+    {
+        $tugas = Tugas::where('mahasiswa_id', $mahasiswa_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('matkul_id', $matkul_id)
+            ->where('jadwal_id', $jadwal_id)
+            ->sum('nilai');
 
-    $keaktifan = Aktif::where('mahasiswa_id', $mahasiswa_id)
-        ->where('kelas_id', $kelas_id)
-        ->where('matkul_id', $matkul_id)
-        ->where('jadwal_id', $jadwal_id)
-        ->value('nilai');
+        $keaktifan = Aktif::where('mahasiswa_id', $mahasiswa_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('matkul_id', $matkul_id)
+            ->where('jadwal_id', $jadwal_id)
+            ->value('nilai');
 
-    $etika = Etika::where('mahasiswa_id', $mahasiswa_id)
-        ->where('kelas_id', $kelas_id)
-        ->where('matkul_id', $matkul_id)
-        ->where('jadwal_id', $jadwal_id)
-        ->value('nilai');
+        $etika = Etika::where('mahasiswa_id', $mahasiswa_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('matkul_id', $matkul_id)
+            ->where('jadwal_id', $jadwal_id)
+            ->value('nilai');
 
-    $totalPertemuan = Absen::where('kelas_id', $kelas_id)
-        ->where('matkuls_id', $matkul_id)
-        ->where('jadwals_id', $jadwal_id)
-        ->max('pertemuan');
+        $totalPertemuan = Absen::where('kelas_id', $kelas_id)
+            ->where('matkuls_id', $matkul_id)
+            ->where('jadwals_id', $jadwal_id)
+            ->max('pertemuan');
 
-    $kehadiran = Absen::where('mahasiswas_id', $mahasiswa_id)
-        ->where('kelas_id', $kelas_id)
-        ->where('matkuls_id', $matkul_id)
-        ->where('jadwals_id', $jadwal_id)
-        ->whereIn('status', ['H', 'T'])
-        ->count(); 
+        $kehadiran = Absen::where('mahasiswas_id', $mahasiswa_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('matkuls_id', $matkul_id)
+            ->where('jadwals_id', $jadwal_id)
+            ->whereIn('status', ['H', 'T'])
+            ->count();
 
-    $persentaseKehadiran = $totalPertemuan > 0 ? ($kehadiran / $totalPertemuan) * 100 : 0;
+        $persentaseKehadiran = $totalPertemuan > 0 ? ($kehadiran / $totalPertemuan) * 100 : 0;
 
-    $uts = Uts::where('mahasiswa_id', $mahasiswa_id)
-        ->where('kelas_id', $kelas_id)
-        ->where('matkul_id', $matkul_id)
-        ->where('jadwal_id', $jadwal_id)
-        ->value('nilai');
+        $uts = Uts::where('mahasiswa_id', $mahasiswa_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('matkul_id', $matkul_id)
+            ->where('jadwal_id', $jadwal_id)
+            ->value('nilai');
 
-    $uas = Uas::where('mahasiswa_id', $mahasiswa_id)
-        ->where('kelas_id', $kelas_id)
-        ->where('matkul_id', $matkul_id)
-        ->where('jadwal_id', $jadwal_id)
-        ->value('nilai');
+        $uas = Uas::where('mahasiswa_id', $mahasiswa_id)
+            ->where('kelas_id', $kelas_id)
+            ->where('matkul_id', $matkul_id)
+            ->where('jadwal_id', $jadwal_id)
+            ->value('nilai');
 
-
-    return ($tugas * 0.25) +  
-           ($keaktifan * 0.05) + 
-           ($etika * 0.05) +  
-           ($persentaseKehadiran * 0.15) + 
-           ($uts * 0.25) + 
-           ($uas * 0.25); 
-}
+        return ($tugas * 0.25) +
+               ($keaktifan * 0.05) +
+               ($etika * 0.05) +
+               ($persentaseKehadiran * 0.15) +
+               ($uts * 0.25) +
+               ($uas * 0.25);
+    }
 
     private function getKeterangan($jumlah)
     {

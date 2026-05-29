@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Exports\PegawaiExport;
 use App\Http\Controllers\Controller;
-use App\Models\Pegawai;
 use App\Http\Requests\V2\Admin\Pegawai\StorePegawaiRequest;
 use App\Http\Requests\V2\Admin\Pegawai\UpdatePegawaiRequest;
-use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
+use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
 {
@@ -24,13 +24,13 @@ class PegawaiController extends Controller
         $search = $request->input('search');
 
         $pegawais = Pegawai::when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('nama', 'like', "%{$search}%")
-                        ->orWhere('nuptk', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('no_telephone', 'like', "%{$search}%");
-                });
-            })
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nuptk', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('no_telephone', 'like', "%{$search}%");
+            });
+        })
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -56,7 +56,7 @@ class PegawaiController extends Controller
             'email' => $validated['email'],
             'status' => 1,
             'password' => Hash::make($validated['password']),
-            'is_first_login' => true
+            'is_first_login' => true,
         ]);
 
         return redirect()->back()->with('success', 'Data pegawai berhasil ditambahkan.');
@@ -96,9 +96,10 @@ class PegawaiController extends Controller
     public function downloadFormat()
     {
         $filePath = public_path('format/import_pegawai.xlsx');
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return redirect()->back()->with('error', 'Template import tidak ditemukan.');
         }
+
         return response()->download($filePath, 'Format_Import_Pegawai.xlsx');
     }
 
@@ -113,12 +114,14 @@ class PegawaiController extends Controller
 
         DB::beginTransaction();
         try {
-            Excel::import(new PegawaiImport(), $request->file('file'));
+            Excel::import(new PegawaiImport, $request->file('file'));
             DB::commit();
+
             return redirect()->back()->with('success', 'Data pegawai berhasil diimpor.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal mengimpor data: '.$e->getMessage());
         }
     }
 

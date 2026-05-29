@@ -9,6 +9,7 @@ use App\Models\Mahasiswa;
 use App\Models\Tugas;
 use App\Models\Uas;
 use App\Models\Uts;
+use Illuminate\Support\Collection;
 
 class NilaiService
 {
@@ -17,17 +18,17 @@ class NilaiService
      * Menggantikan 6 query pluck() sequential yang berulang di controller legacy.
      *
      * @return array{
-     *   mahasiswas: \Illuminate\Support\Collection,
-     *   tugass: \Illuminate\Support\Collection,
-     *   groupedTugas: \Illuminate\Support\Collection,
+     *   mahasiswas: Collection,
+     *   tugass: Collection,
+     *   groupedTugas: Collection,
      *   jumlahTugas: int,
-     *   utss: \Illuminate\Support\Collection,
-     *   uass: \Illuminate\Support\Collection,
-     *   etikas: \Illuminate\Support\Collection,
-     *   aktifs: \Illuminate\Support\Collection,
-     *   absens: \Illuminate\Support\Collection,
+     *   utss: Collection,
+     *   uass: Collection,
+     *   etikas: Collection,
+     *   aktifs: Collection,
+     *   absens: Collection,
      *   totalPertemuan: int,
-     *   dataAbsensi: \Illuminate\Support\Collection,
+     *   dataAbsensi: Collection,
      * }
      */
     public static function getRekapData(int $kelas_id, int $matkul_id, int $jadwal_id): array
@@ -97,28 +98,28 @@ class NilaiService
                     : 0;
 
                 return [
-                    'total_kehadiran'    => $totalKehadiran,
+                    'total_kehadiran' => $totalKehadiran,
                     'persentase_kehadiran' => round($persentase, 2),
-                    'absensi'            => $group,
+                    'absensi' => $group,
                 ];
             });
 
         // --- Olah data tugas ---
         $groupedTugas = $tugass->groupBy('mahasiswa_id');
-        $jumlahTugas  = max(1, $tugass->pluck('tugas_ke')->unique()->count());
+        $jumlahTugas = max(1, $tugass->pluck('tugas_ke')->unique()->count());
 
         return [
-            'mahasiswas'     => $mahasiswas,
-            'tugass'         => $tugass,
-            'groupedTugas'   => $groupedTugas,
-            'jumlahTugas'    => $jumlahTugas,
-            'utss'           => $utss,
-            'uass'           => $uass,
-            'etikas'         => $etikas,
-            'aktifs'         => $aktifs,
-            'absens'         => $absens,
+            'mahasiswas' => $mahasiswas,
+            'tugass' => $tugass,
+            'groupedTugas' => $groupedTugas,
+            'jumlahTugas' => $jumlahTugas,
+            'utss' => $utss,
+            'uass' => $uass,
+            'etikas' => $etikas,
+            'aktifs' => $aktifs,
+            'absens' => $absens,
             'totalPertemuan' => $totalPertemuan,
-            'dataAbsensi'    => $dataAbsensi,
+            'dataAbsensi' => $dataAbsensi,
         ];
     }
 
@@ -130,31 +131,31 @@ class NilaiService
      */
     public static function calculateTotalNilai(
         int $mahasiswaId,
-        \Illuminate\Support\Collection $groupedTugas,
-        \Illuminate\Support\Collection $utss,
-        \Illuminate\Support\Collection $uass,
-        \Illuminate\Support\Collection $etikas,
-        \Illuminate\Support\Collection $aktifs,
-        \Illuminate\Support\Collection $dataAbsensi
+        Collection $groupedTugas,
+        Collection $utss,
+        Collection $uass,
+        Collection $etikas,
+        Collection $aktifs,
+        Collection $dataAbsensi
     ): float {
         // Nilai tugas: rata-rata dari semua tugas mahasiswa ini
-        $tugasMhs   = $groupedTugas->get($mahasiswaId, collect());
+        $tugasMhs = $groupedTugas->get($mahasiswaId, collect());
         $nilaiTugas = $tugasMhs->count() > 0 ? $tugasMhs->avg('nilai') : 0;
 
-        $nilaiUts  = (float) ($utss->get($mahasiswaId)?->nilai ?? 0);
-        $nilaiUas  = (float) ($uass->get($mahasiswaId)?->nilai ?? 0);
+        $nilaiUts = (float) ($utss->get($mahasiswaId)?->nilai ?? 0);
+        $nilaiUas = (float) ($uass->get($mahasiswaId)?->nilai ?? 0);
         $nilaiEtika = (float) ($etikas->get($mahasiswaId)?->nilai ?? 0);
         $nilaiAktif = (float) ($aktifs->get($mahasiswaId)?->nilai ?? 0);
 
-        $absensiMhs        = $dataAbsensi->get($mahasiswaId);
-        $nilaiKehadiran    = $absensiMhs ? (float) ($absensiMhs['persentase_kehadiran'] ?? 0) : 0;
+        $absensiMhs = $dataAbsensi->get($mahasiswaId);
+        $nilaiKehadiran = $absensiMhs ? (float) ($absensiMhs['persentase_kehadiran'] ?? 0) : 0;
 
-        return ($nilaiTugas  * 0.25)
-             + ($nilaiAktif  * 0.05)
-             + ($nilaiEtika  * 0.05)
+        return ($nilaiTugas * 0.25)
+             + ($nilaiAktif * 0.05)
+             + ($nilaiEtika * 0.05)
              + ($nilaiKehadiran * 0.15)
-             + ($nilaiUts    * 0.25)
-             + ($nilaiUas    * 0.25);
+             + ($nilaiUts * 0.25)
+             + ($nilaiUas * 0.25);
     }
 
     /**
@@ -193,11 +194,11 @@ class NilaiService
         $semua = $hasTugas && $hasUts && $hasUas && $hasEtika && $hasAktif;
 
         return [
-            'tugas'        => $hasTugas,
-            'uts'          => $hasUts,
-            'uas'          => $hasUas,
-            'etika'        => $hasEtika,
-            'aktif'        => $hasAktif,
+            'tugas' => $hasTugas,
+            'uts' => $hasUts,
+            'uas' => $hasUas,
+            'etika' => $hasEtika,
+            'aktif' => $hasAktif,
             'semua_lengkap' => $semua,
         ];
     }
@@ -217,8 +218,8 @@ class NilaiService
             $nilai >= 55 => 'C',
             $nilai >= 50 => 'C-',
             $nilai >= 40 => 'D',
-            $nilai >= 0  => 'E',
-            default      => '-',
+            $nilai >= 0 => 'E',
+            default => '-',
         };
     }
 }

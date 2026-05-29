@@ -2,42 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use Log;
+use App\Imports\KontrakImport;
 use App\Models\Absen;
 use App\Models\Dosen;
-use App\Models\Kelas;
-use App\Models\Wadir;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
 use App\Models\Kontrak;
-use App\Models\Message;
 use App\Models\Mahasiswa;
-use Illuminate\Http\Request;
-use App\Models\TahunAkademik;
-use App\Imports\KontrakImport;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Message;
 use App\Models\PengajuanRekapkontrak;
+use App\Models\TahunAkademik;
+use App\Models\Wadir;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
-
+use Maatwebsite\Excel\Facades\Excel;
 
 class KontrakController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-
     protected $userId;
+
     protected $role;
+
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $this->userId = session::get('user.id');
-            $this->role = session::get('user.role');
+            $this->userId = Session::get('user.id');
+            $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
-
 
     public function index()
     {
@@ -53,7 +51,7 @@ class KontrakController extends Controller
             },
             'ruangan' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('dosens_id', $this->userId)
             ->latest()
@@ -85,16 +83,15 @@ class KontrakController extends Controller
         });
 
         $groupedPesans = $filteredPesans->groupBy(function ($pesan) {
-            return $pesan->sender_type . '-' . $pesan->sender_id;
+            return $pesan->sender_type.'-'.$pesan->sender_id;
         });
 
         $pesans = $groupedPesans->map(function (Collection $group) {
             return $group->first();
         })->values();
 
-        return view('pages.dosen.data-kontrak.index', compact('jadwals', 'pertemuanCounts', 'rekapKontrakStatus', 'kelasAll','pesans'));
+        return view('pages.dosen.data-kontrak.index', compact('jadwals', 'pertemuanCounts', 'rekapKontrakStatus', 'kelasAll', 'pesans'));
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -103,16 +100,15 @@ class KontrakController extends Controller
     {
         $jadwal = Jadwal::with('dosen', 'matkul', 'kelas', 'ruangan')
             ->where('id', $id)
-            ->where('dosens_id',  $this->userId)
+            ->where('dosens_id', $this->userId)
             ->first();
         $pertemuan = Absen::where('jadwals_id', $id)->max('pertemuan');
         $mahasiswas = Mahasiswa::where('kelas_id', $jadwal->kelas->id)->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
         $tahun = TahunAkademik::where('status', 1)->first();
+
         return view('pages.dosen.data-kontrak.kontrak', compact('jadwal', 'mahasiswas', 'pertemuan', 'tahun', 'kelasAll'));
     }
-
-
 
     /**
      * Store a newly created resource in storage.
@@ -152,8 +148,6 @@ class KontrakController extends Controller
         return redirect()->back()->with('success', 'Kontrak berhasil ditambahkan');
     }
 
-
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -163,6 +157,7 @@ class KontrakController extends Controller
             $query->where('id', $id);
         })->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.data-kontrak.edit', compact('kontrak', 'kelasAll'));
     }
 
@@ -201,10 +196,9 @@ class KontrakController extends Controller
                 'pustaka' => $validateData['pustakaKontrak'][$index] ?? null,
             ]);
         }
+
         return redirect()->back()->with('success', 'Data kontrak berhasil ditambahkan');
     }
-
-
 
     public function rekap($matkuls_id, $kelas_id, $jadwals_id)
     {
@@ -226,7 +220,6 @@ class KontrakController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(Kontrak $kontrak) {}
-
 
     public function kategori()
     {
@@ -256,7 +249,6 @@ class KontrakController extends Controller
                 ->selectRaw('dosens_id, COUNT(*) as total')
                 ->pluck('total', 'dosens_id');
         }
-
 
         return view('pages.data-kontrak.index', compact('getDosen', 'dosenMatkulCount'));
     }
@@ -293,6 +285,7 @@ class KontrakController extends Controller
             $pertemuan = Kontrak::where('jadwals_id', $jadwal->id)->max('pertemuan');
             $pertemuanCounts[$jadwal->id] = $pertemuan ?? 0;
         }
+
         return view('pages.data-kontrak.matkul', compact('jadwals', 'pertemuanCounts'));
     }
 
@@ -311,20 +304,21 @@ class KontrakController extends Controller
 
         return view('pages.data-kontrak.rekap', compact('kontraks', 'kaprodi', 'wadir'));
     }
+
     public function importWithReplace(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,csv',
-            'jadwals_id' => 'required|exists:jadwals,id'
+            'jadwals_id' => 'required|exists:jadwals,id',
         ]);
 
         $tahun = TahunAkademik::where('status', 1)->first();
-        if (!$tahun) {
+        if (! $tahun) {
             return redirect()->back()->with('error', 'Tahun akademik aktif tidak ditemukan');
         }
 
         $jadwal = Jadwal::find($request->jadwals_id);
-        if (!$jadwal) {
+        if (! $jadwal) {
             return redirect()->back()->with('error', 'Jadwal tidak ditemukan');
         }
 
@@ -347,14 +341,13 @@ class KontrakController extends Controller
             );
         }
 
-
         return redirect()->back()->with('success', 'Data kontrak berhasil diimport dan diperbarui');
     }
 
     public function downloadFormat()
     {
         $filePath = public_path('format/import_kontrak.xlsx');
+
         return response()->download($filePath, 'Format_Import_Kontrak.xlsx');
     }
-
 }

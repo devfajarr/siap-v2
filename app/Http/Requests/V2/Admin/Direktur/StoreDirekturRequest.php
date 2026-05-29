@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V2\Admin\Direktur;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDirekturRequest extends FormRequest
@@ -17,14 +18,14 @@ class StoreDirekturRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'dosens_id' => 'required|exists:dosens,id|unique:direkturs,dosens_id',
             'password_mode' => 'required|in:dosen,existing,custom',
-            'password' => 'required_if:password_mode,custom|nullable|min:6'
+            'password' => 'required_if:password_mode,custom|nullable|min:6',
         ];
     }
 

@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\V2\Dosen;
 
 use App\Http\Controllers\Controller;
-use App\Models\Jadwal;
-use App\Models\Kontrak;
-use App\Models\Kaprodi;
-use App\Models\Wadir;
-use App\Models\TahunAkademik;
-use App\Models\PengajuanRekapkontrak;
 use App\Imports\KontrakImport;
+use App\Models\Jadwal;
+use App\Models\Kaprodi;
+use App\Models\Kontrak;
+use App\Models\PengajuanRekapkontrak;
+use App\Models\TahunAkademik;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Facades\Excel;
 
 class KontrakController extends Controller
@@ -24,6 +24,7 @@ class KontrakController extends Controller
     {
         $this->middleware(function ($request, $next) {
             $this->userId = Session::get('user.id') ?? Auth::guard('dosen')->id();
+
             return $next($request);
         });
     }
@@ -31,15 +32,15 @@ class KontrakController extends Controller
     public function index()
     {
         $jadwals = Jadwal::with([
-            'dosen' => fn($q) => $q->withTrashed(),
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'ruangan' => fn($q) => $q->withTrashed(),
-            'pengajuanKontreak'
+            'dosen' => fn ($q) => $q->withTrashed(),
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'ruangan' => fn ($q) => $q->withTrashed(),
+            'pengajuanKontreak',
         ])
-        ->where('dosens_id', $this->userId)
-        ->latest()
-        ->get();
+            ->where('dosens_id', $this->userId)
+            ->latest()
+            ->get();
 
         $rekapStatuses = PengajuanRekapkontrak::whereIn('jadwal_id', $jadwals->pluck('id'))
             ->get()
@@ -86,7 +87,7 @@ class KontrakController extends Controller
         $jadwal = Jadwal::where('id', $request->jadwals_id)
             ->where('dosens_id', $this->userId)
             ->first();
-        if (!$jadwal) {
+        if (! $jadwal) {
             return back()->with('error', 'Jadwal tidak ditemukan atau Anda tidak memiliki akses.');
         }
 
@@ -111,7 +112,8 @@ class KontrakController extends Controller
             return redirect()->route('v2.dosen.kontrak.index')->with('success', 'Kontrak perkuliahan berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan kontrak: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menyimpan kontrak: '.$e->getMessage());
         }
     }
 
@@ -145,7 +147,7 @@ class KontrakController extends Controller
         $jadwal = Jadwal::where('id', $id)
             ->where('dosens_id', $this->userId)
             ->first();
-        if (!$jadwal) {
+        if (! $jadwal) {
             return back()->with('error', 'Jadwal tidak ditemukan atau Anda tidak memiliki akses.');
         }
 
@@ -171,7 +173,8 @@ class KontrakController extends Controller
             return redirect()->route('v2.dosen.kontrak.index')->with('success', 'Data kontrak perkuliahan berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui kontrak: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal memperbarui kontrak: '.$e->getMessage());
         }
     }
 
@@ -202,18 +205,18 @@ class KontrakController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv',
-            'jadwals_id' => 'required|exists:jadwals,id'
+            'jadwals_id' => 'required|exists:jadwals,id',
         ]);
 
         $tahun = TahunAkademik::where('status', 1)->first();
-        if (!$tahun) {
+        if (! $tahun) {
             return back()->with('error', 'Tahun akademik aktif tidak ditemukan.');
         }
 
         $jadwal = Jadwal::where('id', $request->jadwals_id)
             ->where('dosens_id', $this->userId)
             ->first();
-        if (!$jadwal) {
+        if (! $jadwal) {
             return back()->with('error', 'Jadwal tidak ditemukan atau Anda tidak memiliki akses.');
         }
 
@@ -223,10 +226,14 @@ class KontrakController extends Controller
             array_shift($data); // Remove header row
 
             foreach ($data as $row) {
-                if (empty($row[0])) continue;
+                if (empty($row[0])) {
+                    continue;
+                }
 
                 $pertemuan = (int) $row[0];
-                if ($pertemuan < 1 || $pertemuan > 14) continue;
+                if ($pertemuan < 1 || $pertemuan > 14) {
+                    continue;
+                }
 
                 Kontrak::updateOrCreate(
                     [
@@ -244,19 +251,22 @@ class KontrakController extends Controller
             }
 
             DB::commit();
+
             return back()->with('success', 'Data kontrak perkuliahan berhasil diimport.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal mengimpor file: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal mengimpor file: '.$e->getMessage());
         }
     }
 
     public function downloadFormat()
     {
         $filePath = public_path('format/import_kontrak.xlsx');
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return back()->with('error', 'File template format import tidak ditemukan.');
         }
+
         return response()->download($filePath, 'Format_Import_Kontrak.xlsx');
     }
 }

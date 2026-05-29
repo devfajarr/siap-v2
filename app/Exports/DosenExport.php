@@ -1,12 +1,13 @@
 <?php
 
 namespace App\Exports;
-use Carbon\Carbon;
+
 use App\Models\Dosen;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class DosenExport implements FromCollection, WithHeadings, WithStyles
@@ -30,10 +31,10 @@ class DosenExport implements FromCollection, WithHeadings, WithStyles
             ->map(function ($dosen) {
                 return [
                     'nama' => $dosen->nama,
-                    'nidn' => $dosen->nidn ? "'" . $dosen->nidn : '-',
-                    'pembimbing_akademik' => $dosen->pembimbing_akademik == 1 ? 'Ya' : 'Tidak', 
+                    'nidn' => $dosen->nidn ? "'".$dosen->nidn : '-',
+                    'pembimbing_akademik' => $dosen->pembimbing_akademik == 1 ? 'Ya' : 'Tidak',
                     'jenis_kelamin' => $dosen->jenis_kelamin,
-                    'no_telephone' => "'" . $dosen->no_telephone,
+                    'no_telephone' => "'".$dosen->no_telephone,
                     'agama' => $dosen->agama,
                     'status' => $dosen->status ? 'Aktif' : 'Tidak Aktif',
                     'tanggal_lahir' => $dosen->tanggal_lahir
@@ -44,7 +45,6 @@ class DosenExport implements FromCollection, WithHeadings, WithStyles
                 ];
             });
     }
-
 
     public function headings(): array
     {
@@ -65,7 +65,7 @@ class DosenExport implements FromCollection, WithHeadings, WithStyles
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => [ 
+            1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => '000000']],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,

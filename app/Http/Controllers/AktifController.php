@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aktif;
-use App\Models\Kelas;
 use App\Models\Jadwal;
-use App\Models\Matkul;
+use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -15,18 +15,18 @@ class AktifController extends Controller
 {
     /**
      * Display a listing of the resource.
-     * 
      */
-
     protected $userId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
             $this->userId = Session::get('user.id');
+
             return $next($request);
         });
     }
+
     public function index($kelas_id, $matkul_id, $jadwal_id)
     {
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
@@ -38,7 +38,8 @@ class AktifController extends Controller
             ->get();
 
         $kelas = Kelas::where('id', $kelas_id)->first();
-        return  view('pages.dosen.data-nilai.aktif.index', compact('kelasAll', 'kelas_id', 'matkul_id', 'jadwal_id', 'aktifs', 'kelas'));
+
+        return view('pages.dosen.data-nilai.aktif.index', compact('kelasAll', 'kelas_id', 'matkul_id', 'jadwal_id', 'aktifs', 'kelas'));
     }
 
     /**
@@ -58,6 +59,7 @@ class AktifController extends Controller
             ->where('kelas_id', $kelas_id)
             ->where('id', $jadwal_id)
             ->first();
+
         return view('pages.dosen.data-nilai.aktif.create', compact('mahasiswas', 'matkul', 'kelasAll', 'jadwal', 'kelas_id', 'matkul_id', 'jadwal_id'));
     }
 
@@ -71,7 +73,7 @@ class AktifController extends Controller
             'mahasiswas_id.*' => 'exists:mahasiswas,id',
             'nilai' => 'required|array',
             'nilai.*' => 'numeric|min:0|max:100',
-            'jadwal_id' => 'required|exists:jadwals,id'
+            'jadwal_id' => 'required|exists:jadwals,id',
         ]);
 
         $mahasiswas_id = $request->mahasiswas_id;
@@ -92,6 +94,7 @@ class AktifController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -113,6 +116,7 @@ class AktifController extends Controller
             ->get();
 
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.data-nilai.aktif.edit', compact('mahasiswas', 'aktifs', 'kelas_id', 'matkul_id', 'kelasAll', 'jadwal_id'));
     }
 
@@ -141,12 +145,12 @@ class AktifController extends Controller
             );
         }
 
-
         session()->flash('success', 'Data nilai etika berhasil diperbarui.');
         session()->flash('tab', 'aktif');
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -169,6 +173,7 @@ class AktifController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 }

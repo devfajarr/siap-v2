@@ -3,13 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Admin;
-use App\Models\Mahasiswa;
-use Illuminate\Bus\Queueable;
 use App\Services\WhatsappService;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Session;
 
 class PembayaranNotification extends Notification
 {
@@ -19,6 +16,7 @@ class PembayaranNotification extends Notification
      * Create a new notification instance.
      */
     protected $pembayaran;
+
     public function __construct($pembayaran)
     {
         $this->pembayaran = $pembayaran;
@@ -55,14 +53,14 @@ class PembayaranNotification extends Notification
             ];
 
             $pesan = "*Konfirmasi Pembayaran Baru*\n\n"
-                . "Nama   : *{$notif['name']}*\n"
-                . "Kelas  : {$notif['class']}\n"
-                . "Prodi  : {$notif['prodi']}\n"
-                . "Mohon segera lakukan konfirmasi.";
+                ."Nama   : *{$notif['name']}*\n"
+                ."Kelas  : {$notif['class']}\n"
+                ."Prodi  : {$notif['prodi']}\n"
+                .'Mohon segera lakukan konfirmasi.';
 
             $receiver = Admin::all();
             foreach ($receiver as $admin) {
-                if (!empty($admin->no_telephone)) {
+                if (! empty($admin->no_telephone)) {
                     WhatsappService::kirim($admin->no_telephone, $pesan);
                 }
             }
@@ -80,7 +78,7 @@ class PembayaranNotification extends Notification
                 ];
 
                 $pesan = "*Pembayaran Ditolak*\n\n"
-                    . "Silakan segera hubungi *Bagian Akademik* untuk klarifikasi.\n";
+                    ."Silakan segera hubungi *Bagian Akademik* untuk klarifikasi.\n";
 
                 WhatsappService::kirim($this->pembayaran->mahasiswa->no_telephone, $pesan);
 
@@ -96,8 +94,8 @@ class PembayaranNotification extends Notification
                 ];
 
                 $pesan = "*Pembayaran Berhasil Diterima*\n\n"
-                    . "Pembayaran sudah *berhasil diverifikasi*.\n"
-                    . "Silakan segera lakukan *Pengajuan KRS*.\n";
+                    ."Pembayaran sudah *berhasil diverifikasi*.\n"
+                    ."Silakan segera lakukan *Pengajuan KRS*.\n";
 
                 WhatsappService::kirim($this->pembayaran->mahasiswa->no_telephone, $pesan);
 

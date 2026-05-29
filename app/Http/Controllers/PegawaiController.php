@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pegawai;
-use Illuminate\Http\Request;
 use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
-use Illuminate\Validation\Rule;
+use App\Models\Pegawai;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
@@ -20,7 +20,7 @@ class PegawaiController extends Controller
     {
         $pegawais = Pegawai::latest()->get();
 
-        return view('pages.data-master.data-pegawai',compact('pegawais'));
+        return view('pages.data-master.data-pegawai', compact('pegawais'));
     }
 
     // /**
@@ -59,7 +59,7 @@ class PegawaiController extends Controller
                 'email',
                 Rule::unique('pegawais')->whereNull('deleted_at'),
             ],
-            'password' => 'required'
+            'password' => 'required',
         ], [
             'nama.required' => 'Nama Dosen harus diisi',
             'nuptk.numeric' => 'NUPTK harus berupa angka',
@@ -74,7 +74,7 @@ class PegawaiController extends Controller
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
-            'password.required' => 'Password harus diisi'
+            'password.required' => 'Password harus diisi',
         ]);
 
         Pegawai::create([
@@ -88,7 +88,7 @@ class PegawaiController extends Controller
             'email' => $validateData['email'],
             'status' => 1,
             'password' => Hash::make($validateData['password']),
-            'is_first_login' => true
+            'is_first_login' => true,
         ]);
 
         return response()->json(['success' => 'Data dosen berhasil ditambahkan!'], 200);
@@ -154,6 +154,7 @@ class PegawaiController extends Controller
         }
 
         $pegawai->update($updateData);
+
         return response()->json(['success' => 'Data dosen berhasil diperbarui']);
     }
 
@@ -164,33 +165,37 @@ class PegawaiController extends Controller
     {
         $pegawai = Pegawai::findOrFail($id);
         $pegawai->delete();
+
         return response()->json(['success' => 'Dosen berhasil dihapus.']);
     }
 
     public function downloadFormat()
     {
         $filePath = public_path('format/import_pegawai.xlsx');
+
         return response()->download($filePath, 'Format_Import_pegawai.xlsx');
     }
 
-    public function import(Request $request) {
+    public function import(Request $request)
+    {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ], ['file.mimes' => 'Format file tidak sesuai']);
 
         DB::beginTransaction();
 
-        Excel::import(new PegawaiImport(), $request->file('file'));
+        Excel::import(new PegawaiImport, $request->file('file'));
 
         DB::commit();
 
         return response()->json([
-            'success' => 'Data Dosen berhasil diimpor'
+            'success' => 'Data Dosen berhasil diimpor',
         ]);
     }
 
-    public function export(){
+    public function export()
+    {
 
         return Excel::download(new PegawaiExport, 'pegawai.xlsx');
-     }
+    }
 }

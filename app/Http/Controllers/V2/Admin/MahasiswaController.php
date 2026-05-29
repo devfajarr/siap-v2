@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Exports\AllMahasiswaExport;
+use App\Exports\MahasiswaExport;
 use App\Http\Controllers\Controller;
-use App\Models\Mahasiswa;
-use App\Models\Kelas;
-use App\Models\Dosen;
 use App\Http\Requests\V2\Admin\Mahasiswa\StoreMahasiswaRequest;
 use App\Http\Requests\V2\Admin\Mahasiswa\UpdateMahasiswaRequest;
-use App\Exports\MahasiswaExport;
-use App\Exports\AllMahasiswaExport;
 use App\Imports\MahasiswaImport;
+use App\Models\Dosen;
+use App\Models\Kelas;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MahasiswaController extends Controller
 {
@@ -26,31 +26,30 @@ class MahasiswaController extends Controller
     public function index()
     {
         $kelass = Kelas::with([
-            'prodi' => fn($q) => $q->withTrashed(),
-            'semester' => fn($q) => $q->withTrashed(),
-            'mahasiswa'
+            'prodi' => fn ($q) => $q->withTrashed(),
+            'semester' => fn ($q) => $q->withTrashed(),
+            'mahasiswa',
         ])
-        ->get()
-        ->map(function ($kelas) {
-            return [
-                'id'              => $kelas->id,
-                'nama_kelas'      => $kelas->nama_kelas,
-                'prodi'           => $kelas->prodi?->nama_prodi,
-                'prodi_singkatan' => $kelas->prodi?->singkatan,
-                'id_prodi'        => $kelas->id_prodi,
-                'semester'        => $kelas->semester?->semester,
-                'id_semester'     => $kelas->id_semester,
-                'semester_status' => $kelas->semester?->status,  // 1=Aktif, 0=Non-Aktif
-                'jenis_kelas'     => $kelas->jenis_kelas,
-                'mahasiswa_count' => $kelas->mahasiswa->count(),
-            ];
-        });
+            ->get()
+            ->map(function ($kelas) {
+                return [
+                    'id' => $kelas->id,
+                    'nama_kelas' => $kelas->nama_kelas,
+                    'prodi' => $kelas->prodi?->nama_prodi,
+                    'prodi_singkatan' => $kelas->prodi?->singkatan,
+                    'id_prodi' => $kelas->id_prodi,
+                    'semester' => $kelas->semester?->semester,
+                    'id_semester' => $kelas->id_semester,
+                    'semester_status' => $kelas->semester?->status,  // 1=Aktif, 0=Non-Aktif
+                    'jenis_kelas' => $kelas->jenis_kelas,
+                    'mahasiswa_count' => $kelas->mahasiswa->count(),
+                ];
+            });
 
         return Inertia::render('Admin/Mahasiswa/Index', [
             'kelass' => $kelass,
         ]);
     }
-
 
     /**
      * Display students in a specific class.
@@ -58,14 +57,14 @@ class MahasiswaController extends Controller
     public function show($id)
     {
         $kelas = Kelas::with(['prodi', 'semester'])->findOrFail($id);
-        
-        $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik'])
+
+        $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas'])
             ->where('kelas_id', $id)
             ->orderBy('nim', 'asc')
             ->get();
 
         $allKelas = Kelas::with(['prodi', 'semester'])->get();
-        
+
         // Kelas satu prodi & jenis kelas sama (untuk "naik semester / pindah rombel")
         $kelasSamProdi = Kelas::with(['prodi', 'semester'])
             ->where('id', '!=', $id)
@@ -78,11 +77,11 @@ class MahasiswaController extends Controller
             ->get();
 
         return Inertia::render('Admin/Mahasiswa/Detail', [
-            'namaKelas'    => $kelas,
-            'mahasiswas'   => $mahasiswas,
-            'allKelas'     => $allKelas,
-            'kelasSamProdi'=> $kelasSamProdi,
-            'dosens'       => $dosens,
+            'namaKelas' => $kelas,
+            'mahasiswas' => $mahasiswas,
+            'allKelas' => $allKelas,
+            'kelasSamProdi' => $kelasSamProdi,
+            'dosens' => $dosens,
         ]);
     }
 
@@ -129,8 +128,8 @@ class MahasiswaController extends Controller
     {
         $mahasiswa = Mahasiswa::findOrFail($id);
 
-        if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/' . $mahasiswa->profile_picture)) {
-            Storage::delete('public/profile_pictures/' . $mahasiswa->profile_picture);
+        if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/'.$mahasiswa->profile_picture)) {
+            Storage::delete('public/profile_pictures/'.$mahasiswa->profile_picture);
         }
 
         $mahasiswa->delete();
@@ -147,13 +146,13 @@ class MahasiswaController extends Controller
         $mahasiswas = Mahasiswa::whereIn('id', $ids)->get();
 
         foreach ($mahasiswas as $mahasiswa) {
-            if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/' . $mahasiswa->profile_picture)) {
-                Storage::delete('public/profile_pictures/' . $mahasiswa->profile_picture);
+            if ($mahasiswa->profile_picture && Storage::exists('public/profile_pictures/'.$mahasiswa->profile_picture)) {
+                Storage::delete('public/profile_pictures/'.$mahasiswa->profile_picture);
             }
             $mahasiswa->delete();
         }
 
-        return redirect()->back()->with('success', count($ids) . ' data mahasiswa berhasil dihapus');
+        return redirect()->back()->with('success', count($ids).' data mahasiswa berhasil dihapus');
     }
 
     /**
@@ -162,8 +161,8 @@ class MahasiswaController extends Controller
     public function pindahKelas(Request $request)
     {
         $request->validate([
-            'ids'             => 'required|array',
-            'kelas_id'        => 'required|exists:kelas,id',
+            'ids' => 'required|array',
+            'kelas_id' => 'required|exists:kelas,id',
             'source_kelas_id' => 'required|exists:kelas,id',
         ]);
 
@@ -171,7 +170,7 @@ class MahasiswaController extends Controller
         $targetKelas = Kelas::findOrFail($request->kelas_id);
 
         if (
-            $targetKelas->id_prodi   !== $sourceKelas->id_prodi ||
+            $targetKelas->id_prodi !== $sourceKelas->id_prodi ||
             $targetKelas->jenis_kelas !== $sourceKelas->jenis_kelas
         ) {
             return back()->withErrors([
@@ -180,11 +179,11 @@ class MahasiswaController extends Controller
         }
 
         Mahasiswa::whereIn('id', $request->ids)->update([
-            'kelas_id'   => $request->kelas_id,
+            'kelas_id' => $request->kelas_id,
             'status_krs' => 0,
         ]);
 
-        return redirect()->back()->with('success', count($request->ids) . ' mahasiswa berhasil dipindahkan kelas');
+        return redirect()->back()->with('success', count($request->ids).' mahasiswa berhasil dipindahkan kelas');
     }
 
     /**
@@ -201,10 +200,12 @@ class MahasiswaController extends Controller
         try {
             Excel::import(new MahasiswaImport($request->kelas_id), $request->file('file'));
             DB::commit();
+
             return redirect()->back()->with('success', 'Data mahasiswa berhasil diimpor');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal impor data: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal impor data: '.$e->getMessage());
         }
     }
 
@@ -214,7 +215,8 @@ class MahasiswaController extends Controller
     public function export($id)
     {
         $kelas = Kelas::findOrFail($id);
-        return Excel::download(new MahasiswaExport($id), 'mahasiswa_' . $kelas->nama_kelas . '.xlsx');
+
+        return Excel::download(new MahasiswaExport($id), 'mahasiswa_'.$kelas->nama_kelas.'.xlsx');
     }
 
     /**

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Uts;
-use App\Models\Kelas;
 use App\Models\Jadwal;
-use App\Models\Matkul;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use App\Models\Uts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -16,16 +15,17 @@ class UtsController extends Controller
     /**
      * Display a listing of the resource.
      */
-
     protected $userId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $this->userId = Session::get("user.id");
+            $this->userId = Session::get('user.id');
+
             return $next($request);
         });
     }
+
     public function index($kelas_id, $matkul_id, $jadwal_id)
     {
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
@@ -36,7 +36,7 @@ class UtsController extends Controller
             ->groupBy('matkul_id', 'kelas_id', 'jadwal_id')
             ->get();
 
-        return  view('pages.dosen.data-nilai.uts.index', compact('kelasAll', 'kelas_id', 'matkul_id', 'jadwal_id', 'utss'));
+        return view('pages.dosen.data-nilai.uts.index', compact('kelasAll', 'kelas_id', 'matkul_id', 'jadwal_id', 'utss'));
     }
 
     /**
@@ -56,6 +56,7 @@ class UtsController extends Controller
             ->where('kelas_id', $kelas_id)
             ->where('id', $jadwal_id)
             ->first();
+
         return view('pages.dosen.data-nilai.uts.create', compact('mahasiswas', 'matkul', 'kelasAll', 'jadwal', 'kelas_id', 'matkul_id', 'jadwal_id'));
     }
 
@@ -69,7 +70,7 @@ class UtsController extends Controller
             'mahasiswas_id.*' => 'exists:mahasiswas,id',
             'nilai' => 'required|array',
             'nilai.*' => 'numeric|min:0|max:100',
-            'jadwal_id' => 'required|exists:jadwals,id'
+            'jadwal_id' => 'required|exists:jadwals,id',
         ]);
 
         $mahasiswas_id = $request->mahasiswas_id;
@@ -90,6 +91,7 @@ class UtsController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -111,6 +113,7 @@ class UtsController extends Controller
             ->get();
 
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.data-nilai.uts.edit', compact('mahasiswas', 'uts', 'kelas_id', 'matkul_id', 'kelasAll', 'jadwal_id'));
     }
 
@@ -139,12 +142,12 @@ class UtsController extends Controller
             );
         }
 
-
         session()->flash('success', 'Data nilai uas berhasil diperbarui.');
         session()->flash('tab', 'uts');
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -167,6 +170,7 @@ class UtsController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 }

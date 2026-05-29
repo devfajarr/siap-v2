@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2\Dosen;
 use App\Http\Controllers\Controller;
 use App\Models\Absen;
 use App\Models\Admin;
-use App\Models\Dosen;
 use App\Models\Jadwal;
 use App\Models\Mahasiswa;
 use App\Models\RequestEditPresensi;
@@ -23,7 +22,7 @@ class PresensiController extends Controller
     public function index()
     {
         $dosen = Auth::guard('dosen')->user();
-        
+
         $jadwals = Jadwal::with(['dosen', 'matkul', 'kelas.prodi', 'ruangan'])
             ->where('dosens_id', $dosen->id)
             ->latest()
@@ -33,17 +32,17 @@ class PresensiController extends Controller
 
         $formattedJadwals = $jadwals->map(function ($jadwal) use ($today) {
             $pertemuanMax = Absen::where('jadwals_id', $jadwal->id)->max('pertemuan') ?? 0;
-            
+
             $absenToday = Absen::where('jadwals_id', $jadwal->id)
                 ->where('kelas_id', $jadwal->kelas->id)
                 ->whereDate('tanggal', $today)
                 ->first();
-                
-            $statusPresensi = 'available'; 
-            if ($pertemuanMax >= 14 && !$absenToday) {
-                $statusPresensi = 'completed'; 
+
+            $statusPresensi = 'available';
+            if ($pertemuanMax >= 14 && ! $absenToday) {
+                $statusPresensi = 'completed';
             } elseif ($absenToday) {
-                $statusPresensi = 'filled_today'; 
+                $statusPresensi = 'filled_today';
             }
 
             // Fetch approved but not yet used edit requests
@@ -63,7 +62,7 @@ class PresensiController extends Controller
                 'matkul' => $jadwal->matkul->nama_matkul,
                 'sks' => $jadwal->matkul->praktek + $jadwal->matkul->teori,
                 'hari' => $jadwal->hari,
-                'waktu' => Carbon::parse($jadwal->waktu_mulai)->format('H:i') . ' - ' . Carbon::parse($jadwal->waktu_selesai)->format('H:i'),
+                'waktu' => Carbon::parse($jadwal->waktu_mulai)->format('H:i').' - '.Carbon::parse($jadwal->waktu_selesai)->format('H:i'),
                 'kelas' => $jadwal->kelas->nama_kelas,
                 'ruangan' => $jadwal->ruangan->nama,
                 'prodi' => $jadwal->kelas->prodi->nama_prodi,
@@ -75,7 +74,7 @@ class PresensiController extends Controller
         });
 
         return Inertia::render('Dosen/Presensi/Index', [
-            'jadwals' => $formattedJadwals
+            'jadwals' => $formattedJadwals,
         ]);
     }
 
@@ -85,7 +84,7 @@ class PresensiController extends Controller
             'jadwal_id' => 'required|exists:jadwals,id',
             'pertemuan' => 'required|integer|min:1|max:14',
         ], [
-            'pertemuan.required' => 'Pertemuan harus dipilih.'
+            'pertemuan.required' => 'Pertemuan harus dipilih.',
         ]);
 
         $dosen = Auth::guard('dosen')->user();
@@ -104,37 +103,37 @@ class PresensiController extends Controller
                 WhatsappService::kirim(
                     $nomor_akademik,
                     "📢 *Pengajuan Edit Presensi (V2)!*\n\n"
-                        . "📌 *Dosen:* {$dosen->nama}\n"
-                        . "📖 *Mata Kuliah:* {$jadwal->matkul->nama_matkul}\n"
-                        . "🏫 *Kelas:* {$jadwal->kelas->nama_kelas}\n"
-                        . "📅 *Pertemuan:* {$request->pertemuan}\n\n"
-                        . "Mohon segera lakukan verifikasi di Dashboard Admin. ✅"
+                        ."📌 *Dosen:* {$dosen->nama}\n"
+                        ."📖 *Mata Kuliah:* {$jadwal->matkul->nama_matkul}\n"
+                        ."🏫 *Kelas:* {$jadwal->kelas->nama_kelas}\n"
+                        ."📅 *Pertemuan:* {$request->pertemuan}\n\n"
+                        .'Mohon segera lakukan verifikasi di Dashboard Admin. ✅'
                 );
             }
 
             return back()->with('success', 'Pengajuan edit presensi berhasil dikirim ke Admin.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengirim pengajuan: ' . $e->getMessage());
+            return back()->with('error', 'Gagal mengirim pengajuan: '.$e->getMessage());
         }
     }
 
     public function create($id)
     {
         $dosen = Auth::guard('dosen')->user();
-        
+
         $jadwal = Jadwal::with(['dosen', 'matkul', 'kelas.prodi', 'ruangan'])
             ->where('dosens_id', $dosen->id)
             ->where('id', $id)
             ->firstOrFail();
-            
+
         $pertemuan = Absen::where('jadwals_id', $jadwal->id)->max('pertemuan');
         $pertemuan = $pertemuan ? $pertemuan + 1 : 1;
-        
+
         $mahasiswas = Mahasiswa::where('kelas_id', $jadwal->kelas->id)
             ->where('status_krs', 1)
             ->orderBy('nama_lengkap', 'asc')
             ->get();
-            
+
         $tahun = TahunAkademik::where('status', 1)->first();
 
         return Inertia::render('Dosen/Presensi/Create', [
@@ -158,14 +157,14 @@ class PresensiController extends Controller
                     'nim' => $m->nim,
                     'nama_lengkap' => $m->nama_lengkap,
                 ];
-            })
+            }),
         ]);
     }
 
     public function edit($jadwal_id, $pertemuan)
     {
         $dosen = Auth::guard('dosen')->user();
-        
+
         $jadwal = Jadwal::with(['dosen', 'matkul', 'kelas.prodi', 'ruangan'])
             ->where('dosens_id', $dosen->id)
             ->where('id', $jadwal_id)
@@ -184,7 +183,7 @@ class PresensiController extends Controller
             ->where('status_krs', 1)
             ->orderBy('nama_lengkap', 'asc')
             ->get();
-            
+
         $tahun = TahunAkademik::where('status', 1)->first();
 
         return Inertia::render('Dosen/Presensi/Edit', [
@@ -201,7 +200,7 @@ class PresensiController extends Controller
                 'tanggal' => $resume ? Carbon::parse($resume->tanggal)->format('d/m/Y') : Carbon::now()->format('d/m/Y'),
                 'tahun_akademik' => $tahun ? $tahun->tahun_akademik : '',
             ],
-            'pertemuan' => (int)$pertemuan,
+            'pertemuan' => (int) $pertemuan,
             'existingStatus' => $absens,
             'existingMateri' => $resume ? $resume->materi : '',
             'mahasiswas' => $mahasiswas->map(function ($m) {
@@ -210,7 +209,7 @@ class PresensiController extends Controller
                     'nim' => $m->nim,
                     'nama_lengkap' => $m->nama_lengkap,
                 ];
-            })
+            }),
         ]);
     }
 
@@ -269,14 +268,16 @@ class PresensiController extends Controller
             ]);
 
             DB::commit();
+
             return redirect()->route('v2.dosen.presensi.index')->with('success', 'Data presensi berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             $errorMessage = 'Gagal menyimpan data presensi. Pastikan semua status kehadiran telah diisi atau hubungi administrator.';
             if (config('app.env') === 'local') {
-                $errorMessage = 'Gagal menyimpan presensi: ' . $e->getMessage();
+                $errorMessage = 'Gagal menyimpan presensi: '.$e->getMessage();
             }
+
             return back()->with('error', $errorMessage);
         }
     }
@@ -317,13 +318,15 @@ class PresensiController extends Controller
                 ->update(['status' => true]);
 
             DB::commit();
+
             return redirect()->route('v2.dosen.presensi.index')->with('success', 'Data presensi berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
             $errorMessage = 'Gagal memperbarui data presensi.';
             if (config('app.env') === 'local') {
-                $errorMessage .= ' ' . $e->getMessage();
+                $errorMessage .= ' '.$e->getMessage();
             }
+
             return back()->with('error', $errorMessage);
         }
     }

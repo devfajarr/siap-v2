@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
-use App\Models\Prodi;
 use App\Models\Jadwal;
 use App\Models\Kaprodi;
+use App\Models\Kelas;
+use App\Models\Prodi;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -18,13 +18,13 @@ class ProdiController extends Controller
     {
         $kelasAll = Jadwal::all();
         $prodis = Prodi::latest()->get();
+
         return view('pages.data-master.data-prodi', compact('prodis', 'kelasAll'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-
     public function store(Request $request)
     {
         $validateData = $request->validate([
@@ -35,8 +35,8 @@ class ProdiController extends Controller
             'nama_prodi' => 'required',
             'singkatan' => 'required',
             'jenjang' => 'required',
-            'alias_nama'=>'required',
-            'alias_jenjang'=>'required'
+            'alias_nama' => 'required',
+            'alias_jenjang' => 'required',
         ], [
             'kode_prodi.required' => 'Kode prodi harus diisi',
             'kode_prodi.unique' => 'Kode prodi sudah digunakan',
@@ -60,9 +60,6 @@ class ProdiController extends Controller
         return response()->json(['success' => 'Program studi berhasil ditambahkan', 'prodi' => $prodi]);
     }
 
-
-
-
     /**
      * Update the specified resource in storage.
      */
@@ -78,8 +75,8 @@ class ProdiController extends Controller
             'nama_prodi' => 'required',
             'singkatan' => 'required',
             'jenjang' => 'required',
-            'alias_nama'=>'required',
-            'alias_jenjang'=>'required'
+            'alias_nama' => 'required',
+            'alias_jenjang' => 'required',
         ], [
             'kode_prodi.required' => 'Kode prodi harus diisi',
             'kode_prodi.unique' => 'Kode prodi sudah terdaftar',
@@ -95,8 +92,6 @@ class ProdiController extends Controller
         return response()->json(['success' => 'Program studi berhasil diupdate', 'prodi' => $edit]);
     }
 
-
-
     /**
      * Remove the specified resource from storage.
      */
@@ -104,8 +99,9 @@ class ProdiController extends Controller
     {
         $prodi = Prodi::findOrFail($id);
         Kelas::where('s', $prodi->id)->delete();
-        Kaprodi::where('prodis_id',$prodi->id)->delete();
+        Kaprodi::where('prodis_id', $prodi->id)->delete();
         $prodi->delete();
+
         return response()->json(['success' => 'Program studi berhasil dihapus!']);
     }
 }

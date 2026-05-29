@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V2\Admin\Direktur;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateDirekturRequest extends FormRequest
@@ -17,13 +18,13 @@ class UpdateDirekturRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'status' => 'required|in:0,1',
-            'password' => 'nullable|min:6'
+            'password' => 'nullable|min:6',
         ];
     }
 

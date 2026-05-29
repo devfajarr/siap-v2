@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Jadwal;
 use App\Models\Message;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
 class LembarMonitoringController extends Controller
 {
     protected $role;
+
     protected $userId;
 
     public function __construct()
@@ -17,9 +17,11 @@ class LembarMonitoringController extends Controller
         $this->middleware(function ($request, $next) {
             $this->role = Session::get('user.role');
             $this->userId = Session::get('user.id');
+
             return $next($request);
         });
     }
+
     public function index($jadwal_id)
     {
         // INI RANCU
@@ -27,7 +29,6 @@ class LembarMonitoringController extends Controller
         //     ->where('jadwal_id', $jadwal_id)
         //     ->whereNull('parent_id')
         //     ->get();
-
 
         // ATAU INI SAYA JUGA TIDAK TAHU
         $jadwal = Jadwal::findOrFail($jadwal_id);
@@ -53,9 +54,9 @@ class LembarMonitoringController extends Controller
             ->whereNull('parent_id')
             ->get();
 
-
         return view('pages.lembar-monitoring.index', compact('messages'));
     }
+
     protected function getModelNamespaceFromRole($role)
     {
         $roleToModelMap = [
@@ -64,7 +65,7 @@ class LembarMonitoringController extends Controller
             'wakil_direktur' => 'App\Models\Wadir',
             'kaprodi' => 'App\Models\Kaprodi',
             'mahasiswa' => 'App\Models\Mahasiswa',
-            'dosen' => 'App\Models\Dosen'
+            'dosen' => 'App\Models\Dosen',
         ];
 
         return $roleToModelMap[$role] ?? '';

@@ -5,11 +5,10 @@ namespace App\Http\Controllers\V2\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dosen;
 use App\Models\Jadwal;
-use App\Models\TahunAkademik;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Session;
+use App\Models\Message;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
 
 class DataPerkuliahanController extends Controller
 {
@@ -32,7 +31,7 @@ class DataPerkuliahanController extends Controller
             });
 
         return Inertia::render('Admin/DataPerkuliahan/Index', [
-            'dosens' => $dosens
+            'dosens' => $dosens,
         ]);
     }
 
@@ -47,7 +46,7 @@ class DataPerkuliahanController extends Controller
             'matkul',
             'matkul.prodi',
             'matkul.semester',
-            'kelas.prodi'
+            'kelas.prodi',
         ])
             ->where('dosens_id', $id)
             ->withMax('absen as pertemuan_max', 'pertemuan')
@@ -61,12 +60,12 @@ class DataPerkuliahanController extends Controller
             ->get();
 
         $formattedJadwals = $jadwals->map(function ($jadwal) {
-            
+
             // Evaluasi message menggunakan DB::raw subquery atau exists query untuk performa
             // Karena relasi message ada di Jadwal
             $userId = Session::get('user.id');
             $role = Session::get('user.role');
-            
+
             // Map role to Model namespace (Simplified inline mapping as used in legacy code)
             $roleToModelMap = [
                 'admin' => 'App\Models\Admin',
@@ -76,22 +75,22 @@ class DataPerkuliahanController extends Controller
                 'mahasiswa' => 'App\Models\Mahasiswa',
                 'dosen' => 'App\Models\Dosen',
             ];
-            
+
             $receiverType = $roleToModelMap[$role] ?? '';
             $dosenType = $roleToModelMap['dosen'];
 
-            $hasMessage = \App\Models\Message::where('jadwal_id', $jadwal->id)
+            $hasMessage = Message::where('jadwal_id', $jadwal->id)
                 ->where(function ($query) use ($jadwal, $receiverType, $dosenType, $userId) {
                     $query->where(function ($subQuery) use ($jadwal, $receiverType, $dosenType, $userId) {
                         $subQuery->where('sender_id', $userId)
-                                 ->where('sender_type', $receiverType)
-                                 ->where('receiver_id', $jadwal->dosens_id)
-                                 ->where('receiver_type', $dosenType);
+                            ->where('sender_type', $receiverType)
+                            ->where('receiver_id', $jadwal->dosens_id)
+                            ->where('receiver_type', $dosenType);
                     })->orWhere(function ($subQuery) use ($jadwal, $receiverType, $dosenType, $userId) {
                         $subQuery->where('receiver_id', $userId)
-                                 ->where('receiver_type', $receiverType)
-                                 ->where('sender_id', $jadwal->dosens_id)
-                                 ->where('sender_type', $dosenType);
+                            ->where('receiver_type', $receiverType)
+                            ->where('sender_id', $jadwal->dosens_id)
+                            ->where('sender_type', $dosenType);
                     });
                 })
                 ->whereNull('parent_id')
@@ -110,7 +109,7 @@ class DataPerkuliahanController extends Controller
                 'matkuls_id' => $jadwal->matkuls_id,
                 'kelas_id' => $jadwal->kelas_id,
                 'dosens_id' => $jadwal->dosens_id,
-                'has_message' => $hasMessage
+                'has_message' => $hasMessage,
             ];
         });
 
@@ -119,7 +118,7 @@ class DataPerkuliahanController extends Controller
                 'id' => $dosen->id,
                 'nama' => $dosen->nama,
             ],
-            'jadwals' => $formattedJadwals
+            'jadwals' => $formattedJadwals,
         ]);
     }
 }

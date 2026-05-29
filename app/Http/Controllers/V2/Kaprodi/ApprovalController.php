@@ -4,28 +4,25 @@ namespace App\Http\Controllers\V2\Kaprodi;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absen;
-use App\Models\Dosen;
-use App\Models\Jadwal;
 use App\Models\Admin;
-use App\Models\PengajuanRekapPresensi;
-use App\Models\PengajuanRekapkontrak;
-use App\Models\PengajuanRekapBerita;
-use App\Models\PengajuanRekapNilai;
-use App\Models\PermohonanSurat;
-use App\Models\Kontrak;
+use App\Models\Dosen;
+use App\Models\Kaprodi;
 use App\Models\Kelas;
+use App\Models\Kontrak;
+use App\Models\Mahasiswa;
+use App\Models\PengajuanRekapBerita;
+use App\Models\PengajuanRekapkontrak;
+use App\Models\PengajuanRekapPresensi;
+use App\Models\PermohonanSurat;
 use App\Models\Resume;
 use App\Models\Semester;
 use App\Models\TahunAkademik;
 use App\Models\Wadir;
-use App\Models\Kaprodi;
-use App\Notifications\PengajuanPresensiNotification;
 use App\Notifications\PengajuanKontrakNotification;
+use App\Notifications\PengajuanPresensiNotification;
 use App\Notifications\PengajuanResumeNotification;
-use App\Notifications\PengajuanNilaiNotification;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ApprovalController extends Controller
@@ -36,9 +33,9 @@ class ApprovalController extends Controller
         $prodiId = session('user.activeProdiId');
 
         $diajukan = PengajuanRekapPresensi::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('status', 0)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
@@ -48,9 +45,9 @@ class ApprovalController extends Controller
             ->get();
 
         $disetujui = PengajuanRekapPresensi::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('status', 1)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
@@ -62,24 +59,24 @@ class ApprovalController extends Controller
         return Inertia::render('Kaprodi/Approval/Presensi/Index', [
             'diajukanList' => $diajukan,
             'disetujuiList' => $disetujui,
-            'title' => 'Rekap Presensi Mahasiswa'
+            'title' => 'Rekap Presensi Mahasiswa',
         ]);
     }
 
     public function presensiDetail($pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
         $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
 
         $absens = Absen::with([
-            'mahasiswa' => fn($q) => $q->withTrashed(),
-            'kelas' => fn($q) => $q->withTrashed(),
-            'matkul' => fn($q) => $q->withTrashed(),
-            'dosen' => fn($q) => $q->withTrashed()
+            'mahasiswa' => fn ($q) => $q->withTrashed(),
+            'kelas' => fn ($q) => $q->withTrashed(),
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
@@ -93,20 +90,20 @@ class ApprovalController extends Controller
                 'pertemuan' => $pertemuan,
                 'matkul_id' => $matkul_id,
                 'kelas_id' => $kelas_id,
-                'jadwal_id' => $jadwal_id
-            ]
+                'jadwal_id' => $jadwal_id,
+            ],
         ]);
     }
 
     public function presensiApprove(Request $request, $pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
         $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
-        
+
         $absenRecords = Absen::where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
             ->where('jadwals_id', $jadwal_id)
@@ -118,8 +115,8 @@ class ApprovalController extends Controller
             $absen->save();
         }
 
-        $allKaprodiApproved = $absenRecords->every(fn($a) => $a->setuju_kaprodi);
-        $allWadirApproved = $absenRecords->every(fn($a) => $a->setuju_wadir);
+        $allKaprodiApproved = $absenRecords->every(fn ($a) => $a->setuju_kaprodi);
+        $allWadirApproved = $absenRecords->every(fn ($a) => $a->setuju_wadir);
 
         $statusPresensi = ($allKaprodiApproved && $allWadirApproved) ? 1 : 0;
 
@@ -130,10 +127,12 @@ class ApprovalController extends Controller
 
         if ($pengajuan) {
             $pengajuan->update(['status' => $statusPresensi]);
-            
+
             if ($statusPresensi) {
                 $dosen = Dosen::find($absenRecords->first()->dosens_id);
-                if ($dosen) $dosen->notify(new PengajuanPresensiNotification($pengajuan));
+                if ($dosen) {
+                    $dosen->notify(new PengajuanPresensiNotification($pengajuan));
+                }
             }
         }
 
@@ -146,9 +145,9 @@ class ApprovalController extends Controller
         $prodiId = session('user.activeProdiId');
 
         $diajukan = PengajuanRekapBerita::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('status', 0)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
@@ -158,9 +157,9 @@ class ApprovalController extends Controller
             ->get();
 
         $disetujui = PengajuanRekapBerita::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('status', 1)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
@@ -172,7 +171,7 @@ class ApprovalController extends Controller
         return Inertia::render('Kaprodi/Approval/Berita/Index', [
             'diajukanList' => $diajukan,
             'disetujuiList' => $disetujui,
-            'title' => 'Rekap Berita Acara Perkuliahan'
+            'title' => 'Rekap Berita Acara Perkuliahan',
         ]);
     }
 
@@ -182,9 +181,9 @@ class ApprovalController extends Controller
         $prodiId = session('user.activeProdiId');
 
         $diajukan = PengajuanRekapkontrak::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('status', 0)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
@@ -194,9 +193,9 @@ class ApprovalController extends Controller
             ->get();
 
         $disetujui = PengajuanRekapkontrak::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('status', 1)
             ->whereHas('kelas.prodi', function ($query) use ($prodiId) {
@@ -208,7 +207,7 @@ class ApprovalController extends Controller
         return Inertia::render('Kaprodi/Approval/Kontrak/Index', [
             'diajukanList' => $diajukan,
             'disetujuiList' => $disetujui,
-            'title' => 'Rekap Kontrak Kuliah'
+            'title' => 'Rekap Kontrak Kuliah',
         ]);
     }
 
@@ -239,10 +238,11 @@ class ApprovalController extends Controller
 
         $permohonans->getCollection()->transform(function ($permohonan) {
             $anggotaTim = null;
-            if (!empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
-                $anggotaTim = \App\Models\Mahasiswa::whereIn('id', $permohonan->anggota_tim)->get();
+            if (! empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
+                $anggotaTim = Mahasiswa::whereIn('id', $permohonan->anggota_tim)->get();
             }
             $permohonan->anggota_tim_detail = $anggotaTim;
+
             return $permohonan;
         });
 
@@ -252,7 +252,7 @@ class ApprovalController extends Controller
                 'search' => $request->search ?? '',
                 'jenis' => $request->jenis ?? '',
             ],
-            'title' => 'Verifikasi Permohonan Surat'
+            'title' => 'Verifikasi Permohonan Surat',
         ]);
     }
 
@@ -282,10 +282,11 @@ class ApprovalController extends Controller
 
         $permohonans->getCollection()->transform(function ($permohonan) {
             $anggotaTim = null;
-            if (!empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
-                $anggotaTim = \App\Models\Mahasiswa::whereIn('id', $permohonan->anggota_tim)->get();
+            if (! empty($permohonan->anggota_tim) && is_array($permohonan->anggota_tim)) {
+                $anggotaTim = Mahasiswa::whereIn('id', $permohonan->anggota_tim)->get();
             }
             $permohonan->anggota_tim_detail = $anggotaTim;
+
             return $permohonan;
         });
 
@@ -295,7 +296,7 @@ class ApprovalController extends Controller
                 'search' => $request->search ?? '',
                 'jenis' => $request->jenis ?? '',
             ],
-            'title' => 'Riwayat Persetujuan Surat'
+            'title' => 'Riwayat Persetujuan Surat',
         ]);
     }
 
@@ -306,17 +307,17 @@ class ApprovalController extends Controller
 
         $permohonan->update([
             'setuju_kaprodi' => 1,
-            'keterangan_ditolak' => null
+            'keterangan_ditolak' => null,
         ]);
 
         if ($nomor_akademik) {
             WhatsappService::kirim(
                 $nomor_akademik,
-                "✅ *Verifikasi Permohonan Surat* ✅\n\n" .
-                "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n" .
-                "👤 Nama Mahasiswa: {$permohonan->mahasiswa->nama_lengkap}\n" .
-                "🎓 NIM: {$permohonan->mahasiswa->nim}\n\n" .
-                "📌 Permohonan surat ini telah diverifikasi oleh Kaprodi dan siap untuk dicetak"
+                "✅ *Verifikasi Permohonan Surat* ✅\n\n".
+                "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
+                "👤 Nama Mahasiswa: {$permohonan->mahasiswa->nama_lengkap}\n".
+                "🎓 NIM: {$permohonan->mahasiswa->nim}\n\n".
+                '📌 Permohonan surat ini telah diverifikasi oleh Kaprodi dan siap untuk dicetak'
             );
         }
 
@@ -326,24 +327,24 @@ class ApprovalController extends Controller
     public function permohonanSuratReject(Request $request, $id)
     {
         $request->validate([
-            'keterangan_ditolak' => 'required|string|min:5'
+            'keterangan_ditolak' => 'required|string|min:5',
         ]);
 
         $permohonan = PermohonanSurat::with('mahasiswa')->findOrFail($id);
-        
+
         $permohonan->update([
             'setuju_kaprodi' => 2,
-            'keterangan_ditolak' => $request->keterangan_ditolak
+            'keterangan_ditolak' => $request->keterangan_ditolak,
         ]);
 
         if ($permohonan->mahasiswa && $permohonan->mahasiswa->no_telephone) {
             WhatsappService::kirim(
                 $permohonan->mahasiswa->no_telephone,
-                "❌ *Pemberitahuan Surat Permohonan* ❌\n\n" .
-                "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n" .
-                "📌 Status: *Ditolak oleh Kaprodi*\n" .
-                "📝 Alasan: *{$request->keterangan_ditolak}*\n\n" .
-                "📍 Silakan hubungi Kaprodi untuk informasi lebih lanjut atau ajukan permohonan baru dengan data yang benar."
+                "❌ *Pemberitahuan Surat Permohonan* ❌\n\n".
+                "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
+                "📌 Status: *Ditolak oleh Kaprodi*\n".
+                "📝 Alasan: *{$request->keterangan_ditolak}*\n\n".
+                '📍 Silakan hubungi Kaprodi untuk informasi lebih lanjut atau ajukan permohonan baru dengan data yang benar.'
             );
         }
 
@@ -353,17 +354,17 @@ class ApprovalController extends Controller
     public function beritaDetail($pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
         $rentang = $pertemuan === '1-7' ? range(1, 7) : range(8, 14);
 
         $beritas = Resume::with([
-            'dosen' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'kelas.semester' => fn($q) => $q->withTrashed(),
-            'matkul' => fn($q) => $q->withTrashed()
+            'dosen' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'kelas.semester' => fn ($q) => $q->withTrashed(),
+            'matkul' => fn ($q) => $q->withTrashed(),
         ])
             ->where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
@@ -372,7 +373,7 @@ class ApprovalController extends Controller
             ->get();
 
         $semester = Semester::where('status', 1)->first();
-        $sem = $semester ? (($semester->semester % 2 == 0) ? "GENAP" : "GANJIL") : "GANJIL";
+        $sem = $semester ? (($semester->semester % 2 == 0) ? 'GENAP' : 'GANJIL') : 'GANJIL';
         $tahunAkademik = TahunAkademik::where('status', 1)->first();
 
         return Inertia::render('Kaprodi/Approval/Berita/Detail', [
@@ -383,15 +384,15 @@ class ApprovalController extends Controller
                 'pertemuan' => $pertemuan,
                 'matkul_id' => $matkul_id,
                 'kelas_id' => $kelas_id,
-                'jadwal_id' => $jadwal_id
-            ]
+                'jadwal_id' => $jadwal_id,
+            ],
         ]);
     }
 
     public function beritaApprove(Request $request, $pertemuan, $matkul_id, $kelas_id, $jadwal_id)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -408,8 +409,8 @@ class ApprovalController extends Controller
             $resume->save();
         }
 
-        $allKaprodiApproved = $resumeRecords->every(fn($r) => $r->setuju_kaprodi);
-        $allWadirApproved = $resumeRecords->every(fn($r) => $r->setuju_wadir);
+        $allKaprodiApproved = $resumeRecords->every(fn ($r) => $r->setuju_kaprodi);
+        $allWadirApproved = $resumeRecords->every(fn ($r) => $r->setuju_wadir);
 
         $statusBerita = ($allKaprodiApproved && $allWadirApproved) ? 1 : 0;
 
@@ -424,7 +425,9 @@ class ApprovalController extends Controller
 
             if ($statusBerita) {
                 $dosen = Dosen::find($resumeRecords->first()->dosens_id);
-                if ($dosen) $dosen->notify(new PengajuanResumeNotification($pengajuan));
+                if ($dosen) {
+                    $dosen->notify(new PengajuanResumeNotification($pengajuan));
+                }
             }
         }
 
@@ -434,15 +437,15 @@ class ApprovalController extends Controller
     public function kontrakDetail($jadwal_id, $matkul_id, $kelas_id)
     {
         $kelas = Kelas::with('prodi')->findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
         $kontraks = Kontrak::with([
-            'matkul' => fn($q) => $q->withTrashed(),
-            'kelas.semester' => fn($q) => $q->withTrashed(),
-            'kelas.prodi' => fn($q) => $q->withTrashed(),
-            'jadwal.dosen' => fn($q) => $q->withTrashed()
+            'matkul' => fn ($q) => $q->withTrashed(),
+            'kelas.semester' => fn ($q) => $q->withTrashed(),
+            'kelas.prodi' => fn ($q) => $q->withTrashed(),
+            'jadwal.dosen' => fn ($q) => $q->withTrashed(),
         ])
             ->where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
@@ -459,15 +462,15 @@ class ApprovalController extends Controller
             'params' => [
                 'jadwal_id' => $jadwal_id,
                 'matkul_id' => $matkul_id,
-                'kelas_id' => $kelas_id
-            ]
+                'kelas_id' => $kelas_id,
+            ],
         ]);
     }
 
     public function kontrakApprove(Request $request, $jadwal_id, $matkul_id, $kelas_id)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -481,8 +484,8 @@ class ApprovalController extends Controller
             $kontrak->save();
         }
 
-        $allKaprodiApproved = $kontraks->every(fn($k) => $k->setuju_kaprodi);
-        $allWadirApproved = $kontraks->every(fn($k) => $k->setuju_wadir);
+        $allKaprodiApproved = $kontraks->every(fn ($k) => $k->setuju_kaprodi);
+        $allWadirApproved = $kontraks->every(fn ($k) => $k->setuju_wadir);
 
         $statusKontrak = ($allKaprodiApproved && $allWadirApproved) ? 1 : 0;
 
@@ -500,7 +503,9 @@ class ApprovalController extends Controller
 
             if ($statusKontrak) {
                 $dosen = Dosen::find($kontraks->first()->jadwal->dosens_id);
-                if ($dosen) $dosen->notify(new PengajuanKontrakNotification($pengajuan));
+                if ($dosen) {
+                    $dosen->notify(new PengajuanKontrakNotification($pengajuan));
+                }
             }
         }
 
@@ -514,8 +519,10 @@ class ApprovalController extends Controller
         if (in_array($request->prodi_id, $prodiIds)) {
             session(['user.activeProdiId' => $request->prodi_id]);
             session(['user.prodiId' => $request->prodi_id]); // update fallback V1/legacy
+
             return response()->json(['success' => true]);
         }
+
         return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
     }
 }

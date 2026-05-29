@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dosen;
-use App\Models\Direktur;
-use App\Models\Wadir;
-use App\Models\Kaprodi;
 use App\Http\Requests\V2\Admin\Direktur\StoreDirekturRequest;
 use App\Http\Requests\V2\Admin\Direktur\UpdateDirekturRequest;
+use App\Models\Direktur;
+use App\Models\Dosen;
+use App\Models\Kaprodi;
+use App\Models\Wadir;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class DirekturController extends Controller
@@ -33,12 +32,12 @@ class DirekturController extends Controller
             ->withQueryString();
 
         $dosens = Dosen::orderBy('nama', 'asc')->get();
-        
+
         // Get IDs of lecturers who already have a structural position
         $existingKaprodiDosenIds = Kaprodi::pluck('dosens_id');
         $existingDirekturDosenIds = Direktur::pluck('dosens_id');
         $existingWadirDosenIds = Wadir::pluck('dosens_id');
-        
+
         $hasAnyPositionIds = $existingKaprodiDosenIds
             ->concat($existingDirekturDosenIds)
             ->concat($existingWadirDosenIds)
@@ -63,9 +62,9 @@ class DirekturController extends Controller
             $password = $dosen->password;
         } elseif ($request->password_mode === 'existing') {
             // Check in Kaprodi, then Wadir
-            $existing = Kaprodi::where('dosens_id', $request->dosens_id)->first() 
+            $existing = Kaprodi::where('dosens_id', $request->dosens_id)->first()
                       ?? Wadir::where('dosens_id', $request->dosens_id)->first();
-            
+
             if ($existing) {
                 $password = $existing->password;
             } else {
@@ -82,7 +81,7 @@ class DirekturController extends Controller
             'email' => $dosen->email,
             'status' => 1,
             'password' => $password,
-            'is_first_login' => ($request->password_mode === 'custom')
+            'is_first_login' => ($request->password_mode === 'custom'),
         ]);
 
         return redirect()->back()->with('success', 'Direktur berhasil ditambahkan.');

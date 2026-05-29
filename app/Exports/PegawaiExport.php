@@ -2,19 +2,20 @@
 
 namespace App\Exports;
 
-use Carbon\Carbon;
 use App\Models\Pegawai;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class PegawaiExport implements FromCollection, WithHeadings, WithStyles
 {
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return Collection
+     */
     public function collection()
     {
         return Pegawai::select(
@@ -33,9 +34,9 @@ class PegawaiExport implements FromCollection, WithHeadings, WithStyles
             ->map(function ($pegawai) {
                 return [
                     'nama' => $pegawai->nama,
-                    'nuptk' => $pegawai->nuptk ? "'" . $pegawai->nuptk : '-',
+                    'nuptk' => $pegawai->nuptk ? "'".$pegawai->nuptk : '-',
                     'jenis_kelamin' => $pegawai->jenis_kelamin,
-                    'no_telephone' => "'" . $pegawai->no_telephone,
+                    'no_telephone' => "'".$pegawai->no_telephone,
                     'agama' => $pegawai->agama,
                     'status' => $pegawai->status ? 'Aktif' : 'Tidak Aktif',
                     'tanggal_lahir' => $pegawai->tanggal_lahir
@@ -46,7 +47,6 @@ class PegawaiExport implements FromCollection, WithHeadings, WithStyles
                 ];
             });
     }
-
 
     public function headings(): array
     {
@@ -66,7 +66,7 @@ class PegawaiExport implements FromCollection, WithHeadings, WithStyles
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => [ 
+            1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => '000000']],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,

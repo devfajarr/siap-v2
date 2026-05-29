@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JadwalUjian;
 use App\Models\Kelas;
 use App\Models\Matkul;
 use App\Models\Pegawai;
 use App\Models\Ruangan;
-use App\Models\JadwalUjian;
-use Illuminate\Http\Request;
 use App\Models\TahunAkademik;
+use Illuminate\Http\Request;
 
 class JadwalUjianController extends Controller
 {
@@ -79,7 +79,7 @@ class JadwalUjianController extends Controller
         if ($existingUjian) {
             return response()->json([
                 'status' => 400,
-                'error' => 'Jadwal ujian sudah ada untuk kelas dan mata kuliah ini pada tanggal tersebut.'
+                'error' => 'Jadwal ujian sudah ada untuk kelas dan mata kuliah ini pada tanggal tersebut.',
             ], 400);
         }
 
@@ -160,7 +160,7 @@ class JadwalUjianController extends Controller
         if ($existingUjian) {
             return response()->json([
                 'status' => 400,
-                'error' => 'Jadwal ujian lain sudah terdaftar untuk kelas dan mata kuliah ini pada tanggal tersebut.'
+                'error' => 'Jadwal ujian lain sudah terdaftar untuk kelas dan mata kuliah ini pada tanggal tersebut.',
             ], 400);
         }
 
@@ -189,8 +189,9 @@ class JadwalUjianController extends Controller
     {
         $jadwal = JadwalUjian::findOrFail($id);
         $jadwal->delete();
+
         return response()->json([
-            'success' => 'Jadwal berhasil dihapus'
+            'success' => 'Jadwal berhasil dihapus',
         ]);
     }
 

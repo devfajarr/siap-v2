@@ -3,25 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absen;
-use App\Models\Kelas;
-use App\Models\Wadir;
-use App\Models\Jadwal;
-use App\Models\Kaprodi;
 use App\Models\Direktur;
 use App\Models\Dosen;
-use Illuminate\Http\Request;
+use App\Models\Jadwal;
+use App\Models\Kaprodi;
+use App\Models\Kelas;
 use App\Models\PengajuanRekapPresensi;
+use App\Models\Wadir;
 use App\Notifications\PengajuanPresensiNotification;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
-
 
 class PengajuanRekapPresensiController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-
     protected $prodiId;
+
     protected $role;
 
     public function __construct()
@@ -29,6 +28,7 @@ class PengajuanRekapPresensiController extends Controller
         $this->middleware(function ($request, $next) {
             $this->prodiId = Session::get('user.prodiId');
             $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
@@ -52,7 +52,7 @@ class PengajuanRekapPresensiController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 0)
                 ->when($prodiId, function ($query) use ($prodiId) {
@@ -78,7 +78,7 @@ class PengajuanRekapPresensiController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 0)
                 ->latest()
@@ -109,7 +109,7 @@ class PengajuanRekapPresensiController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 1)
                 ->when($prodiId, function ($query) use ($prodiId) {
@@ -136,7 +136,7 @@ class PengajuanRekapPresensiController extends Controller
                 },
                 'jadwal.dosen' => function ($query) {
                     $query->withTrashed();
-                }
+                },
             ])
                 ->where('status', 1)
                 ->latest()
@@ -147,7 +147,6 @@ class PengajuanRekapPresensiController extends Controller
 
         return view('pages.pengajuanRekapPresensi.disetujui', compact('presensis', 'kelasAll'));
     }
-
 
     public function store(Request $request)
     {
@@ -166,7 +165,7 @@ class PengajuanRekapPresensiController extends Controller
             'kelas_id' => $validateData['kelas_id'],
             'matkul_id' => $validateData['matkul_id'],
             'pertemuan' => $validateData['rentang'],
-            'jadwals_id' => $validateData['jadwal_id']
+            'jadwals_id' => $validateData['jadwal_id'],
         ]);
         foreach ($wadirs as $wadir) {
             $wadir->notify(new PengajuanPresensiNotification($presensi));
@@ -175,6 +174,7 @@ class PengajuanRekapPresensiController extends Controller
             $direktur->notify(new PengajuanPresensiNotification($presensi));
         }
         $kaprodi->notify(new PengajuanPresensiNotification($presensi));
+
         return redirect()->back()->with('success', 'Pengajuan Rekap Presensi Berhasil');
     }
 
@@ -204,7 +204,7 @@ class PengajuanRekapPresensiController extends Controller
             },
             'mahasiswa' => function ($query) {
                 $query->withTrashed();
-            }
+            },
         ])
             ->where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
@@ -218,6 +218,7 @@ class PengajuanRekapPresensiController extends Controller
             ->get();
 
         $kaprodi = Kaprodi::where('prodis_id', $absens->first()->prodis_id)->first();
+
         return view('pages.pengajuanRekapPresensi.rekap', compact('absens', 'rentang', 'kaprodi'));
     }
 
@@ -257,10 +258,10 @@ class PengajuanRekapPresensiController extends Controller
                     $absen->setuju_wadir = false;
                 }
 
-                if (!$absen->setuju_kaprodi) {
+                if (! $absen->setuju_kaprodi) {
                     $allKaprodiApproved = false;
                 }
-                if (!$absen->setuju_wadir) {
+                if (! $absen->setuju_wadir) {
                     $allWadirApproved = false;
                 }
 
@@ -285,7 +286,7 @@ class PengajuanRekapPresensiController extends Controller
 
             return redirect()->back()->with('success', 'Status persetujuan berhasil diperbarui');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memperbarui status persetujuan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui status persetujuan: '.$e->getMessage());
         }
     }
 }

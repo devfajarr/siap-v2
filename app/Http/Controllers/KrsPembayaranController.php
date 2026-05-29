@@ -2,38 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Krs;
+use App\Exports\AllKrsExport;
+use App\Exports\KrsExport;
 use App\Models\Admin;
 use App\Models\Dosen;
-use App\Models\Kelas;
 use App\Models\Jadwal;
-use App\Models\Matkul;
+use App\Models\Kelas;
+use App\Models\Krs;
 use App\Models\Mahasiswa;
-use App\Exports\KrsExport;
+use App\Models\Matkul;
 use App\Models\NilaiHuruf;
 use App\Models\Pembayaran;
-use Illuminate\Http\Request;
-use App\Exports\AllKrsExport;
 use App\Models\TahunAkademik;
-use App\Services\WhatsappService;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Notifications\KRSNotification;
-use Illuminate\Support\Facades\Session;
 use App\Notifications\PembayaranNotification;
+use App\Services\WhatsappService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KrsPembayaranController extends Controller
 {
+    protected $userId;
 
-    protected $userId, $kelasId;
+    protected $kelasId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $this->userId = Session::get("user.id");
-            $this->kelasId = Session::get("user.kelasId");
+            $this->userId = Session::get('user.id');
+            $this->kelasId = Session::get('user.kelasId');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         $kelas = Kelas::where('id', $this->kelasId)->first();
@@ -80,6 +83,7 @@ class KrsPembayaranController extends Controller
 
         $mahasiswa = Mahasiswa::where('id', $this->userId)->first();
         $cekStatusKrs = $mahasiswa->status_krs;
+
         return view('pages.mahasiswa.krs_pembayaran.index', compact('semesters', 'cekStatus', 'matkulKrs', 'cekPembayaran', 'pembayaran', 'krs', 'cekStatusKrs'));
     }
 
@@ -116,7 +120,7 @@ class KrsPembayaranController extends Controller
             'semester_id' => $semesterId,
             'kelas_id' => $kelasId->id,
             'bukti_pembayaran' => $buktiPembayaranPath,
-            'status_pembayaran' => 0
+            'status_pembayaran' => 0,
         ]);
 
         $receiver = Admin::all();
@@ -130,11 +134,14 @@ class KrsPembayaranController extends Controller
     public function diajukan()
     {
         $pembayarans = Pembayaran::with('mahasiswa', 'prodi', 'kelas', 'semester')->where('status_pembayaran', 0)->latest()->paginate(6);
+
         return view('pages.pembayaran.index', compact('pembayarans'));
     }
+
     public function disetujui()
     {
         $pembayarans = Pembayaran::with('mahasiswa', 'prodi', 'kelas', 'semester')->where('status_pembayaran', 1)->latest()->paginate(6);
+
         return view('pages.pembayaran.index', compact('pembayarans'));
     }
 
@@ -143,6 +150,7 @@ class KrsPembayaranController extends Controller
         $pembayaran = Pembayaran::with('mahasiswa', 'mahasiswa.kelas.prodi', 'mahasiswa.kelas.semester', 'mahasiswa.kelas')
             ->where('id', $id)
             ->first();
+
         return view('pages.pembayaran.edit', compact('pembayaran'));
     }
 
@@ -150,7 +158,7 @@ class KrsPembayaranController extends Controller
     {
         $pembayaran = Pembayaran::where('id', $id)->first();
         $mahasiswa = Mahasiswa::findOrFail($pembayaran->mahasiswa_id);
-        if (!$pembayaran) {
+        if (! $pembayaran) {
             return redirect('/presensi/pembayaran/diajukan')->with('error', 'Data pembayaran tidak ditemukan.');
         }
         $request->validate([
@@ -173,8 +181,9 @@ class KrsPembayaranController extends Controller
                 'status_krs' => 0,
                 'setuju_pa' => 0,
                 'setuju_mahasiswa' => 0,
-                'tahun_ajaran' => TahunAkademik::where('status', 1)->pluck('tahun_akademik')->first()
+                'tahun_ajaran' => TahunAkademik::where('status', 1)->pluck('tahun_akademik')->first(),
             ]);
+
             return redirect('/presensi/pembayaran/diajukan')->with('success', 'Status pembayaran berhasil diperbarui.');
         }
     }
@@ -192,6 +201,7 @@ class KrsPembayaranController extends Controller
             ->latest()
             ->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.krs.index', compact('krss', 'kelasAll'));
     }
 
@@ -208,6 +218,7 @@ class KrsPembayaranController extends Controller
             ->latest()
             ->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.krs.index', compact('krss', 'kelasAll'));
     }
 
@@ -220,6 +231,7 @@ class KrsPembayaranController extends Controller
             ->where('semester_id', $semesterId)
             ->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.krs.edit', compact('krs', 'matkulKrs', 'kelasAll'));
     }
 
@@ -238,12 +250,12 @@ class KrsPembayaranController extends Controller
             $krs->setuju_mahasiswa = $request->setuju_mahasiswa;
             $krs->save();
             $dosen->notify(new KRSNotification($krs));
-            if (!empty($dosen->no_telephone)) {
+            if (! empty($dosen->no_telephone)) {
                 $pesanDosen = "?? *Pengajuan KRS Baru*\n\n"
-                    . "Nama : *{$krs->mahasiswa->nama_lengkap}*\n"
-                    . "Kelas : {$krs->kelas->nama_kelas}\n"
-                    . "Prodi : {$krs->prodi->nama_prodi}\n\n"
-                    . "Harap *periksa & verifikasi* KRS di sistem.";
+                    ."Nama : *{$krs->mahasiswa->nama_lengkap}*\n"
+                    ."Kelas : {$krs->kelas->nama_kelas}\n"
+                    ."Prodi : {$krs->prodi->nama_prodi}\n\n"
+                    .'Harap *periksa & verifikasi* KRS di sistem.';
                 WhatsappService::kirim($dosen->no_telephone, $pesanDosen);
             }
         }
@@ -257,21 +269,21 @@ class KrsPembayaranController extends Controller
             $mahasiswa->status_krs = true;
             $mahasiswa->save();
             $mahasiswa->notify(new KRSNotification($krs));
-            if (!empty($mahasiswa->no_telephone)) {
+            if (! empty($mahasiswa->no_telephone)) {
                 $pesanMhs = "*KRS Berhasil Diverifikasi*\n\n"
-                    . "Nama : *{$krs->mahasiswa->nama_lengkap}*\n"
-                    . "Kelas : {$krs->kelas->nama_kelas}\n"
-                    . "Prodi : {$krs->prodi->nama_prodi}\n\n"
-                    . "KRS kamu sudah *disetujui*. Silakan cek status di sistem.";
+                    ."Nama : *{$krs->mahasiswa->nama_lengkap}*\n"
+                    ."Kelas : {$krs->kelas->nama_kelas}\n"
+                    ."Prodi : {$krs->prodi->nama_prodi}\n\n"
+                    .'KRS kamu sudah *disetujui*. Silakan cek status di sistem.';
                 WhatsappService::kirim($mahasiswa->no_telephone, $pesanMhs);
             }
             foreach ($admin as $adm) {
                 $adm->notify(new KRSNotification($krs));
-                if (!empty($adm->no_telephone)) {
+                if (! empty($adm->no_telephone)) {
                     $pesanAdm = "*KRS Diverifikasi*\n\n"
-                        . "{$krs->mahasiswa->nama_lengkap}\n"
-                        . "{$krs->kelas->nama_kelas} • {$krs->prodi->nama_prodi}\n"
-                        . "Status: *Disetujui*";
+                        ."{$krs->mahasiswa->nama_lengkap}\n"
+                        ."{$krs->kelas->nama_kelas} • {$krs->prodi->nama_prodi}\n"
+                        .'Status: *Disetujui*';
                     WhatsappService::kirim($adm->no_telephone, $pesanAdm);
                 }
             }
@@ -291,6 +303,7 @@ class KrsPembayaranController extends Controller
         $matkulKrs = Matkul::where('prodi_id', $prodiId)
             ->where('semester_id', $semesterId)
             ->get();
+
         return view('pages.mahasiswa.krs_pembayaran.cetak_krs', compact('krs', 'matkulKrs'));
     }
 
@@ -301,6 +314,7 @@ class KrsPembayaranController extends Controller
                 $query->where('status', 1);
             })
             ->get();
+
         return view('pages.krs.index', compact('kelass'));
     }
 
@@ -311,6 +325,7 @@ class KrsPembayaranController extends Controller
             ->where('kelas_id', $kelas->id)
             ->orderBy('nim', 'asc')
             ->get();
+
         return view('pages.krs.detail', compact('mahasiswas', 'kelas'));
     }
 
@@ -326,6 +341,7 @@ class KrsPembayaranController extends Controller
         $matkulKrs = Matkul::where('prodi_id', $prodiId)
             ->where('semester_id', $semesterId)
             ->get();
+
         return view('pages.krs.cetak', compact('krs', 'matkulKrs'));
     }
 
@@ -338,6 +354,7 @@ class KrsPembayaranController extends Controller
     public function exportKrs($id)
     {
         $kelas = Kelas::findOrFail($id);
-        return Excel::download(new KrsExport($id), 'krs_' . $kelas->nama_kelas . '.xlsx');
+
+        return Excel::download(new KrsExport($id), 'krs_'.$kelas->nama_kelas.'.xlsx');
     }
 }

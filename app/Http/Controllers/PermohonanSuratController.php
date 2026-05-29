@@ -3,33 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
-use App\Models\Kelas;
-use App\Models\Prodi;
-use App\Models\Wadir;
-use App\Models\Matkul;
-use App\Models\Kaprodi;
 use App\Models\Direktur;
+use App\Models\Kaprodi;
 use App\Models\Mahasiswa;
 use App\Models\NilaiHuruf;
-use Illuminate\Http\Request;
-use App\Models\TahunAkademik;
 use App\Models\PermohonanSurat;
+use App\Models\Prodi;
+use App\Models\TahunAkademik;
+use App\Models\Wadir;
 use App\Services\WhatsappService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
 class PermohonanSuratController extends Controller
 {
+    protected $userId;
 
-    protected $userId, $prodiId;
+    protected $prodiId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
             $this->userId = Session::get('user.id');
             $this->prodiId = Session::get('user.prodiId');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         $mahasiswa = Mahasiswa::with('kelas.semester')->where('id', $this->userId)->first();
@@ -41,7 +42,7 @@ class PermohonanSuratController extends Controller
             ->get();
 
         $tahunAkademik = TahunAkademik::where('status', 1)->first();
-        $tahun = explode("/", $tahunAkademik->tahun_akademik);
+        $tahun = explode('/', $tahunAkademik->tahun_akademik);
 
         $tahun_awal = $tahun[0];
         $tahun_akhir = $tahun[1];
@@ -49,16 +50,15 @@ class PermohonanSuratController extends Controller
         $semester_awal = $mahasiswa->kelas->semester->semester;
         $semester_akhir = $semester_awal + 1;
 
-        $label_awal = ($semester_awal % 2 == 1) ? "(Ganjil)" : "(Genap)";
-        $label_akhir = ($semester_akhir % 2 == 1) ? "(Ganjil)" : "(Genap)";
+        $label_awal = ($semester_awal % 2 == 1) ? '(Ganjil)' : '(Genap)';
+        $label_akhir = ($semester_akhir % 2 == 1) ? '(Ganjil)' : '(Genap)';
 
-        $masaCuti = $semester_awal . " " . $label_awal . " & " . $semester_akhir . " " . $label_akhir;
+        $masaCuti = $semester_awal.' '.$label_awal.' & '.$semester_akhir.' '.$label_akhir;
 
         $kelasAsal = $mahasiswa->kelas->jenis_kelas == 'Reguler' ? 'Pagi' : 'Sore';
         $kelasTujuan = ($kelasAsal == 'Pagi') ? 'Sore' : 'Pagi';
 
-
-        $permohonans = PermohonanSurat::where("mahasiswa_id", $this->userId)->with('mahasiswa', 'mahasiswa.kelas.prodi')->latest()->paginate(5);
+        $permohonans = PermohonanSurat::where('mahasiswa_id', $this->userId)->with('mahasiswa', 'mahasiswa.kelas.prodi')->latest()->paginate(5);
 
         return view('pages.mahasiswa.permohonan_surat.index', compact('mahasiswa', 'semesters', 'tahun_awal', 'tahun_akhir', 'permohonans', 'masaCuti', 'kelasAsal', 'kelasTujuan'));
     }
@@ -89,7 +89,6 @@ class PermohonanSuratController extends Controller
                 'namaInstansi.required' => 'Nama Instansi harus diisi.',
             ]);
 
-
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
                 'setuju_kaprodi' => 0,
@@ -110,17 +109,18 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Cuti Kuliah') {
+        } elseif ($request->jenis_permohonan == 'Cuti Kuliah') {
             $validateData = $request->validate([
                 'alasanCuti' => 'required|string|max:255',
             ], [
@@ -134,23 +134,24 @@ class PermohonanSuratController extends Controller
                 'jenis_permohonan' => $request->jenis_permohonan,
                 'masa_cuti' => $request->masaCuti,
                 'tahun_akademik' => $request->tahunAkademik,
-                'alasan_cuti' => $validateData['alasanCuti']
+                'alasan_cuti' => $validateData['alasanCuti'],
             ]);
             if ($success) {
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Tunjangan Gaji') {
+        } elseif ($request->jenis_permohonan == 'Tunjangan Gaji') {
             $validateData = $request->validate([
                 'namaOrangTua' => 'required|string|max:255',
                 'alamatOrangTua' => 'required|string',
@@ -172,7 +173,6 @@ class PermohonanSuratController extends Controller
                 'alasanCuti.required' => 'Alasan Cuti harus diisi.',
             ]);
 
-
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
                 'setuju_kaprodi' => 0,
@@ -192,17 +192,18 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Pindah Kelas') {
+        } elseif ($request->jenis_permohonan == 'Pindah Kelas') {
             $validateData = $request->validate([
                 'kelasAsal' => 'required|string|max:255',
                 'kelasTujuan' => 'required|string',
@@ -210,7 +211,6 @@ class PermohonanSuratController extends Controller
                 'kelasAsal.required' => 'Kelas Asal harus diisi.',
                 'kelasTujuan.required' => 'Kelas Tujuan harus diisi.',
             ]);
-
 
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
@@ -224,17 +224,18 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Pindah PT') {
+        } elseif ($request->jenis_permohonan == 'Pindah PT') {
             $validateData = $request->validate([
                 'ptAsal' => 'required|string|max:255',
                 'ptTujuan' => 'required|string',
@@ -244,7 +245,6 @@ class PermohonanSuratController extends Controller
                 'ptTujuan.required' => 'PT Tujuan harus diisi.',
                 'statusAkreditasi.required' => 'Status Akreditasi harus diisi.',
             ]);
-
 
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
@@ -259,17 +259,18 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Mengundurkan Diri') {
+        } elseif ($request->jenis_permohonan == 'Mengundurkan Diri') {
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
                 'setuju_kaprodi' => 0,
@@ -281,17 +282,18 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Ijin Memperoleh Data TA') {
+        } elseif ($request->jenis_permohonan == 'Ijin Memperoleh Data TA') {
             $validateData = $request->validate([
                 'namaInstansi' => 'required|string|max:255',
                 'alamatInstansi' => 'required|string|max:255',
@@ -305,7 +307,6 @@ class PermohonanSuratController extends Controller
                 'dataDimintaTA.required' => 'Minimal harus ada 1 data yang diminta.',
                 'dataDimintaTA.*.required_without_all' => 'Setiap data yang diminta tidak boleh kosong.',
             ]);
-
 
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
@@ -322,17 +323,17 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
 
-        } else if ($request->jenis_permohonan == 'Ijin Memperoleh Data PKL') {
+        } elseif ($request->jenis_permohonan == 'Ijin Memperoleh Data PKL') {
             $validateData = $request->validate([
                 'namaInstansi' => 'required|string|max:255',
                 'alamatInstansi' => 'required|string|max:255',
@@ -346,7 +347,6 @@ class PermohonanSuratController extends Controller
                 'dataDimintaPKL.required' => 'Minimal harus ada 1 data yang diminta.',
                 'dataDimintaPKL.*.required_without_all' => 'Setiap data yang diminta tidak boleh kosong.',
             ]);
-
 
             $success = PermohonanSurat::create([
                 'mahasiswa_id' => $this->userId,
@@ -363,24 +363,25 @@ class PermohonanSuratController extends Controller
                 session()->forget('selected_form');
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
-        } else if ($request->jenis_permohonan == 'Ijin PKL') {
+        } elseif ($request->jenis_permohonan == 'Ijin PKL') {
 
             $validateData = $request->validate([
                 'namaInstansi' => 'required|string|max:255',
                 'alamatInstansi' => 'required|string|max:255',
                 'pimpinan' => 'required|string|max:255',
                 'waktuMulai' => 'required',
-                'waktuSelesai' => 'required'
+                'waktuSelesai' => 'required',
             ], [
                 'alamatInstansi.required' => 'Alamat Instansi harus diisi.',
                 'namaInstansi.required' => 'Nama Instansi harus diisi.',
@@ -404,15 +405,16 @@ class PermohonanSuratController extends Controller
 
                 WhatsappService::kirim(
                     $kaprodi->no_telephone,
-                    "📢 *Permohonan Surat Baru* 📢\n\n" .
-                        "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n" .
-                        "🎓 NIM: {$mahasiswa->nim}\n\n" .
-                        "📌 Mohon segera verifikasi. Terima kasih. 🙏"
+                    "📢 *Permohonan Surat Baru* 📢\n\n".
+                        "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
+                        "🎓 NIM: {$mahasiswa->nim}\n\n".
+                        '📌 Mohon segera verifikasi. Terima kasih. 🙏'
                 );
             } else {
                 session()->flash('selected_form', $request->jenisSurat);
             }
+
             return redirect()->back()->with('success', 'Berhasil mengisi formulir permohonan surat.');
         }
     }
@@ -452,19 +454,19 @@ class PermohonanSuratController extends Controller
                     'keperluan' => $validateData['keperluan'],
                 ]
             );
-        } else if ($permohonan->jenis_permohonan == 'Cuti Kuliah') {
+        } elseif ($permohonan->jenis_permohonan == 'Cuti Kuliah') {
             $validateData = $request->validate([
-                'alasanCuti' => 'required|string|max:255'
+                'alasanCuti' => 'required|string|max:255',
             ], [
                 'alasanCuti.required' => 'Alasan Cuti harus diisi.',
             ]);
 
             $permohonan->update(
                 [
-                    'alasan_cuti' => $validateData['alasanCuti']
+                    'alasan_cuti' => $validateData['alasanCuti'],
                 ]
             );
-        } else if ($permohonan->jenis_permohonan == 'Pindah Kelas') {
+        } elseif ($permohonan->jenis_permohonan == 'Pindah Kelas') {
             $validateData = $request->validate([
                 'kelasAsal' => 'required|string|max:255',
                 'kelasTujuan' => 'required|string',
@@ -479,7 +481,7 @@ class PermohonanSuratController extends Controller
                     'kelas_tujuan' => $validateData['kelasTujuan'],
                 ]
             );
-        } else if ($permohonan->jenis_permohonan == 'Pindah PT') {
+        } elseif ($permohonan->jenis_permohonan == 'Pindah PT') {
             $validateData = $request->validate([
                 'ptAsal' => 'required|string|max:255',
                 'ptTujuan' => 'required|string',
@@ -497,7 +499,7 @@ class PermohonanSuratController extends Controller
                     'status_akreditasi' => $validateData['statusAkreditasi'],
                 ]
             );
-        } else if ($permohonan->jenis_permohonan == 'Ijin Memperoleh Data PKL') {
+        } elseif ($permohonan->jenis_permohonan == 'Ijin Memperoleh Data PKL') {
             $validateData = $request->validate([
                 'namaInstansi' => 'required|string|max:255',
                 'alamatInstansi' => 'required|string|max:255',
@@ -517,10 +519,10 @@ class PermohonanSuratController extends Controller
                     'alamat_instansi' => $validateData['alamatInstansi'],
                     'nama_instansi' => $validateData['namaInstansi'],
                     'judul_laporan' => $validateData['judulLaporan'],
-                    'data_diminta' => $validateData['dataDiminta']
+                    'data_diminta' => $validateData['dataDiminta'],
                 ]
             );
-        } else if ($permohonan->jenis_permohonan == 'Ijin Memperoleh Data TA') {
+        } elseif ($permohonan->jenis_permohonan == 'Ijin Memperoleh Data TA') {
             $validateData = $request->validate([
                 'namaInstansi' => 'required|string|max:255',
                 'alamatInstansi' => 'required|string|max:255',
@@ -540,10 +542,10 @@ class PermohonanSuratController extends Controller
                     'alamat_instansi' => $validateData['alamatInstansi'],
                     'nama_instansi' => $validateData['namaInstansi'],
                     'judul_laporan' => $validateData['judulLaporan'],
-                    'data_diminta' => $validateData['dataDiminta']
+                    'data_diminta' => $validateData['dataDiminta'],
                 ]
             );
-        } else if ($permohonan->jenis_permohonan == 'Ijin PKL') {
+        } elseif ($permohonan->jenis_permohonan == 'Ijin PKL') {
             $validateData = $request->validate([
                 'namaInstansi' => 'required|string|max:255',
                 'alamatInstansi' => 'required|string|max:255',
@@ -568,16 +570,15 @@ class PermohonanSuratController extends Controller
             ]);
         }
 
-
         return response()->json(['success' => 'Data Permohonan Surat Berhasil diupdate!']);
     }
-
 
     public function delete($id)
     {
         $permohonan = PermohonanSurat::findOrFail($id);
         if ($permohonan) {
             $permohonan->delete();
+
             return response()->json(['success' => 'Data Permohonan Berhasil dihapus!']);
         }
     }
@@ -609,11 +610,11 @@ class PermohonanSuratController extends Controller
 
             WhatsappService::kirim(
                 $nomor_akademik,
-                "✅ *Verifikasi Permohonan Surat* ✅\n\n" .
-                    "📄 Jenis Surat: {$request->jenis_permohonan}\n" .
-                    "👤 Nama Mahasiswa: {$permohonan->mahasiswa->nama_lengkap}\n" .
-                    "🎓 NIM: {$permohonan->mahasiswa->nim}\n\n" .
-                    "📌 Permohonan surat ini telah diverifikasi oleh Kaprodi dan siap untuk dicetak"
+                "✅ *Verifikasi Permohonan Surat* ✅\n\n".
+                    "📄 Jenis Surat: {$request->jenis_permohonan}\n".
+                    "👤 Nama Mahasiswa: {$permohonan->mahasiswa->nama_lengkap}\n".
+                    "🎓 NIM: {$permohonan->mahasiswa->nim}\n\n".
+                    '📌 Permohonan surat ini telah diverifikasi oleh Kaprodi dan siap untuk dicetak'
             );
 
             return redirect()->back()->with(['success' => 'Data Permohonan Surat Berhasil Diverifikasi!']);
@@ -624,6 +625,7 @@ class PermohonanSuratController extends Controller
     {
         $permohonans = PermohonanSurat::where('setuju_kaprodi', 1)->where('status', 0)->with('mahasiswa.kelas.prodi', 'mahasiswa.kelas', 'mahasiswa')->latest()->paginate(5);
         $page = 'Cetak';
+
         return view('pages.permohonan_surat.disetujui', compact('permohonans', 'page'));
     }
 
@@ -645,10 +647,10 @@ class PermohonanSuratController extends Controller
 
             WhatsappService::kirim(
                 $permohonan->mahasiswa->no_telephone,
-                "📢 *Pemberitahuan Surat Permohonan* 📢\n\n" .
-                    "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n" .
-                    "📌 Status: *Segera Dicetak* ✅\n\n" .
-                    "📍 Mohon segera menghubungi akademik untuk pengambilan surat. Terima kasih. 🙏"
+                "📢 *Pemberitahuan Surat Permohonan* 📢\n\n".
+                    "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
+                    "📌 Status: *Segera Dicetak* ✅\n\n".
+                    '📍 Mohon segera menghubungi akademik untuk pengambilan surat. Terima kasih. 🙏'
             );
 
             if ($permohonan->jenis_permohonan == 'Pindah PT') {
@@ -678,9 +680,9 @@ class PermohonanSuratController extends Controller
             ->paginate(5);
 
         $page = 'Selesai';
+
         return view('pages.permohonan_surat.disetujui', compact('permohonans', 'page'));
     }
-
 
     public function tukarHurufAB($kelas)
     {
@@ -694,17 +696,18 @@ class PermohonanSuratController extends Controller
             return $kelas;
         }
 
-        return $this->pisahDuaHurufTerakhir(substr($kelas, 0, -1) . $huruf_baru);
+        return $this->pisahDuaHurufTerakhir(substr($kelas, 0, -1).$huruf_baru);
     }
 
-    function pisahDuaHurufTerakhir($kelas)
+    public function pisahDuaHurufTerakhir($kelas)
     {
         if (strlen($kelas) >= 3) {
             $dua_terakhir = substr($kelas, -2);
             $bagian_awal = substr($kelas, 0, -2);
 
-            return $bagian_awal . ' ' . $dua_terakhir;
+            return $bagian_awal.' '.$dua_terakhir;
         }
+
         return $kelas;
     }
 }

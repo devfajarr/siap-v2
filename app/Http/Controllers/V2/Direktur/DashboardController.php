@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Absen;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
-use App\Models\PengajuanRekapPresensi;
-use App\Models\PengajuanRekapkontrak;
 use App\Models\PengajuanRekapBerita;
+use App\Models\PengajuanRekapkontrak;
+use App\Models\PengajuanRekapPresensi;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
@@ -47,7 +47,7 @@ class DashboardController extends Controller
                 'pendingPresensi' => $presensisCount,
                 'pendingKontrak' => $kontraksCount,
                 'pendingBerita' => $beritasCount,
-            ]
+            ],
         ]);
     }
 }

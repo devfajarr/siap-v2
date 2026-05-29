@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Wadir;
 
 class Message extends Model
 {
@@ -42,7 +41,7 @@ class Message extends Model
         return $query->where([
             'receiver_id' => $receiverId,
             'receiver_type' => $receiverType,
-            'read' => false
+            'read' => false,
         ]);
     }
 
@@ -50,7 +49,7 @@ class Message extends Model
     {
         $this->update([
             'read' => true,
-            'read_at' => now()
+            'read_at' => now(),
         ]);
     }
 

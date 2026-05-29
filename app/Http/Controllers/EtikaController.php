@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Etika;
-use App\Models\Kelas;
 use App\Models\Jadwal;
-use App\Models\Matkul;
+use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -16,16 +16,17 @@ class EtikaController extends Controller
     /**
      * Display a listing of the resource.
      */
-
     protected $userId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
             $this->userId = Session::get('user.id');
+
             return $next($request);
         });
     }
+
     public function index($kelas_id, $matkul_id, $jadwal_id)
     {
         $etikas = Etika::where('kelas_id', $kelas_id)
@@ -36,7 +37,8 @@ class EtikaController extends Controller
             ->get();
 
         $kelas = Kelas::where('id', $kelas_id)->first();
-        return  view('pages.dosen.data-nilai.etika.index', compact('kelas_id', 'matkul_id', 'jadwal_id', 'etikas', 'kelas'));
+
+        return view('pages.dosen.data-nilai.etika.index', compact('kelas_id', 'matkul_id', 'jadwal_id', 'etikas', 'kelas'));
     }
 
     /**
@@ -56,6 +58,7 @@ class EtikaController extends Controller
             ->where('kelas_id', $kelas_id)
             ->where('id', $jadwal_id)
             ->first();
+
         return view('pages.dosen.data-nilai.etika.create', compact('mahasiswas', 'matkul', 'kelasAll', 'jadwal', 'kelas_id', 'matkul_id', 'jadwal_id'));
     }
 
@@ -69,7 +72,7 @@ class EtikaController extends Controller
             'mahasiswas_id.*' => 'exists:mahasiswas,id',
             'nilai' => 'required|array',
             'nilai.*' => 'numeric|min:0|max:100',
-            'jadwal_id' => 'required|exists:jadwals,id'
+            'jadwal_id' => 'required|exists:jadwals,id',
         ]);
 
         $mahasiswas_id = $request->mahasiswas_id;
@@ -90,6 +93,7 @@ class EtikaController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -110,6 +114,7 @@ class EtikaController extends Controller
             ->where('jadwal_id', $jadwal_id)
             ->get();
         $kelasAll = Jadwal::where('dosens_id', $this->userId)->get();
+
         return view('pages.dosen.data-nilai.etika.edit', compact('mahasiswas', 'etikas', 'kelas_id', 'matkul_id', 'kelasAll', 'jadwal_id'));
     }
 
@@ -138,12 +143,12 @@ class EtikaController extends Controller
             );
         }
 
-
         session()->flash('success', 'Data nilai etika berhasil diperbarui.');
         session()->flash('tab', 'etika');
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 
@@ -166,6 +171,7 @@ class EtikaController extends Controller
         session()->flash('kelas_id', $kelas_id);
         session()->flash('matkul_id', $matkul_id);
         session()->flash('jadwal_id', $jadwal_id);
+
         return redirect()->back();
     }
 }

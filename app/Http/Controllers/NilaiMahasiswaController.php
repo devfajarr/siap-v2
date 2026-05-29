@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
-use App\Models\Prodi;
-use App\Models\Jadwal;
-use App\Models\Matkul;
 use App\Models\Kaprodi;
-use App\Models\Semester;
+use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\Matkul;
 use App\Models\NilaiHuruf;
-use Illuminate\Http\Request;
+use App\Models\Prodi;
+use App\Models\Semester;
 use App\Models\TahunAkademik;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class NilaiMahasiswaController extends Controller
@@ -20,16 +17,20 @@ class NilaiMahasiswaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    protected $userId, $kelasId;
+    protected $userId;
+
+    protected $kelasId;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $this->userId = Session::get("user.id");
-            $this->kelasId = Session::get("user.kelasId");
+            $this->userId = Session::get('user.id');
+            $this->kelasId = Session::get('user.kelasId');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         $kelas = Kelas::with('prodi', 'semester')->where('id', $this->kelasId)->first();
@@ -43,12 +44,13 @@ class NilaiMahasiswaController extends Controller
             ->where('semester_id', $semester->id)
             ->where('mahasiswa_id', $this->userId)
             ->get();
-            
+
         $combinedData = $matkuls->map(function ($matkul) use ($nilais) {
             $nilai = $nilais->firstWhere('matkul_id', $matkul->id);
+
             return [
                 'matkul' => $matkul,
-                'nilai' => $nilai
+                'nilai' => $nilai,
             ];
         });
 
@@ -65,7 +67,8 @@ class NilaiMahasiswaController extends Controller
         $sem = $mahasiswa->kelas->semester->semester;
 
         $riwayat = false;
-        return view("pages.mahasiswa.nilai.index", compact("combinedData", "semesters", 'sem', 'riwayat'));
+
+        return view('pages.mahasiswa.nilai.index', compact('combinedData', 'semesters', 'sem', 'riwayat'));
     }
 
     /**
@@ -83,7 +86,7 @@ class NilaiMahasiswaController extends Controller
         // })
         //     ->get();
 
-        $matkuls = matkul::where('prodi_id', $prodi->id)
+        $matkuls = Matkul::where('prodi_id', $prodi->id)
             ->where('semester_id', $semester_id)
             ->get();
 
@@ -97,12 +100,12 @@ class NilaiMahasiswaController extends Controller
             ->where('mahasiswa_id', $this->userId)
             ->get();
 
-
         $combinedData = $matkuls->mapWithKeys(function ($matkul) use ($nilais) {
             $nilai = $nilais->firstWhere('matkul_id', $matkul->id);
+
             return [$matkul->id => [
                 'matkul' => $matkul,
-                'nilai' => $nilai
+                'nilai' => $nilai,
             ]];
         });
 
@@ -122,9 +125,9 @@ class NilaiMahasiswaController extends Controller
             ->get();
 
         $riwayat = true;
-        return view("pages.mahasiswa.nilai.index", compact("combinedData", "semesters", 'riwayat', 'semesterRiwayatKhs'));
-    }
 
+        return view('pages.mahasiswa.nilai.index', compact('combinedData', 'semesters', 'riwayat', 'semesterRiwayatKhs'));
+    }
 
     public function khs($semester)
     {

@@ -385,6 +385,7 @@ use App\Http\Controllers\V2\Admin\DataNilaiController;
 use App\Http\Controllers\V2\Admin\InformasiTambahanController;
 use App\Http\Controllers\V2\Admin\JabatanController;
 use App\Http\Controllers\V2\Admin\JadwalMengajarController;
+use App\Http\Controllers\V2\Admin\OrangTuaController;
 use App\Http\Controllers\V2\Admin\PembayaranController;
 use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
 use App\Http\Controllers\V2\Admin\PengajuanKartuUjianController;
@@ -629,6 +630,10 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->names('v2.admin.data-mahasiswa')
             ->parameters(['data-mahasiswa' => 'id'])
             ->except(['create', 'edit']);
+        Route::post('data-mahasiswa/{mahasiswa_id}/orang-tua', [OrangTuaController::class, 'store'])
+            ->name('v2.admin.mahasiswa.orang-tua.store');
+        Route::delete('data-mahasiswa/{mahasiswa_id}/orang-tua/{parent_id}', [OrangTuaController::class, 'destroy'])
+            ->name('v2.admin.mahasiswa.orang-tua.destroy');
         Route::post('data-mahasiswa/bulk-delete', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'bulkDelete'])
             ->name('v2.admin.data-mahasiswa.bulk-delete');
         Route::post('data-mahasiswa/pindah-kelas', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'pindahKelas'])
@@ -762,5 +767,17 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::put('{id}', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'update'])->name('update');
             Route::delete('{id}', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'destroy'])->name('destroy');
         });
+    });
+});
+
+Route::prefix('v2')->middleware(['auth:orang_tua'])->group(function () {
+    Route::prefix('orang-tua')->name('v2.orang-tua.')->group(function () {
+        Route::get('dashboard', [App\Http\Controllers\V2\OrangTua\DashboardController::class, 'index'])->name('dashboard');
+        Route::post('switch-child', [App\Http\Controllers\V2\OrangTua\DashboardController::class, 'switchChild'])->name('switch-child');
+        Route::get('absensi', [App\Http\Controllers\V2\OrangTua\MonitoringController::class, 'absen'])->name('absensi');
+        Route::get('nilai', [App\Http\Controllers\V2\OrangTua\MonitoringController::class, 'nilai'])->name('nilai');
+        Route::get('nilai/riwayat/{semester_id}', [App\Http\Controllers\V2\OrangTua\MonitoringController::class, 'riwayatNilai'])->name('nilai.riwayat');
+        Route::get('keuangan', [App\Http\Controllers\V2\OrangTua\MonitoringController::class, 'keuangan'])->name('keuangan');
+        Route::get('krs', [App\Http\Controllers\V2\OrangTua\MonitoringController::class, 'krs'])->name('krs');
     });
 });

@@ -2,24 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
-use App\Models\Prodi;
 use App\Models\Jadwal;
 use App\Models\Matkul;
+use App\Models\Prodi;
 use App\Models\Semester;
-use GuzzleHttp\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 
 class MatkulController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-
     protected $prodiId;
+
     protected $role;
 
     public function __construct()
@@ -27,22 +25,24 @@ class MatkulController extends Controller
         $this->middleware(function ($request, $next) {
             $this->prodiId = Session::get('user.prodiId');
             $this->role = Session::get('user.role');
+
             return $next($request);
         });
     }
+
     public function index()
     {
         $kelasAll = Jadwal::all();
         $prodis = Prodi::all();
         $semesters = Semester::all();
         $matkuls = Matkul::with('prodi', 'semester')->latest()->paginate(6);
+
         return view('pages.data-master.data-matkul', compact('matkuls', 'kelasAll', 'prodis', 'semesters'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-
     public function store(Request $request)
     {
         $request->validate([
@@ -53,7 +53,7 @@ class MatkulController extends Controller
                 Rule::unique('matkuls')->where(function ($query) use ($request) {
                     return $query->where('semester_id', $request->semester_id)
                         ->where('prodi_id', $request->prodi_id);
-                })
+                }),
             ],
             'alias' => [
                 'required',
@@ -62,14 +62,14 @@ class MatkulController extends Controller
                 Rule::unique('matkuls')->where(function ($query) use ($request) {
                     return $query->where('semester_id', $request->semester_id)
                         ->where('prodi_id', $request->prodi_id);
-                })
+                }),
             ],
             'kode' => [
                 'required',
                 Rule::unique('matkuls')->where(function ($query) use ($request) {
                     return $query->where('semester_id', $request->semester_id)
                         ->where('prodi_id', $request->prodi_id);
-                })
+                }),
             ],
             'prodi_id' => 'required|exists:prodi,id',
             'semester_id' => 'required|exists:semesters,id',
@@ -96,12 +96,8 @@ class MatkulController extends Controller
             'teori' => $request->teori,
         ]);
 
-
         return response()->json(['success' => 'Data mata kuliah berhasil ditambahkan']);
     }
-
-
-
 
     /**
      * Update the specified resource in storage.
@@ -164,10 +160,6 @@ class MatkulController extends Controller
         return response()->json(['success' => 'Data mata kuliah berhasil diupdate']);
     }
 
-
-
-
-
     /**
      * Remove the specified resource from storage.
      */
@@ -176,6 +168,7 @@ class MatkulController extends Controller
         $matkul = Matkul::findOrFail($id);
         Jadwal::where('matkuls_id', $id)->forceDelete();
         $matkul->delete();
+
         return response()->json(['success' => 'Mata kuliah berhasil dihapus']);
     }
 
@@ -214,6 +207,7 @@ class MatkulController extends Controller
     public function kategoriSemester()
     {
         $semesters = Semester::all();
+
         return view('pages.data-matkul.index', compact('semesters'));
     }
 
@@ -223,6 +217,7 @@ class MatkulController extends Controller
             ->where('prodi_id', $this->prodiId)
             ->paginate(6);
         $semester = Semester::findOrFail($id);
+
         return view('pages.data-matkul.detail', compact('matkuls', 'semester'));
     }
 }

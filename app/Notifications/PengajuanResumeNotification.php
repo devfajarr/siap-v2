@@ -3,10 +3,8 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Auth;
 
 class PengajuanResumeNotification extends Notification
 {
@@ -16,6 +14,7 @@ class PengajuanResumeNotification extends Notification
      * Create a new notification instance.
      */
     protected $resume;
+
     public function __construct($resume)
     {
         $this->resume = $resume;
@@ -45,7 +44,7 @@ class PengajuanResumeNotification extends Notification
                 'title' => 'Pengajuan Rekap Berita Acara',
                 'name' => $this->resume->jadwal->dosen->nama,
                 'matkul' => $this->resume->matkul->nama_matkul,
-                'class' => $this->resume->kelas->nama_kelas
+                'class' => $this->resume->kelas->nama_kelas,
             ];
         } else {
             return [
@@ -54,7 +53,7 @@ class PengajuanResumeNotification extends Notification
                 'title' => 'Pengajuan Rekap Berita Acara',
                 'name' => $this->resume->jadwal->dosen->nama,
                 'matkul' => $this->resume->matkul->nama_matkul,
-                'class' => $this->resume->kelas->nama_kelas
+                'class' => $this->resume->kelas->nama_kelas,
             ];
         }
     }

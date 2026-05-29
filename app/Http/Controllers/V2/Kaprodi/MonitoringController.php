@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\V2\Kaprodi;
 
 use App\Http\Controllers\Controller;
-use App\Models\Matkul;
-use App\Models\Semester;
-use App\Models\Jadwal;
-use App\Models\Kelas;
 use App\Models\Absen;
-use App\Models\NilaiHuruf;
-use App\Models\Tugas;
 use App\Models\Aktif;
 use App\Models\Etika;
-use App\Models\Uts;
-use App\Models\Uas;
-use App\Models\Mahasiswa;
-use App\Models\Wadir;
+use App\Models\Jadwal;
 use App\Models\Kaprodi;
-use Illuminate\Http\Request;
+use App\Models\Kelas;
+use App\Models\Mahasiswa;
+use App\Models\Matkul;
+use App\Models\Semester;
+use App\Models\Tugas;
+use App\Models\Uas;
+use App\Models\Uts;
+use App\Models\Wadir;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -26,8 +25,9 @@ class MonitoringController extends Controller
     public function matkul()
     {
         $semesters = Semester::orderBy('semester', 'asc')->get();
+
         return Inertia::render('Kaprodi/Monitoring/Matkul/Index', [
-            'semesters' => $semesters
+            'semesters' => $semesters,
         ]);
     }
 
@@ -36,7 +36,7 @@ class MonitoringController extends Controller
         $user = Auth::guard('kaprodi')->user();
         $prodiId = session('user.activeProdiId');
         $semester = Semester::findOrFail($semester_id);
-        
+
         $matkuls = Matkul::with(['prodi', 'semester'])
             ->where('semester_id', $semester_id)
             ->where('prodi_id', $prodiId)
@@ -44,7 +44,7 @@ class MonitoringController extends Controller
 
         return Inertia::render('Kaprodi/Monitoring/Matkul/Detail', [
             'semester' => $semester,
-            'matkuls' => $matkuls
+            'matkuls' => $matkuls,
         ]);
     }
 
@@ -56,14 +56,14 @@ class MonitoringController extends Controller
         $kelas = Kelas::where('id_prodi', $prodiId)->with('semester')->get();
 
         return Inertia::render('Kaprodi/Monitoring/Perkuliahan/Index', [
-            'kelas' => $kelas
+            'kelas' => $kelas,
         ]);
     }
 
     public function perkuliahanDetail($kelas_id)
     {
         $kelas = Kelas::with('semester', 'prodi')->findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
         $jadwals = Jadwal::with(['matkul', 'dosen', 'ruangan'])
@@ -72,21 +72,21 @@ class MonitoringController extends Controller
 
         return Inertia::render('Kaprodi/Monitoring/Perkuliahan/Detail', [
             'kelas' => $kelas,
-            'jadwals' => $jadwals
+            'jadwals' => $jadwals,
         ]);
     }
 
     public function presensiCek($matkul_id, $kelas_id, $jadwal_id, $rentang)
     {
         $kelas = Kelas::findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
         $range = $rentang === '1-7' ? range(1, 7) : range(8, 14);
-        
+
         $jadwal = Jadwal::with(['matkul', 'kelas', 'dosen'])->findOrFail($jadwal_id);
-        
+
         $presensi = Absen::with('mahasiswa')
             ->where('matkuls_id', $matkul_id)
             ->where('kelas_id', $kelas_id)
@@ -98,7 +98,7 @@ class MonitoringController extends Controller
         return Inertia::render('Kaprodi/Monitoring/Perkuliahan/PresensiCek', [
             'jadwal' => $jadwal,
             'rentang' => $rentang,
-            'presensi' => $presensi
+            'presensi' => $presensi,
         ]);
     }
 
@@ -110,7 +110,7 @@ class MonitoringController extends Controller
         $kelas = Kelas::where('id_prodi', $prodiId)->with('semester')->get();
 
         return Inertia::render('Kaprodi/Monitoring/Nilai/Index', [
-            'kelas' => $kelas
+            'kelas' => $kelas,
         ]);
     }
 
@@ -118,9 +118,9 @@ class MonitoringController extends Controller
     {
         $user = Auth::guard('kaprodi')->user();
         $kelas = Kelas::with('semester', 'prodi')->findOrFail($kelas_id);
-        
+
         // Security check
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -132,17 +132,17 @@ class MonitoringController extends Controller
 
         return Inertia::render('Kaprodi/Monitoring/Nilai/Detail', [
             'kelas' => $kelas,
-            'jadwals' => $jadwals
+            'jadwals' => $jadwals,
         ]);
     }
 
     public function nilaiCek($matkul_id, $kelas_id, $jadwal_id)
     {
         $user = Auth::guard('kaprodi')->user();
-        
+
         // 1. Secure & load class with relations
         $kelas = Kelas::with('semester', 'prodi')->findOrFail($kelas_id);
-        if (!in_array($kelas->id_prodi, session('user.prodiIds', []))) {
+        if (! in_array($kelas->id_prodi, session('user.prodiIds', []))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -192,7 +192,7 @@ class MonitoringController extends Controller
             ->get();
 
         $dataAbsensi = $absens->groupBy('mahasiswas_id');
-        
+
         $totalPertemuan = Absen::where('jadwals_id', $jadwal_id)
             ->where('kelas_id', $kelas_id)
             ->where('matkuls_id', $matkul_id)
@@ -231,7 +231,7 @@ class MonitoringController extends Controller
             &$totalKehadiranSemuaMahasiswa
         ) {
             $tugasGroup = $groupedTugas->get($mahasiswa->id, collect());
-            
+
             $totalNilaiTugas = 0;
             $jumlahTugasDikumpulkan = 0;
             $nilaiTugasList = [];
@@ -242,7 +242,7 @@ class MonitoringController extends Controller
                 if ($tugas) {
                     $nilai = $tugas->nilai;
                     if ($nilai !== null && $nilai !== '-') {
-                        $nilaiVal = (float)$nilai;
+                        $nilaiVal = (float) $nilai;
                     }
                     $totalNilaiTugas += $nilaiVal;
                     $jumlahTugasDikumpulkan++;
@@ -252,26 +252,26 @@ class MonitoringController extends Controller
 
             $persentaseTugas = $jumlahTugas > 0 ? ($totalNilaiTugas / ($jumlahTugas * 100)) * 25 : 0;
 
-            $nilaiKeaktifan = isset($dataAktif[$mahasiswa->id]) ? (float)$dataAktif[$mahasiswa->id]->nilai : 0;
+            $nilaiKeaktifan = isset($dataAktif[$mahasiswa->id]) ? (float) $dataAktif[$mahasiswa->id]->nilai : 0;
             $persentaseKeaktifan = ($nilaiKeaktifan / 100) * 5;
 
-            $nilaiEtika = isset($dataEtika[$mahasiswa->id]) ? (float)$dataEtika[$mahasiswa->id]->nilai : 0;
+            $nilaiEtika = isset($dataEtika[$mahasiswa->id]) ? (float) $dataEtika[$mahasiswa->id]->nilai : 0;
             $persentaseEtika = ($nilaiEtika / 100) * 5;
 
             $absensiGroup = $dataAbsensi->get($mahasiswa->id, collect());
             $totalKehadiran = $absensiGroup->whereIn('status', ['H', 'T'])->count();
             $totalKehadiranSemuaMahasiswa += $totalKehadiran;
-            
+
             $persentaseKehadiran = $totalPertemuan > 0 ? ($totalKehadiran / $totalPertemuan) * 15 : 0;
 
-            $nilaiUts = isset($utss[$mahasiswa->id]) ? (float)$utss[$mahasiswa->id]->nilai : 0;
+            $nilaiUts = isset($utss[$mahasiswa->id]) ? (float) $utss[$mahasiswa->id]->nilai : 0;
             $persentaseUts = ($nilaiUts / 100) * 25;
 
-            $nilaiUas = isset($uass[$mahasiswa->id]) ? (float)$uass[$mahasiswa->id]->nilai : 0;
+            $nilaiUas = isset($uass[$mahasiswa->id]) ? (float) $uass[$mahasiswa->id]->nilai : 0;
             $persentaseUas = ($nilaiUas / 100) * 25;
 
             $jumlahTotal = $persentaseTugas + $persentaseKeaktifan + $persentaseEtika + $persentaseKehadiran + $persentaseUts + $persentaseUas;
-            
+
             $nilaiHuruf = $this->getKeteranganNilai($jumlahTotal);
 
             return [
@@ -291,7 +291,7 @@ class MonitoringController extends Controller
                 'nilai_uas' => $nilaiUas,
                 'persentase_uas' => round($persentaseUas, 2),
                 'jumlah_total' => round($jumlahTotal, 2),
-                'nilai_huruf' => $nilaiHuruf
+                'nilai_huruf' => $nilaiHuruf,
             ];
         });
 
@@ -307,7 +307,7 @@ class MonitoringController extends Controller
             'rataRataKehadiran' => round($rataRataKehadiran, 2),
             'wadir' => $wadir,
             'kaprodi' => $kaprodi,
-            'tanggal_sekarang' => \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y')
+            'tanggal_sekarang' => Carbon::now()->locale('id')->translatedFormat('d F Y'),
         ]);
     }
 

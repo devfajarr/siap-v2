@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\InformasiLandingPage;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class InformasiTambahanController extends Controller
 {
@@ -39,12 +39,12 @@ class InformasiTambahanController extends Controller
         ]);
 
         $file = $request->file('pdf_file');
-        
+
         // Simpan ke storage/app/public/images/kalender
         // Menggunakan penamaan dengan timestamp/hash unik untuk mencegah stale cache di browser
-        $filename = 'kalender_' . time() . '.pdf';
+        $filename = 'kalender_'.time().'.pdf';
         $storedPath = $file->storeAs('images/kalender', $filename, 'public');
-        $fullDbPath = 'storage/' . $storedPath;
+        $fullDbPath = 'storage/'.$storedPath;
 
         // Bersihkan file kalender lama di storage jika ada untuk menghemat ruang
         $oldKalender = InformasiLandingPage::where('tipe', 'kalender')->first();
@@ -85,9 +85,9 @@ class InformasiTambahanController extends Controller
 
         if ($request->hasFile('gambar_brosur')) {
             $image = $request->file('gambar_brosur');
-            $imageName = Str::random(12) . '_' . time() . '.' . $image->getClientOriginalExtension();
+            $imageName = Str::random(12).'_'.time().'.'.$image->getClientOriginalExtension();
             $storedPath = $image->storeAs('images/brosur', $imageName, 'public');
-            $fullDbPath = 'storage/' . $storedPath;
+            $fullDbPath = 'storage/'.$storedPath;
 
             InformasiLandingPage::create([
                 'nama' => $fullDbPath,

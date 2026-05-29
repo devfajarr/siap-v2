@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Jadwal;
 use App\Services\WhatsappService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,11 +24,11 @@ class KirimNotifikasiJadwal implements ShouldQueue
     public function handle()
     {
         $pesan = "🔔 *Pengingat Jadwal Perkuliahan*\n\n".
-         "📖 *Mata Kuliah:* " . $this->jadwal->matkul->nama_matkul . "\n".
-         "🏢 *Ruang:* " . $this->jadwal->ruangan->nama . "\n".
-         "🎓 *Kelas:* " . $this->jadwal->kelas->nama_kelas . "\n".
-         "⏳ *Waktu Mulai:* " . date('H:i', strtotime($this->jadwal->waktu_mulai)) . "\n\n".
-         "Harap bersiap dan hadir tepat waktu. Terima kasih. ✅";
+         '📖 *Mata Kuliah:* '.$this->jadwal->matkul->nama_matkul."\n".
+         '🏢 *Ruang:* '.$this->jadwal->ruangan->nama."\n".
+         '🎓 *Kelas:* '.$this->jadwal->kelas->nama_kelas."\n".
+         '⏳ *Waktu Mulai:* '.date('H:i', strtotime($this->jadwal->waktu_mulai))."\n\n".
+         'Harap bersiap dan hadir tepat waktu. Terima kasih. ✅';
 
         WhatsappService::kirim($this->jadwal->dosen->no_telephone, $pesan);
     }

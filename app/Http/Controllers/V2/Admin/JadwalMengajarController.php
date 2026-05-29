@@ -27,14 +27,14 @@ class JadwalMengajarController extends Controller
             ->whereHas('semester', function ($query) {
                 $query->where('status', 1);
             })->get();
-            
+
         $dosens = Dosen::orderBy('nama', 'asc')->get();
-        
-        // Pass matkuls logic to frontend for reactivity based on classes selected, 
+
+        // Pass matkuls logic to frontend for reactivity based on classes selected,
         // but we send all matkuls so Vue can filter them by prodi and semester.
         $matkuls = Matkul::with('semester', 'prodi')->orderBy('nama_matkul', 'asc')->get();
         $ruangans = Ruangan::orderBy('nama', 'asc')->get();
-        
+
         // Active academic year with safety checks
         $tahun = TahunAkademik::where('status', '1')->first();
 

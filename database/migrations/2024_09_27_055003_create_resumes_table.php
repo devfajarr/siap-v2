@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('kelas_id');
             $table->integer('tidak_hadir');
             $table->integer('hadir');
-            $table->boolean('setuju_wadir')->default(false); 
+            $table->boolean('setuju_wadir')->default(false);
             $table->boolean('setuju_kaprodi')->default(false);
             $table->timestamps();
         });
