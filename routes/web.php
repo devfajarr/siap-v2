@@ -393,12 +393,16 @@ use App\Http\Controllers\V2\Admin\PengajuanKhsController;
 use App\Http\Controllers\V2\Admin\QuestionnaireController;
 use App\Http\Controllers\V2\Dosen\BimbinganController;
 use App\Http\Controllers\V2\Dosen\KrsController;
+use App\Http\Controllers\V2\ForceChangePasswordController;
 use App\Http\Controllers\V2\Kaprodi\ApprovalController;
 use App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController;
 use App\Http\Controllers\V2\Kaprodi\MonitoringController;
 use App\Http\Controllers\V2\Respondent\QuestionnaireResponseController;
 
-Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan', 'role_switch'])->group(function () {
+Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan', 'role_switch', 'force_password_change'])->group(function () {
+    Route::get('/force-change-password', [ForceChangePasswordController::class, 'show'])->name('v2.force-change-password');
+    Route::post('/force-change-password', [ForceChangePasswordController::class, 'update'])->name('v2.force-change-password.update');
+
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
     Route::middleware('auth:pegawai')->prefix('pegawai')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\V2\Pegawai\DashboardController::class, 'index'])->name('v2.pegawai.dashboard');

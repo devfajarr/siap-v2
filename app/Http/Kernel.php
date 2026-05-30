@@ -5,6 +5,7 @@ namespace App\Http;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -95,6 +96,7 @@ class Kernel extends HttpKernel
         'verified' => EnsureEmailIsVerified::class,
         'role' => CheckRole::class,
         'role_switch' => RoleSwitchMiddleware::class,
+        'force_password_change' => EnsurePasswordIsChanged::class,
     ];
 
     /**

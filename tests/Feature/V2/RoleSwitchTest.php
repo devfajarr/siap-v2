@@ -31,6 +31,7 @@ class RoleSwitchTest extends TestCase
             'pembimbing_akademik' => 0,
             'tanggal_lahir' => '1990-01-01',
             'tempat_lahir' => 'Jakarta',
+            'is_first_login' => false,
         ]);
 
         $jabatan = Jabatan::create([
@@ -39,6 +40,7 @@ class RoleSwitchTest extends TestCase
             'email' => 'dosen@test.com',
             'password' => Hash::make('secret123'),
             'status' => 1,
+            'is_first_login' => false,
         ]);
 
         $response = $this->actingAs($dosen, 'dosen')
@@ -74,6 +76,7 @@ class RoleSwitchTest extends TestCase
             'pembimbing_akademik' => 0,
             'tanggal_lahir' => '1990-01-01',
             'tempat_lahir' => 'Jakarta',
+            'is_first_login' => false,
         ]);
 
         $jabatan = Jabatan::create([
@@ -82,6 +85,7 @@ class RoleSwitchTest extends TestCase
             'email' => 'dosen@test.com',
             'password' => Hash::make('secret123'),
             'status' => 1,
+            'is_first_login' => false,
         ]);
 
         $response = $this->actingAs($jabatan, 'jabatan')
@@ -116,6 +120,7 @@ class RoleSwitchTest extends TestCase
             'pembimbing_akademik' => 0,
             'tanggal_lahir' => '1990-01-01',
             'tempat_lahir' => 'Jakarta',
+            'is_first_login' => false,
         ]);
 
         $jabatan = Jabatan::create([
@@ -124,6 +129,7 @@ class RoleSwitchTest extends TestCase
             'email' => 'dosen@test.com',
             'password' => Hash::make('secret123'),
             'status' => 1,
+            'is_first_login' => false,
         ]);
 
         $response = $this->actingAs($jabatan, 'jabatan')
