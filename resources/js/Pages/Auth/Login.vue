@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, useForm, Link } from '@inertiajs/vue3'
 import { Card, CardContent } from '@/Components/ui/card'
 import { Input } from '@/Components/ui/input'
 import { Label } from '@/Components/ui/label'
@@ -142,9 +142,17 @@ const submit = () => {
 
                 <!-- Password -->
                 <div class="space-y-1.5">
-                  <Label for="password" class="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
-                    Password
-                  </Label>
+                  <div class="flex items-center justify-between">
+                    <Label for="password" class="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      Password
+                    </Label>
+                    <Link
+                      :href="route('v2.forgot-password')"
+                      class="text-[10px] sm:text-xs font-semibold text-[#4B49AC] hover:text-[#3f3d91] transition-colors font-nunito"
+                    >
+                      Lupa Password?
+                    </Link>
+                  </div>
                   <div class="relative">
                     <Input
                       id="password"

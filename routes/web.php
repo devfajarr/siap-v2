@@ -395,10 +395,17 @@ use App\Http\Controllers\V2\ContactVerificationController;
 use App\Http\Controllers\V2\Dosen\BimbinganController;
 use App\Http\Controllers\V2\Dosen\KrsController;
 use App\Http\Controllers\V2\ForceChangePasswordController;
+use App\Http\Controllers\V2\ForgotPasswordController;
 use App\Http\Controllers\V2\Kaprodi\ApprovalController;
 use App\Http\Controllers\V2\Kaprodi\DataPerkuliahanController;
 use App\Http\Controllers\V2\Kaprodi\MonitoringController;
 use App\Http\Controllers\V2\Respondent\QuestionnaireResponseController;
+
+Route::prefix('v2')->middleware('guest')->group(function () {
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('v2.forgot-password');
+    Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp'])->name('v2.forgot-password.send-otp');
+    Route::post('/forgot-password/verify-and-reset', [ForgotPasswordController::class, 'verifyAndReset'])->name('v2.forgot-password.verify-and-reset');
+});
 
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan', 'role_switch', 'force_password_change'])->group(function () {
     Route::get('/force-change-password', [ForceChangePasswordController::class, 'show'])->name('v2.force-change-password');
