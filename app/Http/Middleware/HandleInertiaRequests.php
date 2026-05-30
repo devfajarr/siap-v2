@@ -182,6 +182,8 @@ class HandleInertiaRequests extends Middleware
                     'nama' => $user->nama ?? $user->nama_lengkap ?? $user->name,
                     'role' => $role,
                     'avatar' => $avatar,
+                    'no_telephone' => $user->no_telephone ?? null,
+                    'whatsapp_verified_at' => $user->whatsapp_verified_at ?? null,
                     'prodis' => $prodis,
                     'activeProdiId' => $activeProdiId,
                     'pending_khs_count' => $pendingKhsCount,

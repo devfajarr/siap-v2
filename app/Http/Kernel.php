@@ -6,6 +6,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsurePasswordIsChanged;
+use App\Http\Middleware\EnsureWhatsappIsVerified;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -97,6 +98,7 @@ class Kernel extends HttpKernel
         'role' => CheckRole::class,
         'role_switch' => RoleSwitchMiddleware::class,
         'force_password_change' => EnsurePasswordIsChanged::class,
+        'whatsapp_verified' => EnsureWhatsappIsVerified::class,
     ];
 
     /**

@@ -391,6 +391,7 @@ use App\Http\Controllers\V2\Admin\PengajuanEditPresensiController;
 use App\Http\Controllers\V2\Admin\PengajuanKartuUjianController;
 use App\Http\Controllers\V2\Admin\PengajuanKhsController;
 use App\Http\Controllers\V2\Admin\QuestionnaireController;
+use App\Http\Controllers\V2\ContactVerificationController;
 use App\Http\Controllers\V2\Dosen\BimbinganController;
 use App\Http\Controllers\V2\Dosen\KrsController;
 use App\Http\Controllers\V2\ForceChangePasswordController;
@@ -402,6 +403,9 @@ use App\Http\Controllers\V2\Respondent\QuestionnaireResponseController;
 Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan', 'role_switch', 'force_password_change'])->group(function () {
     Route::get('/force-change-password', [ForceChangePasswordController::class, 'show'])->name('v2.force-change-password');
     Route::post('/force-change-password', [ForceChangePasswordController::class, 'update'])->name('v2.force-change-password.update');
+
+    Route::post('/whatsapp/send-otp', [ContactVerificationController::class, 'sendOtp'])->name('v2.whatsapp.send-otp');
+    Route::post('/whatsapp/verify-otp', [ContactVerificationController::class, 'verifyOtp'])->name('v2.whatsapp.verify-otp');
 
     Route::get('/admin/dashboard', [AdminDashboardV2::class, 'index'])->name('v2.admin.dashboard');
     Route::middleware('auth:pegawai')->prefix('pegawai')->group(function () {
@@ -758,8 +762,8 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         // KRS & Pembayaran
         Route::prefix('krs_pembayaran')->name('krs-pembayaran.')->group(function () {
             Route::get('/', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'index'])->name('index');
-            Route::post('upload', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'uploadPembayaran'])->name('upload');
-            Route::post('pengajuan', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'pengajuanKrs'])->name('pengajuan');
+            Route::post('upload', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'uploadPembayaran'])->name('upload')->middleware('whatsapp_verified');
+            Route::post('pengajuan', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'pengajuanKrs'])->name('pengajuan')->middleware('whatsapp_verified');
             Route::put('persetujuan/{id}', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'persetujuanKrs'])->name('persetujuan');
             Route::get('cetak/{id}', [App\Http\Controllers\V2\Mahasiswa\KrsPembayaranController::class, 'cetakKrs'])->name('cetak');
         });
@@ -767,7 +771,7 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         // Permohonan Surat Mahasiswa
         Route::prefix('permohonan-surat')->name('permohonan-surat.')->group(function () {
             Route::get('/', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'index'])->name('index');
-            Route::post('/', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'store'])->name('store');
+            Route::post('/', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'store'])->name('store')->middleware('whatsapp_verified');
             Route::put('{id}', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'update'])->name('update');
             Route::delete('{id}', [App\Http\Controllers\V2\Mahasiswa\PermohonanSuratController::class, 'destroy'])->name('destroy');
         });

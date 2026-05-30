@@ -1,5 +1,5 @@
 <script setup>
-import { Head, usePage } from '@inertiajs/vue3'
+import { Head, usePage, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/Components/ui/card'
 import { 
@@ -8,14 +8,163 @@ import {
   Shield as ShieldIcon, 
   Camera as CameraIcon, 
   Lock as LockIcon, 
-  Key as KeyIcon 
+  Key as KeyIcon,
+  Check as CheckIcon,
+  AlertCircle as AlertCircleIcon
 } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/Components/ui/dialog'
+import axios from 'axios'
 
 const page = usePage()
 const user = computed(() => page.props.auth.user)
 
 const activeTab = ref('profile')
+
+// Helper formatting phone
+const getInitialPhone = (phone) => {
+  if (!phone) return ''
+  let digits = phone.replace(/[^0-9]/g, '')
+  if (digits.startsWith('62')) {
+    return digits.substring(2)
+  }
+  if (digits.startsWith('0')) {
+    return digits.substring(1)
+  }
+  return digits
+}
+
+// State
+const whatsappInput = ref(getInitialPhone(user.value?.no_telephone))
+const isSendingOtp = ref(false)
+const isVerifying = ref(false)
+const isModalOpen = ref(false)
+const errorMsg = ref('')
+const countdown = ref(0)
+const otpDigits = ref(['', '', '', '', '', ''])
+const otpCode = computed(() => otpDigits.value.join(''))
+
+let timer = null
+
+const startTimer = () => {
+  countdown.value = 60
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--
+    } else {
+      clearInterval(timer)
+    }
+  }, 1000)
+}
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
+
+// Handlers
+const initiateVerification = async () => {
+  if (!whatsappInput.value) return
+  isSendingOtp.value = true
+  errorMsg.value = ''
+  
+  try {
+    const fullPhone = '62' + whatsappInput.value.replace(/[^0-9]/g, '')
+    const response = await axios.post(route('v2.whatsapp.send-otp'), {
+      no_telephone: fullPhone
+    })
+    
+    if (response.data.success) {
+      isModalOpen.value = true
+      otpDigits.value = ['', '', '', '', '', '']
+      startTimer()
+    } else {
+      errorMsg.value = response.data.message || 'Gagal mengirim OTP.'
+    }
+  } catch (error) {
+    errorMsg.value = error.response?.data?.message || 'Terjadi kesalahan sistem saat mengirim OTP.'
+  } finally {
+    isSendingOtp.value = false
+  }
+}
+
+const resendOtp = async () => {
+  if (countdown.value > 0 || isSendingOtp.value) return
+  await initiateVerification()
+}
+
+const submitOtp = async () => {
+  if (otpCode.value.length !== 6 || isVerifying.value) return
+  isVerifying.value = true
+  errorMsg.value = ''
+  
+  try {
+    const response = await axios.post(route('v2.whatsapp.verify-otp'), {
+      code: otpCode.value
+    })
+    
+    if (response.data.success) {
+      // Update shared state
+      if (page.props.auth?.user) {
+        page.props.auth.user.whatsapp_verified_at = response.data.whatsapp_verified_at
+        page.props.auth.user.no_telephone = response.data.no_telephone
+      }
+      isModalOpen.value = false
+      router.reload({ only: ['auth'] })
+    } else {
+      errorMsg.value = response.data.message || 'OTP salah.'
+    }
+  } catch (error) {
+    errorMsg.value = error.response?.data?.message || 'Kode OTP yang dimasukkan salah.'
+  } finally {
+    isVerifying.value = false
+  }
+}
+
+const handleOtpInput = (e, index) => {
+  const val = e.target.value
+  otpDigits.value[index] = val.replace(/[^0-9]/g, '')
+  
+  if (otpDigits.value[index] && index < 5) {
+    const nextInput = document.getElementById(`otp-input-${index + 1}`)
+    if (nextInput) {
+      nextInput.focus()
+    }
+  }
+}
+
+const handleOtpKeydown = (e, index) => {
+  if (e.key === 'Backspace' && !otpDigits.value[index] && index > 0) {
+    otpDigits.value[index - 1] = ''
+    const prevInput = document.getElementById(`otp-input-${index - 1}`)
+    if (prevInput) {
+      prevInput.focus()
+    }
+  }
+}
+
+const handleOtpPaste = (e) => {
+  e.preventDefault()
+  const pasteData = e.clipboardData.getData('text')
+  const digits = pasteData.replace(/[^0-9]/g, '').substring(0, 6)
+  
+  for (let i = 0; i < digits.length; i++) {
+    otpDigits.value[i] = digits[i]
+  }
+  
+  const targetIndex = Math.min(digits.length, 5)
+  const targetInput = document.getElementById(`otp-input-${targetIndex}`)
+  if (targetInput) {
+    targetInput.focus()
+  }
+}
 </script>
 
 <template>
@@ -102,6 +251,41 @@ const activeTab = ref('profile')
                         />
                       </div>
                     </div>
+
+                    <div v-if="user.role === 'Mahasiswa'" class="space-y-2 col-span-1 md:col-span-2">
+                      <label class="text-sm font-bold text-gray-700">Nomor WhatsApp</label>
+                      <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-1">
+                          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">+62</span>
+                          <input 
+                            type="text" 
+                            v-model="whatsappInput"
+                            :disabled="user.whatsapp_verified_at"
+                            class="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            placeholder="8123456789"
+                          />
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span v-if="user.whatsapp_verified_at" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200 shrink-0">
+                            <CheckIcon class="w-4 h-4 text-green-600" />
+                            Terverifikasi
+                          </span>
+                          <span v-else class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                            <AlertCircleIcon class="w-4 h-4 text-amber-600 animate-pulse" />
+                            Belum Terverifikasi
+                          </span>
+                          <button 
+                            v-if="!user.whatsapp_verified_at"
+                            @click="initiateVerification"
+                            :disabled="isSendingOtp || !whatsappInput"
+                            class="px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
+                          >
+                            {{ isSendingOtp ? 'Mengirim...' : 'Verifikasi Sekarang' }}
+                          </button>
+                        </div>
+                      </div>
+                      <p class="text-xs text-gray-500">Nomor WhatsApp diperlukan untuk mengirimkan notifikasi penting seperti tagihan pembayaran, persetujuan KRS, dan status surat akademik.</p>
+                    </div>
                   </div>
                 </CardContent>
                 <CardFooter class="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
@@ -168,6 +352,72 @@ const activeTab = ref('profile')
         </div>
       </div>
     </div>
+
+    <!-- OTP Verification Dialog -->
+    <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
+      <DialogContent class="sm:max-w-[425px] rounded-lg border-[#CDD1E1] p-0 overflow-hidden">
+        <DialogHeader class="bg-primary text-white p-6 text-left">
+          <DialogTitle class="text-lg font-bold text-white">Verifikasi Nomor WhatsApp</DialogTitle>
+          <DialogDescription class="text-white/80 text-sm">
+            Kami telah mengirimkan kode OTP 6-digit ke nomor WhatsApp +62 {{ whatsappInput }}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div class="p-6 space-y-6">
+          <div v-if="errorMsg" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg flex items-center gap-2">
+            <AlertCircleIcon class="w-4 h-4 text-red-600 shrink-0" />
+            <span>{{ errorMsg }}</span>
+          </div>
+          
+          <div class="space-y-4 text-center">
+            <label class="text-sm font-bold text-gray-700 block">Masukkan 6 Digit Kode OTP</label>
+            <div class="flex justify-center gap-2">
+              <input 
+                v-for="(digit, idx) in 6" 
+                :key="idx"
+                :id="'otp-input-' + idx"
+                type="text" 
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="1"
+                v-model="otpDigits[idx]"
+                @input="handleOtpInput($event, idx)"
+                @keydown="handleOtpKeydown($event, idx)"
+                @paste="handleOtpPaste"
+                class="w-12 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter class="p-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
+          <button 
+            @click="resendOtp"
+            :disabled="countdown > 0 || isSendingOtp"
+            class="w-full sm:w-auto text-xs font-bold text-primary hover:underline disabled:text-gray-400 disabled:no-underline text-left sm:text-center"
+          >
+            {{ countdown > 0 ? `Kirim ulang OTP dalam ${countdown}s` : 'Kirim Ulang OTP' }}
+          </button>
+          
+          <div class="flex w-full sm:w-auto gap-2 justify-end">
+            <button 
+              @click="isModalOpen = false" 
+              class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Batal
+            </button>
+            <button 
+              @click="submitOtp"
+              :disabled="isVerifying || otpCode.length !== 6"
+              class="px-5 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary/10 flex items-center gap-1.5"
+            >
+              <span v-if="isVerifying" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              {{ isVerifying ? 'Memverifikasi...' : 'Verifikasi' }}
+            </button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>
 
