@@ -11,14 +11,16 @@ use App\Models\Mahasiswa;
 use App\Models\OrangTua;
 use App\Models\Pegawai;
 use App\Models\Wadir;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request): Response|RedirectResponse
     {
         $roleRedirects = [
             'admin' => 'v2.admin.dashboard',
@@ -49,7 +51,9 @@ class AuthController extends Controller
             }
         }
 
-        return Inertia::render('Auth/Login');
+        return Inertia::render('Auth/Login', [
+            'defaultRole' => $request->query('role'),
+        ]);
     }
 
     public function processLogin(Request $request)
@@ -96,7 +100,7 @@ class AuthController extends Controller
         }
 
         if ($user && Hash::check($request->password, $user->password)) {
-            Auth::guard($guard)->login($user);
+            Auth::guard($guard)->login($user, $request->boolean('remember'));
 
             $prodiIds = [];
             $activeProdiId = null;

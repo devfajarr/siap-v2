@@ -1,5 +1,5 @@
 <script setup>
-import { Head, usePage, router } from '@inertiajs/vue3'
+import { Head, usePage, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/Components/ui/card'
 import { 
@@ -26,6 +26,34 @@ import axios from 'axios'
 
 const page = usePage()
 const user = computed(() => page.props.auth.user)
+
+const fileInput = ref(null)
+const avatarForm = useForm({
+  profile_picture: null,
+})
+
+const triggerFileInput = () => {
+  fileInput.value.click()
+}
+
+const onFileSelected = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Ukuran file maksimal adalah 2MB.')
+    return
+  }
+
+  avatarForm.profile_picture = file
+  avatarForm.post(route('v2.profile.update-avatar'), {
+    forceFormData: true,
+    preserveScroll: true,
+    onError: (errors) => {
+      alert(errors.profile_picture || 'Gagal mengunggah foto profil.')
+    }
+  })
+}
 
 const activeTab = ref('profile')
 
@@ -201,10 +229,26 @@ const handleOtpPaste = (e) => {
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-lg border border-[#CDD1E1] shadow-sm">
         <div class="flex items-center gap-6">
           <div class="relative group">
-            <div class="w-24 h-24 rounded-lg overflow-hidden border-4 border-white shadow-xl">
+            <div class="w-24 h-24 rounded-lg overflow-hidden border-4 border-white shadow-xl bg-gray-100 flex items-center justify-center relative">
               <img :src="user.avatar" alt="Avatar" class="w-full h-full object-cover" />
+              <div v-if="avatarForm.processing" class="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs font-semibold">
+                <span class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              </div>
             </div>
-            <button class="absolute -bottom-2 -right-2 p-2 bg-primary text-white rounded-lg shadow-lg hover:bg-primary/90 transition-colors">
+            <input 
+              type="file" 
+              ref="fileInput" 
+              @change="onFileSelected" 
+              accept="image/png, image/jpeg, image/jpg" 
+              class="hidden" 
+            />
+            <button 
+              v-if="user.role === 'Mahasiswa'"
+              type="button"
+              @click="triggerFileInput"
+              :disabled="avatarForm.processing"
+              class="absolute -bottom-2 -right-2 p-2 bg-primary text-white rounded-lg shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <CameraIcon class="w-4 h-4" />
             </button>
           </div>

@@ -565,6 +565,7 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
     });
 
     Route::get('/profile', [App\Http\Controllers\V2\ProfileController::class, 'edit'])->name('v2.profile.edit');
+    Route::post('/profile/avatar', [App\Http\Controllers\V2\ProfileController::class, 'updateAvatar'])->name('v2.profile.update-avatar');
 
     // Admin Data Master
     Route::middleware('auth:admin')->prefix('admin/data-master')->group(function () {

@@ -15,10 +15,18 @@ import {
 } from '@/Components/ui/select'
 import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-vue-next'
 
+const props = defineProps({
+  defaultRole: {
+    type: String,
+    default: ''
+  }
+})
+
 const form = useForm({
   username: '',
   password: '',
-  role: ''
+  role: props.defaultRole || '',
+  remember: false
 })
 
 const showPassword = ref(false)
@@ -172,6 +180,19 @@ const submit = () => {
                       <EyeOff v-else class="w-4 h-4" />
                     </button>
                   </div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="flex items-center gap-2">
+                  <input
+                    id="remember"
+                    type="checkbox"
+                    v-model="form.remember"
+                    class="h-4 w-4 rounded border-slate-200 text-[#4B49AC] focus:ring-[#4B49AC] focus:ring-offset-0 cursor-pointer"
+                  />
+                  <label for="remember" class="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                    Ingat Saya
+                  </label>
                 </div>
 
                 <!-- Role Select -->
