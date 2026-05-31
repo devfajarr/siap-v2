@@ -407,7 +407,7 @@ Route::prefix('v2')->middleware('guest')->group(function () {
     Route::post('/forgot-password/verify-and-reset', [ForgotPasswordController::class, 'verifyAndReset'])->name('v2.forgot-password.verify-and-reset');
 });
 
-Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan', 'role_switch', 'force_password_change'])->group(function () {
+Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,dosen,pegawai,kaprodi,jabatan,orang_tua', 'role_switch', 'force_password_change'])->group(function () {
     Route::get('/force-change-password', [ForceChangePasswordController::class, 'show'])->name('v2.force-change-password');
     Route::post('/force-change-password', [ForceChangePasswordController::class, 'update'])->name('v2.force-change-password.update');
 

@@ -174,6 +174,15 @@ class HandleInertiaRequests extends Middleware
             $pendingKartuUjianCount = PengajuanCetakKartuUjian::where('status', 0)->count();
         }
 
+        $baseUser = $user;
+        if ($user) {
+            if (auth()->guard('kaprodi')->check() || auth()->guard('direktur')->check() || auth()->guard('wakil_direktur')->check()) {
+                $baseUser = $user->dosen;
+            } elseif (auth()->guard('jabatan')->check()) {
+                $baseUser = $user->dosen ?? $user->pegawai;
+            }
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -182,8 +191,8 @@ class HandleInertiaRequests extends Middleware
                     'nama' => $user->nama ?? $user->nama_lengkap ?? $user->name,
                     'role' => $role,
                     'avatar' => $avatar,
-                    'no_telephone' => $user->no_telephone ?? null,
-                    'whatsapp_verified_at' => $user->whatsapp_verified_at ?? null,
+                    'no_telephone' => $baseUser->no_telephone ?? null,
+                    'whatsapp_verified_at' => $baseUser->whatsapp_verified_at ?? null,
                     'prodis' => $prodis,
                     'activeProdiId' => $activeProdiId,
                     'pending_khs_count' => $pendingKhsCount,

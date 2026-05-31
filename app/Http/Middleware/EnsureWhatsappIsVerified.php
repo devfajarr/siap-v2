@@ -18,7 +18,16 @@ class EnsureWhatsappIsVerified
     {
         $user = Auth::user();
 
-        if (! $user || ! $user->whatsapp_verified_at) {
+        $baseUser = $user;
+        if ($user) {
+            if (Auth::guard('kaprodi')->check() || Auth::guard('direktur')->check() || Auth::guard('wakil_direktur')->check()) {
+                $baseUser = $user->dosen;
+            } elseif (Auth::guard('jabatan')->check()) {
+                $baseUser = $user->dosen ?? $user->pegawai;
+            }
+        }
+
+        if (! $baseUser || ! $baseUser->whatsapp_verified_at) {
             if ($request->expectsJson() || $request->header('X-Inertia')) {
                 return response()->json([
                     'success' => false,

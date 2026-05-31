@@ -18,10 +18,27 @@ class ContactVerificationController extends Controller
      */
     protected function resolveUser(): mixed
     {
-        foreach (['admin', 'dosen', 'mahasiswa', 'kaprodi', 'direktur', 'wakil_direktur', 'pegawai', 'jabatan'] as $guard) {
+        // 1. Resolve primary guards
+        foreach (['admin', 'dosen', 'mahasiswa', 'pegawai', 'orang_tua'] as $guard) {
             if (Auth::guard($guard)->check()) {
                 return Auth::guard($guard)->user();
             }
+        }
+
+        // 2. Resolve sub-role guards to their base models
+        if (Auth::guard('kaprodi')->check()) {
+            return Auth::guard('kaprodi')->user()->dosen;
+        }
+        if (Auth::guard('direktur')->check()) {
+            return Auth::guard('direktur')->user()->dosen;
+        }
+        if (Auth::guard('wakil_direktur')->check()) {
+            return Auth::guard('wakil_direktur')->user()->dosen;
+        }
+        if (Auth::guard('jabatan')->check()) {
+            $jabatan = Auth::guard('jabatan')->user();
+
+            return $jabatan->dosen ?? $jabatan->pegawai;
         }
 
         return null;
