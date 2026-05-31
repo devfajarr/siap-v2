@@ -19,7 +19,9 @@ class SendWhatsappOtpJob implements ShouldQueue
     public function __construct(
         protected string $nomor,
         protected string $code
-    ) {}
+    ) {
+        $this->queue = 'whatsapp';
+    }
 
     /**
      * Execute the job.

@@ -34,7 +34,7 @@ class Kernel extends ConsoleKernel
                     ->get();
 
                 foreach ($jadwals as $jadwal) {
-                    dispatch(new KirimNotifikasiJadwal($jadwal))->onQueue('default');
+                    dispatch(new KirimNotifikasiJadwal($jadwal))->onQueue('whatsapp');
                 }
             })->everyMinute();
 
@@ -51,7 +51,7 @@ class Kernel extends ConsoleKernel
                     $jadwals = Jadwal::where('hari', $hariIni)
                         ->where('dosens_id', $dosen->id)
                         ->get();
-                    dispatch(new KirimJadwalDosen($jadwals, $dosen))->onQueue('default');
+                    dispatch(new KirimJadwalDosen($jadwals, $dosen))->onQueue('whatsapp');
                 }
             })->timezone('Asia/Jakarta')->dailyAt('06:00');
         }
@@ -77,7 +77,7 @@ class Kernel extends ConsoleKernel
                     $pengawas = $jadwalsPegawai->first()->pengawas;
 
                     if ($pengawas) {
-                        dispatch(new KirimJadwalPegawai($jadwalsPegawai, $pengawas))->onQueue('default');
+                        dispatch(new KirimJadwalPegawai($jadwalsPegawai, $pengawas))->onQueue('whatsapp');
                     } else {
                         Log::warning("Pengawas tidak ditemukan untuk kunci jadwal {$key}.");
                     }

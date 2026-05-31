@@ -19,7 +19,9 @@ class SendWhatsappResetPasswordJob implements ShouldQueue
     public function __construct(
         public string $nomor,
         public string $code
-    ) {}
+    ) {
+        $this->queue = 'whatsapp';
+    }
 
     /**
      * Execute the job.

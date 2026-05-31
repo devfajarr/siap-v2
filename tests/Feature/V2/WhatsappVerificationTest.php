@@ -21,13 +21,23 @@ class WhatsappVerificationTest extends TestCase
     {
         parent::setUp();
 
+        $prodi = \App\Models\Prodi::firstOrCreate(
+            ['kode_prodi' => '1001'],
+            [
+                'nama_prodi' => 'Teknik Elektro',
+                'singkatan' => 'TE',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Electrical Engineering',
+                'alias_jenjang' => 'Associate Degree',
+            ]
+        );
         $semester = Semester::firstOrCreate(['semester' => 1], ['status' => 1]);
         $kelas = Kelas::firstOrCreate(
             ['kode_kelas' => '99999'],
             [
                 'nama_kelas' => 'Test Kelas',
                 'jenis_kelas' => 'Reguler',
-                'id_prodi' => 1,
+                'id_prodi' => $prodi->id,
                 'id_semester' => $semester->id,
             ]
         );

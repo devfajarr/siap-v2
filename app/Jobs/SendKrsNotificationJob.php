@@ -24,6 +24,7 @@ class SendKrsNotificationJob implements ShouldQueue
     public function __construct($krsId)
     {
         $this->krsId = $krsId;
+        $this->queue = 'whatsapp';
     }
 
     /**

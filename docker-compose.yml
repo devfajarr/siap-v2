@@ -1,0 +1,84 @@
+# =============================================================================
+# SIAP - Sistem Informasi Akademik POLSA
+# Docker Compose: FrankenPHP + PostgreSQL
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Service: app (Laravel + FrankenPHP)
+  # ---------------------------------------------------------------------------
+  # FrankenPHP bertindak sebagai web server (Caddy) sekaligus PHP execution
+  # engine, menghilangkan kebutuhan container terpisah untuk Nginx dan PHP-FPM.
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siap-app
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+      - "8843:443"
+    volumes:
+      - ./:/app
+    environment:
+      APP_NAME: "SIA POLSA"
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://siapv2.polsa.ac.id
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: siakad
+      DB_USERNAME: postgres
+      DB_PASSWORD: secret
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      WA_API_URL: https://wa-api.polsa.ac.id/send-message
+      WA_API_KEY: dhimas
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - siap-network
+
+  # ---------------------------------------------------------------------------
+  # Service: db (PostgreSQL)
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 15 Alpine sebagai database engine utama.
+  # Volume db-data memastikan data persisten antar restart container.
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: siap-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: siakad
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d siakad" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - siap-network
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+volumes:
+  db-data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  siap-network:
+    driver: bridge
