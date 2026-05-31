@@ -43,11 +43,21 @@ class SendKrsNotificationJob implements ShouldQueue
         // Notifikasi ke Mahasiswa
         $mahasiswa->notify(new KRSNotification($krs));
         if (! empty($mahasiswa->no_telephone)) {
-            $pesanMhs = "*KRS Berhasil Diverifikasi*\n\n"
-                ."Nama : *{$mahasiswa->nama_lengkap}*\n"
-                ."Kelas : {$krs->kelas->nama_kelas}\n"
-                ."Prodi : {$krs->prodi->nama_prodi}\n\n"
-                .'KRS kamu sudah *disetujui*. Silakan cek status di sistem.';
+            $kelasNama = $krs->kelas->nama_kelas ?? '-';
+            $prodiNama = $krs->prodi->nama_prodi ?? '-';
+            $pesanMhs = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                ."══════════════════════════\n"
+                ."🟢 *STATUS KRS: DIVERIFIKASI*\n"
+                ."══════════════════════════\n"
+                ."• *Mahasiswa:* {$mahasiswa->nama_lengkap}\n"
+                ."• *NIM:* {$mahasiswa->nim}\n"
+                ."• *Kelas:* {$kelasNama}\n"
+                ."• *Prodi:* {$prodiNama}\n\n"
+                ."*Status:* KRS Anda telah disetujui oleh Dosen Pembimbing Akademik. Silakan cek status lengkap di portal.\n"
+                ."──────────────────────────\n"
+                .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                .'_SIA POLSA - Sistem Informasi Akademik_';
             WhatsappService::kirim($mahasiswa->no_telephone, $pesanMhs);
         }
 
@@ -56,10 +66,21 @@ class SendKrsNotificationJob implements ShouldQueue
         foreach ($admins as $adm) {
             $adm->notify(new KRSNotification($krs));
             if (! empty($adm->no_telephone)) {
-                $pesanAdm = "*KRS Diverifikasi*\n\n"
-                    ."{$mahasiswa->nama_lengkap}\n"
-                    ."{$krs->kelas->nama_kelas} • {$krs->prodi->nama_prodi}\n"
-                    .'Status: *Disetujui*';
+                $kelasNama = $krs->kelas->nama_kelas ?? '-';
+                $prodiNama = $krs->prodi->nama_prodi ?? '-';
+                $pesanAdm = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                    ."══════════════════════════\n"
+                    ."🟢 *KRS SELESAI*\n"
+                    ."══════════════════════════\n"
+                    ."• *Mahasiswa:* {$mahasiswa->nama_lengkap}\n"
+                    ."• *NIM:* {$mahasiswa->nim}\n"
+                    ."• *Kelas:* {$kelasNama}\n"
+                    ."• *Prodi:* {$prodiNama}\n\n"
+                    ."*Status:* Data KRS mahasiswa bersangkutan telah berhasil diverifikasi oleh Dosen PA.\n"
+                    ."──────────────────────────\n"
+                    .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                    ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                    .'_SIA POLSA - Sistem Informasi Akademik_';
                 WhatsappService::kirim($adm->no_telephone, $pesanAdm);
             }
         }

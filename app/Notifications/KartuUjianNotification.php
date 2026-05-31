@@ -47,9 +47,18 @@ class KartuUjianNotification extends Notification
                 'jenis_ujian' => $this->pengajuan->jenis_ujian,
             ];
 
-            $pesan = "*Pengajuan Kartu Ujian {$jenisUjianUpper} Disetujui*\n\n"
-                ."Kartu Ujian fisik Anda sudah *selesai dicetak*.\n"
-                ."Silakan ambil kartu ujian Anda di *Bagian Akademik*.\n";
+            $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                ."══════════════════════════\n"
+                ."🟢 *KARTU UJIAN DISETUJUI*\n"
+                ."══════════════════════════\n"
+                ."• *Mahasiswa:* {$notifiable->nama_lengkap}\n"
+                ."• *NIM:* {$notifiable->nim}\n"
+                ."• *Ujian:* Kartu Ujian {$jenisUjianUpper}\n\n"
+                ."*Status:* Pengajuan disetujui dan kartu fisik telah selesai dicetak. Silakan ambil di *Bagian Akademik*.\n"
+                ."──────────────────────────\n"
+                .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                .'_SIA POLSA - Sistem Informasi Akademik_';
 
             if (! empty($notifiable->no_telephone)) {
                 WhatsappService::kirim($notifiable->no_telephone, $pesan);
@@ -68,9 +77,20 @@ class KartuUjianNotification extends Notification
                 'jenis_ujian' => $this->pengajuan->jenis_ujian,
             ];
 
-            $pesan = "*Pengajuan Kartu Ujian {$jenisUjianUpper} Ditolak*\n\n"
-                .'Alasan: '.($this->pengajuan->keterangan ?? '-')."\n"
-                ."Silakan unggah kembali bukti pembayaran yang valid melalui sistem.\n";
+            $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                ."══════════════════════════\n"
+                ."🔴 *KARTU UJIAN DITOLAK*\n"
+                ."══════════════════════════\n"
+                ."• *Mahasiswa:* {$notifiable->nama_lengkap}\n"
+                ."• *NIM:* {$notifiable->nim}\n"
+                ."• *Ujian:* Kartu Ujian {$jenisUjianUpper}\n\n"
+                ."*Alasan Penolakan:*\n"
+                .'_"'.($this->pengajuan->keterangan ?? '-')."\"_\n\n"
+                ."Silakan unggah kembali bukti pembayaran yang valid melalui portal mahasiswa.\n"
+                ."──────────────────────────\n"
+                .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                .'_SIA POLSA - Sistem Informasi Akademik_';
 
             if (! empty($notifiable->no_telephone)) {
                 WhatsappService::kirim($notifiable->no_telephone, $pesan);

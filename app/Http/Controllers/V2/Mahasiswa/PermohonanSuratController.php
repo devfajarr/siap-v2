@@ -317,12 +317,20 @@ class PermohonanSuratController extends Controller
             if (config('app.whatsapp_notification', true)) {
                 $kaprodi = $mahasiswa->kelas->prodi->kaprodi ?? null;
                 if ($kaprodi && $kaprodi->no_telephone) {
-                    $pesan = "📢 *Permohonan Surat Baru (Sistem V2)* 📢\n\n".
-                        "📄 Jenis Surat: {$jenis}\n".
-                        "👤 Nama: {$mahasiswa->nama_lengkap}\n".
-                        "🎓 NIM: {$mahasiswa->nim}\n".
-                        '🏛️ Prodi: '.($mahasiswa->kelas->prodi->nama_prodi ?? '-')."\n\n".
-                        '📌 Mohon untuk memeriksa dan memverifikasi pengajuan di sistem. Terima kasih. 🙏';
+                    $prodiNama = $mahasiswa->kelas->prodi->nama_prodi ?? '-';
+                    $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                        ."══════════════════════════\n"
+                        ."🟡 *PENGAJUAN SURAT BARU*\n"
+                        ."══════════════════════════\n"
+                        ."• *Layanan:* {$jenis}\n"
+                        ."• *Pemohon:* {$mahasiswa->nama_lengkap}\n"
+                        ."• *NIM:* {$mahasiswa->nim}\n"
+                        ."• *Prodi:* {$prodiNama}\n\n"
+                        ."Mohon untuk memeriksa dan melakukan verifikasi pengajuan ini melalui sistem SIA POLSA.\n"
+                        ."──────────────────────────\n"
+                        .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                        ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                        .'_SIA POLSA - Sistem Informasi Akademik_';
 
                     WhatsappService::kirim($kaprodi->no_telephone, $pesan);
                 }

@@ -218,11 +218,21 @@ class KrsPembayaranController extends Controller
         $dosenPa = $krs->mahasiswa->pembimbingAkademik ?? null;
         if ($dosenPa && $dosenPa->no_telephone) {
             if (config('app.whatsapp_notification', true)) {
-                $pesanDosen = "Pemberitahuan Sistem Akademik:\n\n"
-                    ."Nama  : *{$krs->mahasiswa->nama_lengkap}*\n"
-                    ."Kelas : {$krs->kelas->nama_kelas}\n"
-                    ."Prodi : {$krs->prodi->nama_prodi}\n\n"
-                    .'Mahasiswa telah menandatangani KRS. Harap *periksa & verifikasi* KRS di sistem.';
+                $kelasNama = $krs->kelas->nama_kelas ?? '-';
+                $prodiNama = $krs->prodi->nama_prodi ?? '-';
+                $pesanDosen = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                    ."══════════════════════════\n"
+                    ."🟡 *VERIFIKASI KRS DIBUTUHKAN*\n"
+                    ."══════════════════════════\n"
+                    ."• *Mahasiswa:* {$krs->mahasiswa->nama_lengkap}\n"
+                    ."• *NIM:* {$krs->mahasiswa->nim}\n"
+                    ."• *Kelas:* {$kelasNama}\n"
+                    ."• *Prodi:* {$prodiNama}\n\n"
+                    ."*Status:* Mahasiswa telah menandatangani KRS. Mohon Dosen PA untuk memeriksa dan memverifikasi KRS di sistem.\n"
+                    ."──────────────────────────\n"
+                    .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                    ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                    .'_SIA POLSA - Sistem Informasi Akademik_';
                 WhatsappService::kirim($dosenPa->no_telephone, $pesanDosen);
             }
         }

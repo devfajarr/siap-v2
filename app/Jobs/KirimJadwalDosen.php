@@ -27,14 +27,27 @@ class KirimJadwalDosen implements ShouldQueue
 
     public function handle()
     {
-        $pesan = "Sistem WA send dari Akademik Polsa.\nMengingatkan jadwal perkuliahan hari ini\n\n";
+        $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+            ."══════════════════════════\n"
+            ."📅 *AGENDA MENGAJAR HARI INI*\n"
+            ."══════════════════════════\n"
+            ."Berikut adalah rangkuman jadwal mengajar Anda untuk hari ini:\n\n";
+
+        $i = 1;
         foreach ($this->jadwals as $jadwal) {
-            $pesan .= '📖 *Mata Kuliah:* '.$jadwal->matkul->nama_matkul."\n".
-                '🏢 *Ruang:* '.$jadwal->ruangan->nama."\n".
-                '🎓 *Kelas:* '.$jadwal->kelas->nama_kelas."\n".
-                '⏳ *Waktu:* '.date('H:i', strtotime($jadwal->waktu_mulai)).' - '.date('H:i', strtotime($jadwal->waktu_selesai))."\n\n";
+            $pesan .= "[{$i}] *".$jadwal->matkul->nama_matkul."*\n"
+                .'    • Waktu: '.date('H:i', strtotime($jadwal->waktu_mulai)).' - '.date('H:i', strtotime($jadwal->waktu_selesai))." WIB\n"
+                .'    • Ruang: '.$jadwal->ruangan->nama."\n"
+                .'    • Kelas: '.$jadwal->kelas->nama_kelas."\n\n";
+            $i++;
         }
-        $pesan .= 'Mohon hadir sesuai jadwal. ✅';
+
+        $pesan .= "Mohon kehadiran Bapak/Ibu Dosen sesuai dengan jadwal di atas.\n"
+            ."──────────────────────────\n"
+            .'📅 _Hari Ini: '.now()->translatedFormat('l, d F Y')."_\n"
+            ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+            .'_SIA POLSA - Sistem Informasi Akademik_';
+
         WhatsappService::kirim($this->dosen->no_telephone, $pesan);
     }
 }

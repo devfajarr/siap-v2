@@ -27,16 +27,26 @@ class KirimJadwalPegawai implements ShouldQueue
 
     public function handle()
     {
-        $pesan = "Sistem WA send dari Akademik Polsa.\nMengingatkan jadwal ujian hari ini\n\n";
+        $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+            ."══════════════════════════\n"
+            ."⏰ *PENGINGAT PENGAWASAN UJIAN*\n"
+            ."══════════════════════════\n"
+            ."Berikut adalah jadwal pengawasan ujian Anda hari ini:\n\n";
 
+        $i = 1;
         foreach ($this->jadwals as $jadwal) {
-            $pesan .= '📖 *Mata Kuliah:* '.$jadwal->matkul->nama_matkul."\n".
-                '🏢 *Ruang:* '.$jadwal->ruangan->nama."\n".
-                '🎓 *Kelas:* '.$jadwal->kelas->nama_kelas."\n".
-                '⏳ *Waktu:* '.Carbon::parse($jadwal->waktu_mulai)->format('H:i').' - '.Carbon::parse($jadwal->waktu_selesai)->format('H:i')."\n\n";
+            $pesan .= "[{$i}] *".$jadwal->matkul->nama_matkul."*\n"
+                .'    • Waktu: '.Carbon::parse($jadwal->waktu_mulai)->format('H:i').' - '.Carbon::parse($jadwal->waktu_selesai)->format('H:i')." WIB\n"
+                .'    • Ruang: '.$jadwal->ruangan->nama."\n"
+                .'    • Kelas: '.$jadwal->kelas->nama_kelas."\n\n";
+            $i++;
         }
 
-        $pesan .= 'Mohon hadir sesuai jadwal. ✅';
+        $pesan .= "Jadwal pengawasan ujian akan dimulai dalam *15 menit*. Mohon segera bersiap menuju ruangan ujian.\n"
+            ."──────────────────────────\n"
+            .'📅 _Hari Ini: '.now()->translatedFormat('l, d F Y')."_\n"
+            ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+            .'_SIA POLSA - Sistem Informasi Akademik_';
 
         WhatsappService::kirim($this->pengawas->no_telephone, $pesan);
 

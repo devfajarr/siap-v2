@@ -311,14 +311,20 @@ class ApprovalController extends Controller
         ]);
 
         if ($nomor_akademik) {
-            WhatsappService::kirim(
-                $nomor_akademik,
-                "✅ *Verifikasi Permohonan Surat* ✅\n\n".
-                "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
-                "👤 Nama Mahasiswa: {$permohonan->mahasiswa->nama_lengkap}\n".
-                "🎓 NIM: {$permohonan->mahasiswa->nim}\n\n".
-                '📌 Permohonan surat ini telah diverifikasi oleh Kaprodi dan siap untuk dicetak'
-            );
+            $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                ."══════════════════════════\n"
+                ."🟢 *VERIFIKASI SURAT: DISETUJUI*\n"
+                ."══════════════════════════\n"
+                ."• *Layanan:* {$permohonan->jenis_permohonan}\n"
+                ."• *Pemohon:* {$permohonan->mahasiswa->nama_lengkap}\n"
+                ."• *NIM:* {$permohonan->mahasiswa->nim}\n\n"
+                ."*Catatan:* Pengajuan surat telah disetujui oleh Kaprodi dan diteruskan ke bagian akademik untuk dicetak.\n"
+                ."──────────────────────────\n"
+                .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                .'_SIA POLSA - Sistem Informasi Akademik_';
+
+            WhatsappService::kirim($nomor_akademik, $pesan);
         }
 
         return redirect()->back()->with('success', 'Permohonan surat berhasil diverifikasi');
@@ -338,14 +344,22 @@ class ApprovalController extends Controller
         ]);
 
         if ($permohonan->mahasiswa && $permohonan->mahasiswa->no_telephone) {
-            WhatsappService::kirim(
-                $permohonan->mahasiswa->no_telephone,
-                "❌ *Pemberitahuan Surat Permohonan* ❌\n\n".
-                "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
-                "📌 Status: *Ditolak oleh Kaprodi*\n".
-                "📝 Alasan: *{$request->keterangan_ditolak}*\n\n".
-                '📍 Silakan hubungi Kaprodi untuk informasi lebih lanjut atau ajukan permohonan baru dengan data yang benar.'
-            );
+            $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                ."══════════════════════════\n"
+                ."🔴 *VERIFIKASI SURAT: DITOLAK*\n"
+                ."══════════════════════════\n"
+                ."• *Layanan:* {$permohonan->jenis_permohonan}\n"
+                ."• *Pemohon:* {$permohonan->mahasiswa->nama_lengkap}\n"
+                ."• *NIM:* {$permohonan->mahasiswa->nim}\n\n"
+                ."*Alasan Penolakan:*\n"
+                ."_\"{$request->keterangan_ditolak}\"_\n\n"
+                ."Silakan ajukan kembali permohonan baru setelah menyesuaikan data atau hubungi Kaprodi Anda.\n"
+                ."──────────────────────────\n"
+                .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                .'_SIA POLSA - Sistem Informasi Akademik_';
+
+            WhatsappService::kirim($permohonan->mahasiswa->no_telephone, $pesan);
         }
 
         return redirect()->back()->with('success', 'Permohonan surat berhasil ditolak.');

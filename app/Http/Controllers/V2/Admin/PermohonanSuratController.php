@@ -111,13 +111,20 @@ class PermohonanSuratController extends Controller
         // Kirim notifikasi WhatsApp dengan penanganan error
         try {
             if ($permohonan->mahasiswa && $permohonan->mahasiswa->no_telephone) {
-                WhatsappService::kirim(
-                    $permohonan->mahasiswa->no_telephone,
-                    "📢 *Pemberitahuan Surat Permohonan* 📢\n\n".
-                        "📄 Jenis Surat: {$permohonan->jenis_permohonan}\n".
-                        "📌 Status: *Segera Dicetak* ✅\n\n".
-                        '📍 Mohon segera menghubungi akademik untuk pengambilan surat. Terima kasih. 🙏'
-                );
+                $pesan = "*SIA POLSA NOTIFICATION BOT* 🤖\n"
+                    ."══════════════════════════\n"
+                    ."🟢 *SURAT TERBIT & SIAP DIAMBIL*\n"
+                    ."══════════════════════════\n"
+                    ."• *Layanan:* {$permohonan->jenis_permohonan}\n"
+                    ."• *No. Surat:* {$request->no_surat}\n"
+                    ."• *Pemohon:* {$permohonan->mahasiswa->nama_lengkap}\n\n"
+                    ."*Status:* Dokumen fisik telah dicetak dan siap diambil di *Bagian Akademik POLSA*.\n"
+                    ."──────────────────────────\n"
+                    .'📅 _Waktu: '.now()->format('d-m-Y H:i')." WIB_\n"
+                    ."🌐 _Akses Portal: siapv2.polsa.ac.id_\n"
+                    .'_SIA POLSA - Sistem Informasi Akademik_';
+
+                WhatsappService::kirim($permohonan->mahasiswa->no_telephone, $pesan);
             }
         } catch (\Exception $e) {
             Log::error('Gagal mengirim WhatsApp penerbitan surat: '.$e->getMessage());
