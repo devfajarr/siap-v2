@@ -259,7 +259,9 @@ const handleOtpPaste = (e) => {
                         <input 
                           type="text" 
                           :value="user.nama"
-                          class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                          :disabled="user.role === 'Mahasiswa'"
+                          class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                          :class="user.role === 'Mahasiswa' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-gray-50'"
                           placeholder="Masukkan nama lengkap"
                         />
                       </div>

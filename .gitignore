@@ -8,6 +8,7 @@
 .env
 .env.backup
 .env.save
+.env.testing
 .env.production
 Homestead.json
 Homestead.yaml
