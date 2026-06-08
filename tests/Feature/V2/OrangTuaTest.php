@@ -5,6 +5,7 @@ namespace Tests\Feature\V2;
 use App\Models\Kelas;
 use App\Models\Mahasiswa;
 use App\Models\OrangTua;
+use App\Models\Prodi;
 use App\Models\Semester;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
@@ -26,13 +27,23 @@ class OrangTuaTest extends TestCase
     {
         parent::setUp();
 
+        $prodi = Prodi::firstOrCreate(
+            ['kode_prodi' => 'TI101'],
+            [
+                'nama_prodi' => 'Teknik Informatika',
+                'singkatan' => 'TI',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Information Technical',
+                'alias_jenjang' => 'Diploma Three',
+            ]
+        );
         $semester = Semester::firstOrCreate(['semester' => 1], ['status' => 1]);
         $kelas = Kelas::firstOrCreate(
             ['kode_kelas' => '99999'],
             [
                 'nama_kelas' => 'Test Kelas',
                 'jenis_kelas' => 'Reguler',
-                'id_prodi' => 1,
+                'id_prodi' => $prodi->id,
                 'id_semester' => $semester->id,
             ]
         );

@@ -37,6 +37,27 @@ class QuestionnaireTest extends TestCase
         ]);
 
         // Setup Mahasiswa
+        $prodi = Prodi::firstOrCreate(
+            ['kode_prodi' => 'TI101'],
+            [
+                'nama_prodi' => 'Teknik Informatika',
+                'singkatan' => 'TI',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Information Technical',
+                'alias_jenjang' => 'Diploma Three',
+            ]
+        );
+        $semester = Semester::firstOrCreate(['semester' => 1], ['status' => 1]);
+        $kelas = Kelas::firstOrCreate(
+            ['kode_kelas' => '99999'],
+            [
+                'nama_kelas' => 'Test Kelas',
+                'jenis_kelas' => 'Reguler',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+
         $this->mahasiswa = Mahasiswa::create([
             'nama_lengkap' => 'Mahasiswa Test Kuisioner',
             'nim' => '22998877',
@@ -51,7 +72,7 @@ class QuestionnaireTest extends TestCase
             'tanggal_lahir' => '2004-01-01',
             'tempat_lahir' => 'Purworejo',
             'tahun_masuk' => '2022',
-            'kelas_id' => 1,
+            'kelas_id' => $kelas->id,
             'alamat' => 'Jl. Test No. 123',
             'nama_ibu' => 'Ibu Test',
         ]);
@@ -311,11 +332,16 @@ class QuestionnaireTest extends TestCase
             'password' => Hash::make('password'),
         ]);
 
-        $prodi = Prodi::create([
-            'nama_prodi' => 'Teknik Informatika',
-            'jenjang' => 'D3',
-            'status' => 1,
-        ]);
+        $prodi = Prodi::firstOrCreate(
+            ['kode_prodi' => 'TI101'],
+            [
+                'nama_prodi' => 'Teknik Informatika',
+                'singkatan' => 'TI',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Information Technical',
+                'alias_jenjang' => 'Diploma Three',
+            ]
+        );
 
         $semester = Semester::create([
             'semester' => 3,
@@ -323,7 +349,9 @@ class QuestionnaireTest extends TestCase
         ]);
 
         $kelas = Kelas::create([
+            'kode_kelas' => 'TI3A99',
             'nama_kelas' => 'TI-3A',
+            'jenis_kelas' => 'Reguler',
             'id_semester' => $semester->id,
             'id_prodi' => $prodi->id,
         ]);

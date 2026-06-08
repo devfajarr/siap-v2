@@ -33,5 +33,15 @@ return [
     'wa' => [
         'url' => env('WA_API_URL'),
     ],
+    'feeder' => [
+        'base_url' => env('FEEDER_API_URL'),
+        'username' => env('FEEDER_USERNAME'),
+        'password' => env('FEEDER_PASSWORD'),
+        'sync' => [
+            'batch_size' => (int) env('FEEDER_SYNC_BATCH_SIZE', 100),
+            'delay_ms' => (int) env('FEEDER_SYNC_DELAY_MS', 200),
+            'max_retries' => (int) env('FEEDER_MAX_RETRIES', 3),
+        ],
+    ],
 
 ];

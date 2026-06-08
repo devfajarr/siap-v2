@@ -11,6 +11,7 @@ use App\Imports\MahasiswaImport;
 use App\Models\Dosen;
 use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\Prodi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -42,12 +43,94 @@ class MahasiswaController extends Controller
                     'id_semester' => $kelas->id_semester,
                     'semester_status' => $kelas->semester?->status,  // 1=Aktif, 0=Non-Aktif
                     'jenis_kelas' => $kelas->jenis_kelas,
-                    'mahasiswa_count' => $kelas->mahasiswa->count(),
+                    'mahasiswa_count' => $kelas->mahasiswa->where('status_mahasiswa', 'Aktif')->count(),
                 ];
             });
 
         return Inertia::render('Admin/Mahasiswa/Index', [
             'kelass' => $kelass,
+        ]);
+    }
+
+    /**
+     * Display a directory of all students with global pagination and filters.
+     */
+    public function allStudents(Request $request)
+    {
+        $query = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas']);
+
+        // Filter search (NIM or Name)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('nim', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter status
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if ($status !== 'all') {
+                $query->where('status_mahasiswa', $status);
+            }
+        }
+
+        // Filter prodi
+        if ($request->filled('prodi_id')) {
+            $prodiId = $request->input('prodi_id');
+            $query->where(function ($q) use ($prodiId) {
+                $q->whereHas('kelas', function ($sq) use ($prodiId) {
+                    $sq->where('id_prodi', $prodiId);
+                })->orWhereExists(function ($sq) {
+                    // Fallback lookup if no class is set (alumni) but we know their entry year/feeder prodi mapping
+                    // We can check if their NIM/registration prodi matches, or keep it class-based
+                });
+            });
+        }
+
+        // Filter angkatan
+        if ($request->filled('angkatan')) {
+            $query->where('tahun_masuk', $request->input('angkatan'));
+        }
+
+        // Pagination (standard 15 items per page)
+        $mahasiswas = $query->orderBy('nim', 'desc')->paginate(15)->withQueryString();
+
+        // Get filter options
+        $prodis = Prodi::withTrashed()->orderBy('nama_prodi', 'asc')->get()->map(function ($prodi) {
+            return [
+                'id' => $prodi->id,
+                'nama_prodi' => $prodi->nama_prodi,
+            ];
+        });
+
+        $angkatanList = Mahasiswa::select('tahun_masuk')
+            ->distinct()
+            ->orderBy('tahun_masuk', 'desc')
+            ->pluck('tahun_masuk')
+            ->filter()
+            ->values();
+
+        // Stats for quick overview
+        $stats = [
+            'total' => Mahasiswa::count(),
+            'active' => Mahasiswa::where('status_mahasiswa', 'Aktif')->count(),
+            'graduated' => Mahasiswa::where('status_mahasiswa', 'like', '%lulus%')->count(),
+            'other' => Mahasiswa::where('status_mahasiswa', '!=', 'Aktif')->where('status_mahasiswa', 'not like', '%lulus%')->count(),
+        ];
+
+        $allKelas = Kelas::with(['prodi', 'semester'])->get();
+        $dosens = Dosen::where('pembimbing_akademik', 1)->where('status', 1)->get();
+
+        return Inertia::render('Admin/Mahasiswa/All', [
+            'mahasiswas' => $mahasiswas,
+            'prodis' => $prodis,
+            'angkatanList' => $angkatanList,
+            'filters' => $request->only(['search', 'status', 'prodi_id', 'angkatan']),
+            'stats' => $stats,
+            'allKelas' => $allKelas,
+            'dosens' => $dosens,
         ]);
     }
 
@@ -60,16 +143,26 @@ class MahasiswaController extends Controller
 
         $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas'])
             ->where('kelas_id', $id)
+            ->where('status_mahasiswa', 'Aktif')
             ->orderBy('nim', 'asc')
             ->get();
 
         $allKelas = Kelas::with(['prodi', 'semester'])->get();
 
-        // Kelas satu prodi & jenis kelas sama (untuk "naik semester / pindah rombel")
+        // Kelas seprodi & sejenis (pindah rombel / naik semester dalam jenis yang sama)
         $kelasSamProdi = Kelas::with(['prodi', 'semester'])
             ->where('id', '!=', $id)
             ->where('id_prodi', $kelas->id_prodi)
             ->where('jenis_kelas', $kelas->jenis_kelas)
+            ->orderBy('id_semester')
+            ->get();
+
+        // Kelas seprodi & lintas jenis (Reguler ↔ Karyawan), bebas semua semester
+        $kelasLintas = Kelas::with(['prodi', 'semester'])
+            ->where('id', '!=', $id)
+            ->where('id_prodi', $kelas->id_prodi)
+            ->where('jenis_kelas', '!=', $kelas->jenis_kelas)
+            ->orderBy('id_semester')
             ->get();
 
         $dosens = Dosen::where('pembimbing_akademik', 1)
@@ -81,6 +174,7 @@ class MahasiswaController extends Controller
             'mahasiswas' => $mahasiswas,
             'allKelas' => $allKelas,
             'kelasSamProdi' => $kelasSamProdi,
+            'kelasLintas' => $kelasLintas,
             'dosens' => $dosens,
         ]);
     }
@@ -162,6 +256,7 @@ class MahasiswaController extends Controller
     {
         $request->validate([
             'ids' => 'required|array',
+            'ids.*' => 'integer|exists:mahasiswas,id',
             'kelas_id' => 'required|exists:kelas,id',
             'source_kelas_id' => 'required|exists:kelas,id',
         ]);
@@ -169,12 +264,9 @@ class MahasiswaController extends Controller
         $sourceKelas = Kelas::findOrFail($request->source_kelas_id);
         $targetKelas = Kelas::findOrFail($request->kelas_id);
 
-        if (
-            $targetKelas->id_prodi !== $sourceKelas->id_prodi ||
-            $targetKelas->jenis_kelas !== $sourceKelas->jenis_kelas
-        ) {
+        if ($targetKelas->id_prodi !== $sourceKelas->id_prodi) {
             return back()->withErrors([
-                'kelas_id' => 'Kelas tujuan harus memiliki program studi dan jenis kelas yang sama dengan kelas asal.',
+                'kelas_id' => 'Kelas tujuan harus berada dalam program studi yang sama dengan kelas asal.',
             ]);
         }
 
@@ -183,7 +275,13 @@ class MahasiswaController extends Controller
             'status_krs' => 0,
         ]);
 
-        return redirect()->back()->with('success', count($request->ids).' mahasiswa berhasil dipindahkan kelas');
+        $isLintasJenis = $targetKelas->jenis_kelas !== $sourceKelas->jenis_kelas;
+        $jumlah = count($request->ids);
+        $message = $isLintasJenis
+            ? "{$jumlah} mahasiswa berhasil dipindahkan ke kelas {$targetKelas->jenis_kelas} ({$targetKelas->nama_kelas})"
+            : "{$jumlah} mahasiswa berhasil dipindahkan ke kelas {$targetKelas->nama_kelas}";
+
+        return redirect()->back()->with('success', $message);
     }
 
     /**

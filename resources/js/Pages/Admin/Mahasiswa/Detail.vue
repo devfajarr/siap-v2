@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/Components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/Components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/Components/ui/select';
 import { Badge } from '@/Components/ui/badge';
 import { Label } from '@/Components/ui/label';
 import { 
@@ -41,7 +41,8 @@ const props = defineProps({
     namaKelas: Object,
     mahasiswas: Array,
     allKelas: Array,
-    kelasSamProdi: Array,  // Kelas seprodi & sejenis (untuk pindah semester/rombel)
+    kelasSamProdi: Array,  // Kelas seprodi & sejenis (pindah rombel/semester)
+    kelasLintas: Array,    // Kelas seprodi & lintas jenis (Reguler ↔ Karyawan)
     dosens: Array,
 });
 
@@ -140,15 +141,32 @@ const isAllSelected = computed({
     }
 });
 
-// Kelas sama prodi & jenis — satu-satunya pilihan valid untuk pindah kelas
+// Kelas sama prodi & jenis — pindah rombel / naik semester
 const kelasSamProdiFiltered = computed(() => {
     return (props.kelasSamProdi ?? []).filter(k => k.id !== props.namaKelas?.id);
 });
 
-// Preview detail kelas yang dipilih sebagai tujuan (hanya dari kelasSamProdi)
+// Kelas sama prodi tapi BEDA jenis — Reguler ↔ Karyawan
+const kelasLintasFiltered = computed(() => {
+    return (props.kelasLintas ?? []).filter(k => k.id !== props.namaKelas?.id);
+});
+
+// Gabungan semua kelas seprodi (sejenis + lintas)
+const allKelasSeprodiFiltered = computed(() => [
+    ...kelasSamProdiFiltered.value,
+    ...kelasLintasFiltered.value,
+]);
+
+// Preview detail kelas yang dipilih sebagai tujuan (dari semua kelas seprodi)
 const selectedKelasDetail = computed(() => {
     if (!targetKelasId.value) return null;
-    return (props.kelasSamProdi ?? []).find(k => k.id.toString() === targetKelasId.value.toString());
+    return allKelasSeprodiFiltered.value.find(k => k.id.toString() === targetKelasId.value.toString());
+});
+
+// Deteksi apakah perpindahan bersifat lintas jenis
+const isLintasJenis = computed(() => {
+    if (!selectedKelasDetail.value) return false;
+    return selectedKelasDetail.value.jenis_kelas !== props.namaKelas?.jenis_kelas;
 });
 
 // Loading state untuk operasi delete
@@ -414,27 +432,43 @@ const submitImport = () => {
                                             <div class="space-y-2">
                                                 <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pilih Kelas Tujuan</Label>
 
-                                                <!-- Hanya kelas seprodi & sejenis -->
-                                                <template v-if="kelasSamProdiFiltered.length > 0">
+                                                <!-- Dropdown dengan 2 grup: sejenis & lintas jenis -->
+                                                <template v-if="allKelasSeprodiFiltered.length > 0">
                                                     <Select v-model="targetKelasId">
                                                         <SelectTrigger class="h-11 rounded-lg border-gray-200">
                                                             <SelectValue placeholder="Pilih kelas tujuan..." />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <div class="px-2 py-1.5 text-[10px] font-bold text-[#4B49AC] uppercase tracking-wider bg-indigo-50">
-                                                                Kelas Seprodi · {{ namaKelas.jenis_kelas }}
-                                                            </div>
-                                                            <SelectItem v-for="kelas in kelasSamProdiFiltered" :key="kelas.id" :value="kelas.id.toString()">
-                                                                <div class="flex items-center gap-2">
-                                                                    <span>{{ kelas.nama_kelas }}</span>
-                                                                    <span class="text-xs text-gray-400">(Sem. {{ kelas.semester?.semester ?? '?' }})</span>
-                                                                </div>
-                                                            </SelectItem>
+                                                            <!-- Grup: Kelas Sejenis -->
+                                                            <SelectGroup v-if="kelasSamProdiFiltered.length > 0">
+                                                                <SelectLabel class="text-[10px] font-bold text-[#4B49AC] uppercase tracking-wider bg-indigo-50 px-2 py-1.5">
+                                                                    {{ namaKelas.jenis_kelas }} (Sejenis)
+                                                                </SelectLabel>
+                                                                <SelectItem v-for="kelas in kelasSamProdiFiltered" :key="kelas.id" :value="kelas.id.toString()">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span>{{ kelas.nama_kelas }}</span>
+                                                                        <span class="text-xs text-gray-400">(Sem. {{ kelas.semester?.semester ?? '?' }})</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            </SelectGroup>
+
+                                                            <!-- Grup: Kelas Lintas Jenis -->
+                                                            <SelectGroup v-if="kelasLintasFiltered.length > 0">
+                                                                <SelectLabel class="text-[10px] font-bold text-amber-700 uppercase tracking-wider bg-amber-50 px-2 py-1.5">
+                                                                    {{ kelasLintasFiltered[0]?.jenis_kelas }} (Lintas Jenis)
+                                                                </SelectLabel>
+                                                                <SelectItem v-for="kelas in kelasLintasFiltered" :key="kelas.id" :value="kelas.id.toString()">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span>{{ kelas.nama_kelas }}</span>
+                                                                        <span class="text-xs text-gray-400">(Sem. {{ kelas.semester?.semester ?? '?' }})</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            </SelectGroup>
                                                         </SelectContent>
                                                     </Select>
                                                 </template>
 
-                                                <!-- Empty state: tidak ada kelas seprodi lain -->
+                                                <!-- Empty state: tidak ada kelas seprodi sama sekali -->
                                                 <template v-else>
                                                     <div class="flex flex-col items-center gap-3 p-6 bg-amber-50 border border-amber-200 rounded-xl text-center">
                                                         <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
@@ -443,35 +477,61 @@ const submitImport = () => {
                                                         <div>
                                                             <p class="text-sm font-bold text-amber-800">Tidak Ada Kelas Tersedia</p>
                                                             <p class="text-xs text-amber-600 mt-1 leading-relaxed">
-                                                                Belum ada kelas lain dengan prodi dan jenis yang sama<br>
-                                                                (<span class="font-bold">{{ namaKelas.prodi?.nama_prodi }} · {{ namaKelas.jenis_kelas }}</span>).
+                                                                Belum ada kelas lain dalam prodi<br>
+                                                                (<span class="font-bold">{{ namaKelas.prodi?.nama_prodi }}</span>).
                                                             </p>
                                                         </div>
                                                     </div>
                                                 </template>
                                             </div>
 
+                                            <!-- Warning lintas jenis -->
+                                            <Transition name="fade-slide">
+                                                <div v-if="isLintasJenis" class="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                    <AlertTriangle class="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <p class="text-xs font-bold text-amber-800">Perpindahan Lintas Jenis</p>
+                                                        <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                                                            Mahasiswa akan berpindah dari kelas <span class="font-bold">{{ namaKelas.jenis_kelas }}</span> ke kelas <span class="font-bold">{{ selectedKelasDetail?.jenis_kelas }}</span>.
+                                                            Pastikan perubahan ini sudah sesuai kebijakan akademik.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </Transition>
+
                                             <!-- Preview kelas tujuan setelah dipilih -->
                                             <Transition name="fade-slide">
                                                 <div v-if="selectedKelasDetail" class="space-y-3">
-                                                    <!-- Arrow indicator -->
                                                     <div class="flex items-center gap-2">
                                                         <div class="h-px flex-1 bg-gray-200"></div>
                                                         <ArrowRight class="h-4 w-4 text-gray-400" />
                                                         <div class="h-px flex-1 bg-gray-200"></div>
                                                     </div>
 
-                                                    <!-- Preview card kelas tujuan -->
-                                                    <div class="p-4 rounded-xl border-2 border-green-200 bg-green-50 transition-all">
+                                                    <!-- Preview card — warna dinamis berdasarkan jenis -->
+                                                    <div
+                                                        class="p-4 rounded-xl border-2 transition-all"
+                                                        :class="isLintasJenis ? 'border-amber-300 bg-amber-50' : 'border-green-200 bg-green-50'"
+                                                    >
                                                         <div class="flex items-start gap-3">
-                                                            <div class="p-2 rounded-lg shrink-0 bg-green-200">
-                                                                <GraduationCap class="h-4 w-4 text-green-700" />
+                                                            <div
+                                                                class="p-2 rounded-lg shrink-0"
+                                                                :class="isLintasJenis ? 'bg-amber-200' : 'bg-green-200'"
+                                                            >
+                                                                <GraduationCap
+                                                                    class="h-4 w-4"
+                                                                    :class="isLintasJenis ? 'text-amber-700' : 'text-green-700'"
+                                                                />
                                                             </div>
                                                             <div class="min-w-0 flex-1">
                                                                 <div class="flex items-center gap-2 flex-wrap">
                                                                     <p class="text-sm font-bold text-gray-800">{{ selectedKelasDetail.nama_kelas }}</p>
-                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-200 text-green-800 text-[10px] font-bold rounded-full">
-                                                                        <CheckCircle2 class="h-2.5 w-2.5" /> Seprodi
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full"
+                                                                        :class="isLintasJenis ? 'bg-amber-200 text-amber-800' : 'bg-green-200 text-green-800'"
+                                                                    >
+                                                                        <CheckCircle2 class="h-2.5 w-2.5" />
+                                                                        {{ isLintasJenis ? 'Lintas Jenis' : 'Seprodi' }}
                                                                     </span>
                                                                 </div>
                                                                 <p class="text-xs text-gray-500 mt-1">
@@ -480,7 +540,6 @@ const submitImport = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                             </Transition>
                                         </div>
@@ -489,7 +548,7 @@ const submitImport = () => {
                                             <Button type="button" variant="ghost" @click="isMoveDialogOpen = false" class="h-11 px-6 rounded-lg font-semibold text-gray-500">Batal</Button>
                                             <Button
                                                 @click="bulkMove"
-                                                :disabled="!targetKelasId || isMoving || kelasSamProdiFiltered.length === 0"
+                                                :disabled="!targetKelasId || isMoving || allKelasSeprodiFiltered.length === 0"
                                                 class="h-11 px-8 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-lg shadow-indigo-100 font-semibold transition-all"
                                             >
                                                 <Loader2 v-if="isMoving" class="w-4 h-4 mr-2 animate-spin" />

@@ -642,6 +642,9 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             ->names('v2.admin.jadwal-ujian')
             ->except(['create', 'edit', 'show']);
 
+        Route::get('data-mahasiswa/all', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'allStudents'])
+            ->name('v2.admin.data-mahasiswa.all');
+
         Route::resource('data-mahasiswa', App\Http\Controllers\V2\Admin\MahasiswaController::class)
             ->names('v2.admin.data-mahasiswa')
             ->parameters(['data-mahasiswa' => 'id'])

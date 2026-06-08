@@ -126,6 +126,34 @@ const kelasCountInSem = (semGroup) =>
                 </div>
             </div>
 
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-gray-200 pb-px">
+                <Link 
+                    :href="route('v2.admin.data-mahasiswa.index')"
+                    class="px-5 py-3 border-b-2 font-semibold text-sm transition-all flex items-center gap-2"
+                    :class="[
+                        route().current('v2.admin.data-mahasiswa.index')
+                            ? 'border-[#4B49AC] text-[#4B49AC]'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]"
+                >
+                    <BookOpen class="h-4 w-4" />
+                    Daftar Kelas
+                </Link>
+                <Link 
+                    :href="route('v2.admin.data-mahasiswa.all')"
+                    class="px-5 py-3 border-b-2 font-semibold text-sm transition-all flex items-center gap-2"
+                    :class="[
+                        route().current('v2.admin.data-mahasiswa.all')
+                            ? 'border-[#4B49AC] text-[#4B49AC]'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]"
+                >
+                    <Users class="h-4 w-4" />
+                    Semua Mahasiswa
+                </Link>
+            </div>
+
             <!-- ── Empty State ── -->
             <div
                 v-if="kelass.length === 0"
@@ -210,9 +238,9 @@ const kelasCountInSem = (semGroup) =>
                                                 {{ prodiGroup.singkatan ?? '?' }}
                                             </span>
                                         </div>
-                                        <span class="text-[9px] font-semibold text-gray-400 text-center leading-tight w-full break-words">
+                                        <!-- <span class="text-[9px] font-semibold text-gray-400 text-center leading-tight w-full break-words">
                                             {{ prodiGroup.singkatan ?? '?' }}
-                                        </span>
+                                        </span> -->
                                     </div>
 
                                     <!-- Cards semua jenis dalam prodi ini, inline -->

@@ -87,6 +87,8 @@ class Kernel extends ConsoleKernel
             }
         })->everyMinute();
 
+        $schedule->command('feeder:renew-token')->daily();
+
         // PAGI DAN SIANG
         // $schedule->call(function () use ($hariIni) {
         //     if (!in_array($hariIni, ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'])) {
