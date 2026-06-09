@@ -362,10 +362,18 @@ class FeederTokenService
                     }
                 }
 
-                // Preferred jenis kelas
-                $preferredJenisKelas = 'Reguler';
-                if ($mahasiswa && $mahasiswa->kelas) {
-                    $preferredJenisKelas = $mahasiswa->kelas->jenis_kelas;
+                // Tentukan preferred jenis kelas berdasarkan digit ke-5 NIM (index 4)
+                $nim = $record['nim'] ?? '';
+                $digit5 = strlen($nim) >= 5 ? substr($nim, 4, 1) : null;
+
+                if ($digit5 === '2') {
+                    $preferredJenisKelas = 'Karyawan';
+                } elseif ($digit5 === '1') {
+                    $preferredJenisKelas = 'Reguler';
+                } else {
+                    $preferredJenisKelas = ($mahasiswa && $mahasiswa->kelas)
+                        ? $mahasiswa->kelas->jenis_kelas
+                        : 'Reguler';
                 }
 
                 // Dynamic class mapping

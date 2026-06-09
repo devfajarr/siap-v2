@@ -615,4 +615,277 @@ class FeederTokenServiceTest extends TestCase
         $this->assertEquals('20231', $mahasiswa->id_periode_masuk);
         $this->assertEquals($kelas->id, $mahasiswa->kelas_id);
     }
+
+    /**
+     * Test mapping new student with NIM digit 5 = 1 to Reguler class.
+     */
+    public function test_pull_mahasiswas_nim_digit5_reguler(): void
+    {
+        Cache::put('feeder_token', 'cached-token-123', 60);
+        Cache::put('feeder_active_period_id', '20241', 60);
+
+        $prodi = Prodi::firstOrCreate(
+            ['nama_prodi' => 'Teknik Informatika'],
+            [
+                'singkatan' => 'TI',
+                'kode_prodi' => 'TI101',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Information Technical',
+                'alias_jenjang' => 'Diploma Three',
+                'feeder_id_prodi' => 'prodi-feeder-123',
+            ]
+        );
+        $semester = Semester::firstOrCreate(['semester' => 1], ['status' => 1]);
+        $kelasReguler = Kelas::firstOrCreate(
+            ['kode_kelas' => '99991'],
+            [
+                'nama_kelas' => 'Test Kelas Reguler',
+                'jenis_kelas' => 'Reguler',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+        $kelasKaryawan = Kelas::firstOrCreate(
+            ['kode_kelas' => '99992'],
+            [
+                'nama_kelas' => 'Test Kelas Karyawan',
+                'jenis_kelas' => 'Karyawan',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+
+        Http::fake([
+            '*/ws/sandbox2.php' => function (Request $request) {
+                $body = json_decode($request->body(), true);
+                if ($body['act'] === 'GetListRiwayatPendidikanMahasiswa') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_mahasiswa' => 'stud-reg-uuid',
+                                'id_registrasi_mahasiswa' => 'reg-reg-uuid',
+                                'nim' => '202410001', // Digit 5 = 1 (Reguler)
+                                'nama_mahasiswa' => 'Student Reguler',
+                                'id_prodi' => 'prodi-feeder-123',
+                                'nama_program_studi' => 'Teknik Informatika',
+                                'id_periode_masuk' => '20241',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                if ($body['act'] === 'GetBiodataMahasiswa') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_mahasiswa' => 'stud-reg-uuid',
+                                'nik' => '123',
+                                'nisn' => '123',
+                                'email' => 'reg@test.com',
+                                'tanggal_lahir' => '2004-01-01',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                return Http::response([], 404);
+            },
+        ]);
+
+        $service = new FeederTokenService;
+        $result = $service->pullMahasiswas('', 10, 0, true);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(1, $result['stats']['created']);
+
+        $mahasiswa = Mahasiswa::where('nim', '202410001')->first();
+        $this->assertNotNull($mahasiswa);
+        $this->assertEquals($kelasReguler->id, $mahasiswa->kelas_id);
+    }
+
+    /**
+     * Test mapping new student with NIM digit 5 = 2 to Karyawan class.
+     */
+    public function test_pull_mahasiswas_nim_digit5_karyawan(): void
+    {
+        Cache::put('feeder_token', 'cached-token-123', 60);
+        Cache::put('feeder_active_period_id', '20241', 60);
+
+        $prodi = Prodi::firstOrCreate(
+            ['nama_prodi' => 'Teknik Informatika'],
+            [
+                'singkatan' => 'TI',
+                'kode_prodi' => 'TI101',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Information Technical',
+                'alias_jenjang' => 'Diploma Three',
+                'feeder_id_prodi' => 'prodi-feeder-123',
+            ]
+        );
+        $semester = Semester::firstOrCreate(['semester' => 1], ['status' => 1]);
+        $kelasReguler = Kelas::firstOrCreate(
+            ['kode_kelas' => '99991'],
+            [
+                'nama_kelas' => 'Test Kelas Reguler',
+                'jenis_kelas' => 'Reguler',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+        $kelasKaryawan = Kelas::firstOrCreate(
+            ['kode_kelas' => '99992'],
+            [
+                'nama_kelas' => 'Test Kelas Karyawan',
+                'jenis_kelas' => 'Karyawan',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+
+        Http::fake([
+            '*/ws/sandbox2.php' => function (Request $request) {
+                $body = json_decode($request->body(), true);
+                if ($body['act'] === 'GetListRiwayatPendidikanMahasiswa') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_mahasiswa' => 'stud-kary-uuid',
+                                'id_registrasi_mahasiswa' => 'reg-kary-uuid',
+                                'nim' => '202420001', // Digit 5 = 2 (Karyawan)
+                                'nama_mahasiswa' => 'Student Karyawan',
+                                'id_prodi' => 'prodi-feeder-123',
+                                'nama_program_studi' => 'Teknik Informatika',
+                                'id_periode_masuk' => '20241',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                if ($body['act'] === 'GetBiodataMahasiswa') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_mahasiswa' => 'stud-kary-uuid',
+                                'nik' => '456',
+                                'nisn' => '456',
+                                'email' => 'kary@test.com',
+                                'tanggal_lahir' => '2004-01-01',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                return Http::response([], 404);
+            },
+        ]);
+
+        $service = new FeederTokenService;
+        $result = $service->pullMahasiswas('', 10, 0, true);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(1, $result['stats']['created']);
+
+        $mahasiswa = Mahasiswa::where('nim', '202420001')->first();
+        $this->assertNotNull($mahasiswa);
+        $this->assertEquals($kelasKaryawan->id, $mahasiswa->kelas_id);
+    }
+
+    /**
+     * Test mapping new student with NIM digit 5 != 1 or 2 defaults to Reguler class.
+     */
+    public function test_pull_mahasiswas_nim_digit5_default(): void
+    {
+        Cache::put('feeder_token', 'cached-token-123', 60);
+        Cache::put('feeder_active_period_id', '20241', 60);
+
+        $prodi = Prodi::firstOrCreate(
+            ['nama_prodi' => 'Teknik Informatika'],
+            [
+                'singkatan' => 'TI',
+                'kode_prodi' => 'TI101',
+                'jenjang' => 'D3',
+                'alias_nama' => 'Information Technical',
+                'alias_jenjang' => 'Diploma Three',
+                'feeder_id_prodi' => 'prodi-feeder-123',
+            ]
+        );
+        $semester = Semester::firstOrCreate(['semester' => 1], ['status' => 1]);
+        $kelasReguler = Kelas::firstOrCreate(
+            ['kode_kelas' => '99991'],
+            [
+                'nama_kelas' => 'Test Kelas Reguler',
+                'jenis_kelas' => 'Reguler',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+        $kelasKaryawan = Kelas::firstOrCreate(
+            ['kode_kelas' => '99992'],
+            [
+                'nama_kelas' => 'Test Kelas Karyawan',
+                'jenis_kelas' => 'Karyawan',
+                'id_prodi' => $prodi->id,
+                'id_semester' => $semester->id,
+            ]
+        );
+
+        Http::fake([
+            '*/ws/sandbox2.php' => function (Request $request) {
+                $body = json_decode($request->body(), true);
+                if ($body['act'] === 'GetListRiwayatPendidikanMahasiswa') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_mahasiswa' => 'stud-other-uuid',
+                                'id_registrasi_mahasiswa' => 'reg-other-uuid',
+                                'nim' => '202490001', // Digit 5 = 9 (Other/Default)
+                                'nama_mahasiswa' => 'Student Other',
+                                'id_prodi' => 'prodi-feeder-123',
+                                'nama_program_studi' => 'Teknik Informatika',
+                                'id_periode_masuk' => '20241',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                if ($body['act'] === 'GetBiodataMahasiswa') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_mahasiswa' => 'stud-other-uuid',
+                                'nik' => '789',
+                                'nisn' => '789',
+                                'email' => 'other@test.com',
+                                'tanggal_lahir' => '2004-01-01',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                return Http::response([], 404);
+            },
+        ]);
+
+        $service = new FeederTokenService;
+        $result = $service->pullMahasiswas('', 10, 0, true);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(1, $result['stats']['created']);
+
+        $mahasiswa = Mahasiswa::where('nim', '202490001')->first();
+        $this->assertNotNull($mahasiswa);
+        $this->assertEquals($kelasReguler->id, $mahasiswa->kelas_id);
+    }
 }
