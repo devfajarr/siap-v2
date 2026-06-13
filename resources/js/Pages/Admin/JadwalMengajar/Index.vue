@@ -125,6 +125,87 @@ const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const selectedJadwal = ref(null)
 
+const openPopoverDosenAdd = ref(false)
+const openPopoverDosenEdit = ref(false)
+const openPopoverDosenFilter = ref(false)
+
+const searchDosenAdd = ref('')
+const searchDosenEdit = ref('')
+const searchDosenFilter = ref('')
+
+const filteredDosensAdd = computed(() => {
+  if (!searchDosenAdd.value) {
+    return props.dosens
+  }
+  const q = searchDosenAdd.value.toLowerCase()
+  return props.dosens.filter(d => 
+    d.nama.toLowerCase().includes(q) || 
+    (d.nidn && d.nidn.toLowerCase().includes(q))
+  )
+})
+
+const filteredDosensEdit = computed(() => {
+  if (!searchDosenEdit.value) {
+    return props.dosens
+  }
+  const q = searchDosenEdit.value.toLowerCase()
+  return props.dosens.filter(d => 
+    d.nama.toLowerCase().includes(q) || 
+    (d.nidn && d.nidn.toLowerCase().includes(q))
+  )
+})
+
+const filteredDosensFilter = computed(() => {
+  if (!searchDosenFilter.value) {
+    return props.dosens
+  }
+  const q = searchDosenFilter.value.toLowerCase()
+  return props.dosens.filter(d => 
+    d.nama.toLowerCase().includes(q) || 
+    (d.nidn && d.nidn.toLowerCase().includes(q))
+  )
+})
+
+watch(openPopoverDosenAdd, (val) => {
+  if (!val) {
+    searchDosenAdd.value = ''
+  }
+})
+
+watch(openPopoverDosenEdit, (val) => {
+  if (!val) {
+    searchDosenEdit.value = ''
+  }
+})
+
+watch(openPopoverDosenFilter, (val) => {
+  if (!val) {
+    searchDosenFilter.value = ''
+  }
+})
+
+const getDosenLabel = (dosenId) => {
+  if (!dosenId || dosenId === 'all') {
+    return 'Pilih Dosen'
+  }
+  const d = props.dosens.find(x => String(x.id) === String(dosenId))
+  if (!d) {
+    return 'Pilih Dosen'
+  }
+  return `${d.nama} (${d.nidn || 'Tanpa NIDN'})`
+}
+
+const getDosenFilterLabel = (dosenId) => {
+  if (!dosenId || dosenId === 'all') {
+    return 'Semua Dosen'
+  }
+  const d = props.dosens.find(x => String(x.id) === String(dosenId))
+  if (!d) {
+    return 'Semua Dosen'
+  }
+  return d.nama
+}
+
 // Toast state
 const showToast = ref(false)
 const toastMessage = ref('')
@@ -346,17 +427,83 @@ const formatTime = (time) => {
 
             <div class="space-y-2 w-full md:w-[200px]">
               <Label class="text-xs font-semibold text-[#374151]">Dosen</Label>
-              <Select v-model="filterDosen">
-                <SelectTrigger class="border-gray-200 focus:ring-[#4B49AC] rounded-lg bg-white">
-                  <SelectValue placeholder="Semua Dosen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Dosen</SelectItem>
-                  <SelectItem v-for="dosen in dosens" :key="dosen.id" :value="String(dosen.id)">
-                    {{ dosen.nama }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover :open="openPopoverDosenFilter" @update:open="openPopoverDosenFilter = $event">
+                <PopoverTrigger as-child>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    :aria-expanded="openPopoverDosenFilter"
+                    class="w-full md:w-[200px] justify-between h-10 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal rounded-lg text-left bg-white px-3 text-[#374151]"
+                  >
+                    <span class="truncate">{{ getDosenFilterLabel(filterDosen) }}</span>
+                    <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-[250px] p-0 bg-white border border-gray-200 shadow-lg z-50" align="start">
+                  <div class="flex flex-col">
+                    <div class="flex items-center border-b px-3 py-2 sticky top-0 bg-white z-10">
+                      <Search class="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                      <input
+                        v-model="searchDosenFilter"
+                        type="text"
+                        placeholder="Cari nama atau NIDN dosen..."
+                        class="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                      <button
+                        v-if="searchDosenFilter"
+                        type="button"
+                        @click="searchDosenFilter = ''"
+                        class="ml-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <X class="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <div class="max-h-[300px] overflow-y-auto p-1">
+                      <button
+                        type="button"
+                        @click="() => {
+                          filterDosen = 'all'
+                          openPopoverDosenFilter = false
+                          searchDosenFilter = ''
+                        }"
+                        class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                        :class="filterDosen === 'all' ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                      >
+                        <Check
+                          :class="filterDosen === 'all' ? 'opacity-100' : 'opacity-0'"
+                          class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                        />
+                        <span class="truncate">Semua Dosen</span>
+                      </button>
+
+                      <div v-if="filteredDosensFilter.length === 0 && searchDosenFilter" class="py-6 text-center text-sm text-gray-500">
+                        Dosen tidak ditemukan.
+                      </div>
+                      
+                      <button
+                        v-for="dosen in filteredDosensFilter"
+                        :key="dosen.id"
+                        type="button"
+                        @click="() => {
+                          filterDosen = String(dosen.id)
+                          openPopoverDosenFilter = false
+                          searchDosenFilter = ''
+                        }"
+                        class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                        :class="filterDosen === String(dosen.id) ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                      >
+                        <Check
+                          :class="filterDosen === String(dosen.id) ? 'opacity-100' : 'opacity-0'"
+                          class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                        />
+                        <span class="truncate">{{ dosen.nama }} ({{ dosen.nidn || 'Tanpa NIDN' }})</span>
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div class="space-y-2 w-full md:w-[200px]">
@@ -632,16 +779,67 @@ const formatTime = (time) => {
 
             <div class="space-y-2">
               <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Dosen</Label>
-              <Select v-model="form.dosen_id">
-                <SelectTrigger class="h-11 border-gray-200 focus:ring-[#4B49AC]/20 rounded-lg">
-                  <SelectValue placeholder="Pilih Dosen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="dosen in dosens" :key="dosen.id" :value="String(dosen.id)">
-                    {{ dosen.nama }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover :open="openPopoverDosenAdd" @update:open="openPopoverDosenAdd = $event">
+                <PopoverTrigger as-child>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    :aria-expanded="openPopoverDosenAdd"
+                    class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal rounded-lg text-left bg-white px-3"
+                    :class="!form.dosen_id ? 'text-gray-500' : 'text-gray-900'"
+                  >
+                    <span class="truncate">{{ getDosenLabel(form.dosen_id) }}</span>
+                    <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-[380px] p-0 bg-white border border-gray-200 shadow-lg z-50" align="start">
+                  <div class="flex flex-col">
+                    <div class="flex items-center border-b px-3 py-2 sticky top-0 bg-white z-10">
+                      <Search class="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                      <input
+                        v-model="searchDosenAdd"
+                        type="text"
+                        placeholder="Cari nama atau NIDN dosen..."
+                        class="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                      <button
+                        v-if="searchDosenAdd"
+                        type="button"
+                        @click="searchDosenAdd = ''"
+                        class="ml-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <X class="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <div class="max-h-[300px] overflow-y-auto p-1">
+                      <div v-if="filteredDosensAdd.length === 0" class="py-6 text-center text-sm text-gray-500">
+                        Dosen tidak ditemukan.
+                      </div>
+                      <button
+                        v-else
+                        v-for="dosen in filteredDosensAdd"
+                        :key="dosen.id"
+                        type="button"
+                        @click="() => {
+                          form.dosen_id = String(dosen.id)
+                          openPopoverDosenAdd = false
+                          searchDosenAdd = ''
+                        }"
+                        class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                        :class="form.dosen_id === String(dosen.id) ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                      >
+                        <Check
+                          :class="form.dosen_id === String(dosen.id) ? 'opacity-100' : 'opacity-0'"
+                          class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                        />
+                        <span class="truncate">{{ dosen.nama }} ({{ dosen.nidn || 'Tanpa NIDN' }})</span>
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <p v-if="form.errors.dosen_id" class="text-xs text-red-500 font-medium">{{ form.errors.dosen_id }}</p>
             </div>
 
@@ -836,16 +1034,67 @@ const formatTime = (time) => {
 
             <div class="space-y-2">
               <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Dosen</Label>
-              <Select v-model="editForm.dosen_id">
-                <SelectTrigger class="h-11 border-gray-200 focus:ring-[#4B49AC]/20 rounded-lg">
-                  <SelectValue placeholder="Pilih Dosen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="dosen in dosens" :key="dosen.id" :value="String(dosen.id)">
-                    {{ dosen.nama }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover :open="openPopoverDosenEdit" @update:open="openPopoverDosenEdit = $event">
+                <PopoverTrigger as-child>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    :aria-expanded="openPopoverDosenEdit"
+                    class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal rounded-lg text-left bg-white px-3"
+                    :class="!editForm.dosen_id ? 'text-gray-500' : 'text-gray-900'"
+                  >
+                    <span class="truncate">{{ getDosenLabel(editForm.dosen_id) }}</span>
+                    <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-[380px] p-0 bg-white border border-gray-200 shadow-lg z-50" align="start">
+                  <div class="flex flex-col">
+                    <div class="flex items-center border-b px-3 py-2 sticky top-0 bg-white z-10">
+                      <Search class="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                      <input
+                        v-model="searchDosenEdit"
+                        type="text"
+                        placeholder="Cari nama atau NIDN dosen..."
+                        class="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                      <button
+                        v-if="searchDosenEdit"
+                        type="button"
+                        @click="searchDosenEdit = ''"
+                        class="ml-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <X class="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <div class="max-h-[300px] overflow-y-auto p-1">
+                      <div v-if="filteredDosensEdit.length === 0" class="py-6 text-center text-sm text-gray-500">
+                        Dosen tidak ditemukan.
+                      </div>
+                      <button
+                        v-else
+                        v-for="dosen in filteredDosensEdit"
+                        :key="dosen.id"
+                        type="button"
+                        @click="() => {
+                          editForm.dosen_id = String(dosen.id)
+                          openPopoverDosenEdit = false
+                          searchDosenEdit = ''
+                        }"
+                        class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                        :class="editForm.dosen_id === String(dosen.id) ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                      >
+                        <Check
+                          :class="editForm.dosen_id === String(dosen.id) ? 'opacity-100' : 'opacity-0'"
+                          class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                        />
+                        <span class="truncate">{{ dosen.nama }} ({{ dosen.nidn || 'Tanpa NIDN' }})</span>
+                      </button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <p v-if="editForm.errors.dosen_id" class="text-xs text-red-500 font-medium">{{ editForm.errors.dosen_id }}</p>
             </div>
 

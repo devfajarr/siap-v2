@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
@@ -15,7 +15,9 @@ import {
     Printer,
     CheckCircle2,
     AlertCircle,
-    FileText
+    FileText,
+    RefreshCw,
+    XCircle
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -24,6 +26,37 @@ const props = defineProps({
 });
 
 const search = ref('');
+const isSyncing = ref(false);
+const page = usePage();
+
+// Toast state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success');
+
+// Watch for flash messages
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) {
+        toastMessage.value = flash.success;
+        toastType.value = 'success';
+        showToast.value = true;
+        setTimeout(() => { showToast.value = false; }, 3000);
+    } else if (flash?.error) {
+        toastMessage.value = flash.error;
+        toastType.value = 'error';
+        showToast.value = true;
+        setTimeout(() => { showToast.value = false; }, 3000);
+    }
+}, { deep: true });
+
+const syncFeeder = () => {
+    isSyncing.value = true;
+    router.post(route('v2.admin.krs.sync-class', props.namaKelas.id), {}, {
+        onFinish: () => {
+            isSyncing.value = false;
+        }
+    });
+};
 
 const filteredMahasiswas = computed(() => {
     if (!props.mahasiswas) return [];
@@ -71,15 +104,23 @@ const totalBelumKrs = computed(() => totalMahasiswa.value - totalSudahKrs.value)
 
                 <!-- Stats Badges -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <Button 
+                        @click="syncFeeder" 
+                        :disabled="isSyncing" 
+                        class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-xl shadow-sm flex items-center gap-2 px-4 h-10 transition-all font-bold border-0"
+                    >
+                        <RefreshCw :class="['h-4 w-4 shrink-0', isSyncing ? 'animate-spin' : '']" />
+                        {{ isSyncing ? 'Sinkronisasi...' : 'Sinkron Feeder' }}
+                    </Button>
+                    <div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100 h-10">
                         <Users class="h-4 w-4 text-[#4B49AC]" />
                         <span class="text-sm font-bold text-[#4B49AC]">{{ totalMahasiswa }} Total Mahasiswa</span>
                     </div>
-                    <div class="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-xl border border-green-200">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-xl border border-green-200 h-10">
                         <CheckCircle2 class="h-4 w-4 text-green-600" />
                         <span class="text-sm font-bold text-green-700">{{ totalSudahKrs }} Sudah KRS</span>
                     </div>
-                    <div class="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-200">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-200 h-10">
                         <AlertCircle class="h-4 w-4 text-amber-600" />
                         <span class="text-sm font-bold text-amber-700">{{ totalBelumKrs }} Belum KRS</span>
                     </div>
@@ -187,6 +228,38 @@ const totalBelumKrs = computed(() => totalMahasiswa.value - totalSudahKrs.value)
                     </div>
                 </CardContent>
             </Card>
+
+            <!-- Toast Notification -->
+            <transition name="toast">
+                <div v-if="showToast" class="fixed bottom-10 right-10 z-[100]">
+                    <div class="bg-[#1F2937] text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center gap-4 border border-gray-700 backdrop-blur-sm bg-opacity-95">
+                        <div :class="toastType === 'error' ? 'bg-red-500' : 'bg-green-500'" class="p-2 rounded-full ring-4 ring-white/10">
+                            <CheckCircle2 v-if="toastType === 'success'" class="w-5 h-5 text-white" />
+                            <XCircle v-else class="w-5 h-5 text-white" />
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold tracking-tight">{{ toastMessage }}</span>
+                        </div>
+                    </div>
+                </div>
+            </transition>
         </div>
     </AdminLayout>
 </template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-enter-from {
+    opacity: 0;
+    transform: translateX(100px) scale(0.8);
+}
+
+.toast-leave-to {
+    opacity: 0;
+    transform: translateX(100px) scale(0.8);
+}
+</style>

@@ -698,6 +698,7 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
             Route::get('kategori', [App\Http\Controllers\V2\Admin\KrsController::class, 'index'])->name('kategori');
             Route::get('kategori/cetak/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'cetak'])->name('cetak');
             Route::get('kategori/{id}', [App\Http\Controllers\V2\Admin\KrsController::class, 'show'])->name('show');
+            Route::post('kategori/{id}/sync', [App\Http\Controllers\V2\Admin\KrsController::class, 'syncClass'])->name('sync-class');
         });
 
         // Permohonan Surat

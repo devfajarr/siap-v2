@@ -42,7 +42,13 @@ class AuthController extends Controller
             if (Auth::guard($guard)->check()) {
                 if ($guard === 'jabatan') {
                     $user = Auth::guard('jabatan')->user();
-                    $redirectRoute = $roleRedirects[$user->nama_jabatan] ?? 'v2.pegawai.dashboard';
+                    if ($user && $user->dosens_id) {
+                        $redirectRoute = 'v2.dosen.dashboard';
+                    } elseif ($user && $user->pegawais_id) {
+                        $redirectRoute = 'v2.pegawai.dashboard';
+                    } else {
+                        $redirectRoute = $roleRedirects[$user->nama_jabatan] ?? 'v2.pegawai.dashboard';
+                    }
                 } else {
                     $redirectRoute = $roleRedirects[$guard] ?? 'dashboard';
                 }
@@ -157,6 +163,14 @@ class AuthController extends Controller
                 'orang_tua' => 'v2.orang-tua.dashboard',
             ];
             $redirectRoute = $roleRedirects[$role] ?? 'dashboard';
+
+            if (in_array($role, ['bpmi', 'kemahasiswaan', 'perpustakaan', 'sarpras', 'personalia']) && $user) {
+                if ($user->dosens_id) {
+                    $redirectRoute = 'v2.dosen.dashboard';
+                } elseif ($user->pegawais_id) {
+                    $redirectRoute = 'v2.pegawai.dashboard';
+                }
+            }
 
             return redirect()->route($redirectRoute);
         } else {

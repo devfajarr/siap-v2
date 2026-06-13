@@ -105,6 +105,18 @@ class RoleSwitchMiddleware
             /** @var Jabatan $jabatanUser */
             $jabatanUser = Auth::guard('jabatan')->user();
 
+            if (preg_match('/^v2\/(bpmi|kemahasiswaan|perpustakaan|sarpras|personalia)(\/|$)/i', $path) && $jabatanUser->dosens_id) {
+                return redirect()->route('v2.dosen.dashboard');
+            }
+
+            if (preg_match('/^v2\/pegawai(\/|$)/i', $path) && $jabatanUser->dosens_id) {
+                return redirect()->route('v2.dosen.dashboard');
+            }
+
+            if (preg_match('/^v2\/dosen(\/|$)/i', $path) && $jabatanUser->pegawais_id) {
+                return redirect()->route('v2.pegawai.dashboard');
+            }
+
             if (preg_match('/^v2\/dosen(\/|$)/i', $path) && ! preg_match('/^v2\/dosen\/dashboard(\/|$)/i', $path) && $jabatanUser->dosens_id) {
                 $dosen = Dosen::find($jabatanUser->dosens_id);
 

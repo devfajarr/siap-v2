@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -18,6 +20,22 @@ class Dosen extends Authenticatable
     public function matkul()
     {
         return $this->hasMany(Matkul::class);
+    }
+
+    /**
+     * Get the placeholder lecturer assigned to this lecturer for Neo Feeder reporting.
+     */
+    public function placeholderDosen(): BelongsTo
+    {
+        return $this->belongsTo(Dosen::class, 'feeder_dosen_placeholder_id');
+    }
+
+    /**
+     * Get the unregistered/honorer lecturers that use this lecturer as a placeholder.
+     */
+    public function placeholderForDosen(): HasMany
+    {
+        return $this->hasMany(Dosen::class, 'feeder_dosen_placeholder_id');
     }
 
     public function jadwal()

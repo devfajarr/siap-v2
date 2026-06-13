@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Dosen;
 use App\Models\Kelas;
 use App\Models\Mahasiswa;
 use App\Models\Prodi;
@@ -887,5 +888,179 @@ class FeederTokenServiceTest extends TestCase
         $mahasiswa = Mahasiswa::where('nim', '202490001')->first();
         $this->assertNotNull($mahasiswa);
         $this->assertEquals($kelasReguler->id, $mahasiswa->kelas_id);
+    }
+
+    /**
+     * Test pulling dosens batch and successfully mapping statuses.
+     */
+    public function test_pull_dosens_match_status_mapping(): void
+    {
+        Cache::put('feeder_token', 'cached-token-123', 60);
+
+        $dosenAktif = Dosen::create([
+            'nama' => 'Dosen Aktif',
+            'nidn' => '1111111111',
+            'pembimbing_akademik' => 0,
+            'jenis_kelamin' => 'Laki-Laki',
+            'no_telephone' => '081234567890',
+            'agama' => 'Islam',
+            'status' => 0,
+            'tanggal_lahir' => '1980-01-01',
+            'tempat_lahir' => '-',
+            'email' => 'dosen_1111111111@sawunggalih.ac.id',
+            'password' => Hash::make('1111111111'),
+        ]);
+
+        $dosenTidakAktif = Dosen::create([
+            'nama' => 'Dosen Tidak Aktif',
+            'nidn' => '2222222222',
+            'pembimbing_akademik' => 0,
+            'jenis_kelamin' => 'Perempuan',
+            'no_telephone' => '081234567890',
+            'agama' => 'Islam',
+            'status' => 1,
+            'tanggal_lahir' => '1980-01-01',
+            'tempat_lahir' => '-',
+            'email' => 'dosen_2222222222@sawunggalih.ac.id',
+            'password' => Hash::make('2222222222'),
+        ]);
+
+        Http::fake([
+            '*/ws/sandbox2.php' => function (Request $request) {
+                $body = json_decode($request->body(), true);
+                if ($body['act'] === 'GetListPenugasanDosen') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_dosen' => 'dosen-aktif-uuid',
+                                'id_registrasi_dosen' => 'reg-aktif-uuid',
+                                'nidn' => '1111111111',
+                                'nama_dosen' => 'Dosen Aktif',
+                            ],
+                            [
+                                'id_dosen' => 'dosen-tidak-aktif-uuid',
+                                'id_registrasi_dosen' => 'reg-tidak-aktif-uuid',
+                                'nidn' => '2222222222',
+                                'nama_dosen' => 'Dosen Tidak Aktif',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                if ($body['act'] === 'GetListDosen') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_dosen' => 'dosen-aktif-uuid',
+                                'nama_dosen' => 'Dosen Aktif',
+                                'nidn' => '1111111111',
+                                'jenis_kelamin' => 'L',
+                                'nama_agama' => 'Islam',
+                                'tanggal_lahir' => '01-01-1980',
+                                'id_status_aktif' => '1',
+                                'nama_status_aktif' => 'Aktif',
+                            ],
+                            [
+                                'id_dosen' => 'dosen-tidak-aktif-uuid',
+                                'nama_dosen' => 'Dosen Tidak Aktif',
+                                'nidn' => '2222222222',
+                                'jenis_kelamin' => 'P',
+                                'nama_agama' => 'Islam',
+                                'tanggal_lahir' => '01-01-1980',
+                                'id_status_aktif' => '2',
+                                'nama_status_aktif' => 'Tidak Aktif',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                return Http::response([], 404);
+            },
+        ]);
+
+        $service = new FeederTokenService;
+        $result = $service->pullDosens('', 10, 0, false);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(2, $result['records_count']);
+        $this->assertEquals(2, $result['stats']['matched']);
+
+        $dosenAktif->refresh();
+        $dosenTidakAktif->refresh();
+
+        $this->assertEquals(1, $dosenAktif->status);
+        $this->assertEquals('dosen-aktif-uuid', $dosenAktif->feeder_id_dosen);
+        $this->assertEquals('reg-aktif-uuid', $dosenAktif->feeder_id_registrasi);
+
+        $this->assertEquals(0, $dosenTidakAktif->status);
+        $this->assertEquals('dosen-tidak-aktif-uuid', $dosenTidakAktif->feeder_id_dosen);
+        $this->assertEquals('reg-tidak-aktif-uuid', $dosenTidakAktif->feeder_id_registrasi);
+    }
+
+    /**
+     * Test pulling dosens batch and successfully creating new records with status mapping.
+     */
+    public function test_pull_dosens_create_new_status_mapping(): void
+    {
+        Cache::put('feeder_token', 'cached-token-123', 60);
+
+        Http::fake([
+            '*/ws/sandbox2.php' => function (Request $request) {
+                $body = json_decode($request->body(), true);
+                if ($body['act'] === 'GetListPenugasanDosen') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_dosen' => 'dosen-new-uuid',
+                                'id_registrasi_dosen' => 'reg-new-uuid',
+                                'nidn' => '3333333333',
+                                'nama_dosen' => 'Dosen Baru',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                if ($body['act'] === 'GetListDosen') {
+                    return Http::response([
+                        'error_code' => 0,
+                        'error_desc' => '',
+                        'data' => [
+                            [
+                                'id_dosen' => 'dosen-new-uuid',
+                                'nama_dosen' => 'Dosen Baru',
+                                'nidn' => '3333333333',
+                                'jenis_kelamin' => 'L',
+                                'nama_agama' => 'Islam',
+                                'tanggal_lahir' => '01-01-1980',
+                                'id_status_aktif' => '1',
+                                'nama_status_aktif' => 'Tugas Belajar',
+                            ],
+                        ],
+                    ], 200);
+                }
+
+                return Http::response([], 404);
+            },
+        ]);
+
+        $service = new FeederTokenService;
+        $result = $service->pullDosens('', 10, 0, true);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(1, $result['records_count']);
+        $this->assertEquals(1, $result['stats']['created']);
+
+        $dosen = Dosen::where('nidn', '3333333333')->first();
+        $this->assertNotNull($dosen);
+        $this->assertEquals('Dosen Baru', $dosen->nama);
+        $this->assertEquals(1, $dosen->status);
+        $this->assertEquals('dosen-new-uuid', $dosen->feeder_id_dosen);
+        $this->assertEquals('reg-new-uuid', $dosen->feeder_id_registrasi);
     }
 }

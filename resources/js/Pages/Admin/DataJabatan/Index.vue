@@ -29,6 +29,11 @@ import {
   SelectValue,
 } from '@/Components/ui/select'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/Components/ui/popover'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -53,7 +58,9 @@ import {
   KeyRound,
   ShieldCheck,
   History,
-  Briefcase
+  Briefcase,
+  Check,
+  ChevronsUpDown
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -92,6 +99,68 @@ const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const selectedJabatan = ref(null)
+
+const openPopoverDosen = ref(false)
+const openPopoverPegawai = ref(false)
+
+const searchDosen = ref('')
+const searchPegawai = ref('')
+
+const filteredDosens = computed(() => {
+  if (!searchDosen.value) {
+    return props.dosens
+  }
+  const q = searchDosen.value.toLowerCase()
+  return props.dosens.filter(d => 
+    d.nama.toLowerCase().includes(q) || 
+    (d.nidn && d.nidn.toLowerCase().includes(q))
+  )
+})
+
+const filteredPegawais = computed(() => {
+  if (!searchPegawai.value) {
+    return props.pegawais
+  }
+  const q = searchPegawai.value.toLowerCase()
+  return props.pegawais.filter(p => 
+    p.nama.toLowerCase().includes(q) || 
+    (p.nuptk && p.nuptk.toLowerCase().includes(q))
+  )
+})
+
+watch(openPopoverDosen, (val) => {
+  if (!val) {
+    searchDosen.value = ''
+  }
+})
+
+watch(openPopoverPegawai, (val) => {
+  if (!val) {
+    searchPegawai.value = ''
+  }
+})
+
+const getDosenLabel = (dosenId) => {
+  if (!dosenId) {
+    return 'Pilih Dosen'
+  }
+  const d = props.dosens.find(x => String(x.id) === String(dosenId))
+  if (!d) {
+    return 'Pilih Dosen'
+  }
+  return `${d.nama} (${d.nidn || 'Tanpa NIDN'})`
+}
+
+const getPegawaiLabel = (pegawaiId) => {
+  if (!pegawaiId) {
+    return 'Pilih Pegawai / Staff'
+  }
+  const p = props.pegawais.find(x => String(x.id) === String(pegawaiId))
+  if (!p) {
+    return 'Pilih Pegawai / Staff'
+  }
+  return `${p.nama} (${p.nuptk || 'Tanpa NUPTK'})`
+}
 
 // Toast state
 const showToast = ref(false)
@@ -157,6 +226,10 @@ watch(() => form.user_type, () => {
   form.dosens_id = ''
   form.pegawais_id = ''
   form.password_mode = 'base'
+  openPopoverDosen.value = false
+  openPopoverPegawai.value = false
+  searchDosen.value = ''
+  searchPegawai.value = ''
 })
 
 // Actions
@@ -393,32 +466,134 @@ const clearFilters = () => {
               <!-- Pilih Dosen -->
               <div v-if="form.user_type === 'dosen'" class="space-y-2">
                 <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pilih Dosen</Label>
-                <Select v-model="form.dosens_id" required>
-                  <SelectTrigger class="h-11 rounded-lg border-gray-200">
-                    <SelectValue placeholder="Klik untuk mencari dosen..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="dosen in dosens" :key="dosen.id" :value="String(dosen.id)">
-                      {{ dosen.nama }} ({{ dosen.nidn || 'Tanpa NIDN' }})
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover :open="openPopoverDosen" @update:open="openPopoverDosen = $event">
+                  <PopoverTrigger as-child>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      :aria-expanded="openPopoverDosen"
+                      class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal rounded-lg text-left bg-white px-3"
+                      :class="!form.dosens_id ? 'text-gray-500' : 'text-gray-900'"
+                    >
+                      <span class="truncate">{{ getDosenLabel(form.dosens_id) }}</span>
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[380px] p-0 bg-white border border-gray-200 shadow-lg z-50" align="start">
+                    <div class="flex flex-col">
+                      <div class="flex items-center border-b px-3 py-2 sticky top-0 bg-white z-10">
+                        <Search class="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                        <input
+                          v-model="searchDosen"
+                          type="text"
+                          placeholder="Cari nama atau NIDN dosen..."
+                          class="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <button
+                          v-if="searchDosen"
+                          type="button"
+                          @click="searchDosen = ''"
+                          class="ml-1 text-gray-400 hover:text-gray-600"
+                        >
+                          <X class="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <div class="max-h-[300px] overflow-y-auto p-1">
+                        <div v-if="filteredDosens.length === 0" class="py-6 text-center text-sm text-gray-500">
+                          Dosen tidak ditemukan.
+                        </div>
+                        <button
+                          v-else
+                          v-for="dosen in filteredDosens"
+                          :key="dosen.id"
+                          type="button"
+                          @click="() => {
+                            form.dosens_id = String(dosen.id)
+                            openPopoverDosen = false
+                            searchDosen = ''
+                          }"
+                          class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                          :class="form.dosens_id === String(dosen.id) ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                        >
+                          <Check
+                            :class="form.dosens_id === String(dosen.id) ? 'opacity-100' : 'opacity-0'"
+                            class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                          />
+                          <span class="truncate">{{ dosen.nama }} ({{ dosen.nidn || 'Tanpa NIDN' }})</span>
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <p v-if="form.errors.dosens_id" class="text-xs text-red-500 font-medium">{{ form.errors.dosens_id }}</p>
               </div>
 
               <!-- Pilih Pegawai -->
               <div v-else class="space-y-2">
                 <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pilih Pegawai / Staff</Label>
-                <Select v-model="form.pegawais_id" required>
-                  <SelectTrigger class="h-11 rounded-lg border-gray-200">
-                    <SelectValue placeholder="Klik untuk mencari pegawai..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="pegawai in pegawais" :key="pegawai.id" :value="String(pegawai.id)">
-                      {{ pegawai.nama }} ({{ pegawai.nuptk || 'Tanpa NUPTK' }})
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover :open="openPopoverPegawai" @update:open="openPopoverPegawai = $event">
+                  <PopoverTrigger as-child>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      :aria-expanded="openPopoverPegawai"
+                      class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal rounded-lg text-left bg-white px-3"
+                      :class="!form.pegawais_id ? 'text-gray-500' : 'text-gray-900'"
+                    >
+                      <span class="truncate">{{ getPegawaiLabel(form.pegawais_id) }}</span>
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[380px] p-0 bg-white border border-gray-200 shadow-lg z-50" align="start">
+                    <div class="flex flex-col">
+                      <div class="flex items-center border-b px-3 py-2 sticky top-0 bg-white z-10">
+                        <Search class="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                        <input
+                          v-model="searchPegawai"
+                          type="text"
+                          placeholder="Cari nama atau NUPTK pegawai..."
+                          class="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <button
+                          v-if="searchPegawai"
+                          type="button"
+                          @click="searchPegawai = ''"
+                          class="ml-1 text-gray-400 hover:text-gray-600"
+                        >
+                          <X class="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <div class="max-h-[300px] overflow-y-auto p-1">
+                        <div v-if="filteredPegawais.length === 0" class="py-6 text-center text-sm text-gray-500">
+                          Pegawai tidak ditemukan.
+                        </div>
+                        <button
+                          v-else
+                          v-for="pegawai in filteredPegawais"
+                          :key="pegawai.id"
+                          type="button"
+                          @click="() => {
+                            form.pegawais_id = String(pegawai.id)
+                            openPopoverPegawai = false
+                            searchPegawai = ''
+                          }"
+                          class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                          :class="form.pegawais_id === String(pegawai.id) ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                        >
+                          <Check
+                            :class="form.pegawais_id === String(pegawai.id) ? 'opacity-100' : 'opacity-0'"
+                            class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                          />
+                          <span class="truncate">{{ pegawai.nama }} ({{ pegawai.nuptk || 'Tanpa NUPTK' }})</span>
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <p v-if="form.errors.pegawais_id" class="text-xs text-red-500 font-medium">{{ form.errors.pegawais_id }}</p>
               </div>
 

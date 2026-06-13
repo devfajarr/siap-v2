@@ -7,7 +7,9 @@ use App\Models\Kelas;
 use App\Models\Krs;
 use App\Models\Mahasiswa;
 use App\Models\Matkul;
+use App\Services\FeederTokenService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
 class KrsController extends Controller
@@ -86,5 +88,19 @@ class KrsController extends Controller
             ->get();
 
         return view('pages.krs.cetak', compact('krs', 'matkulKrs'));
+    }
+
+    /**
+     * Sinkronisasi data KRS kelas rombel ke Neo Feeder PDDIKTI.
+     */
+    public function syncClass(int $id, FeederTokenService $feederService): RedirectResponse
+    {
+        $result = $feederService->syncKrsRombelToFeeder($id);
+
+        if (! $result['success']) {
+            return back()->with('error', 'Gagal sinkronisasi ke Feeder: '.$result['message']);
+        }
+
+        return back()->with('success', "Berhasil sinkronisasi KRS ke Feeder! Synced: {$result['synced_classes']} Kelas, {$result['synced_lecturers']} Dosen Pengajar, {$result['synced_krs_records']} KRS Peserta.");
     }
 }

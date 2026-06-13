@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Jadwal extends Model
@@ -22,6 +23,14 @@ class Jadwal extends Model
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'kelas_id');
+    }
+
+    /**
+     * Get the registered override lecturer reported to Neo Feeder for this schedule.
+     */
+    public function overrideDosen(): BelongsTo
+    {
+        return $this->belongsTo(Dosen::class, 'feeder_override_dosen_id');
     }
 
     public function matkul()
