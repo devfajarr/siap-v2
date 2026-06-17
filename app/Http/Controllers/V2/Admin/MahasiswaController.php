@@ -64,8 +64,8 @@ class MahasiswaController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('nama_lengkap', 'like', "%{$search}%")
-                    ->orWhere('nim', 'like', "%{$search}%");
+                $q->where('mahasiswas.nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('mahasiswas.nim', 'like', "%{$search}%");
             });
         }
 
@@ -73,7 +73,7 @@ class MahasiswaController extends Controller
         if ($request->filled('status')) {
             $status = $request->input('status');
             if ($status !== 'all') {
-                $query->where('status_mahasiswa', $status);
+                $query->where('mahasiswas.status_mahasiswa', $status);
             }
         }
 
@@ -92,11 +92,27 @@ class MahasiswaController extends Controller
 
         // Filter angkatan
         if ($request->filled('angkatan')) {
-            $query->where('tahun_masuk', $request->input('angkatan'));
+            $query->where('mahasiswas.tahun_masuk', $request->input('angkatan'));
         }
 
+        /**
+         * Sorting multi-level:
+         * 1. Mahasiswa berstatus 'Aktif' didahulukan.
+         * 2. Semester aktif (status=1) yang bukan semester pendek (ganjil/genap) didahulukan.
+         *    Logika pendek: nilai semester % 3 == 0 (mis. 3, 6, 9 dst).
+         * 3. Nilai semester ganjil/genap terbesar (terbaru) diutamakan.
+         * 4. NIM ascending sebagai tiebreaker akhir.
+         */
+        $query->select('mahasiswas.*')
+            ->leftJoin('kelas', 'mahasiswas.kelas_id', '=', 'kelas.id')
+            ->leftJoin('semesters', 'kelas.id_semester', '=', 'semesters.id')
+            ->orderByRaw("CASE WHEN mahasiswas.status_mahasiswa = 'Aktif' THEN 0 ELSE 1 END ASC")
+            ->orderByRaw('CASE WHEN semesters.status = 1 AND MOD(semesters.semester, 3) != 0 THEN 0 ELSE 1 END ASC')
+            ->orderByRaw('CASE WHEN MOD(semesters.semester, 3) != 0 THEN semesters.semester ELSE NULL END DESC')
+            ->orderBy('mahasiswas.nim', 'asc');
+
         // Pagination (standard 15 items per page)
-        $mahasiswas = $query->orderBy('nim', 'desc')->paginate(15)->withQueryString();
+        $mahasiswas = $query->paginate(15)->withQueryString();
 
         // Get filter options
         $prodis = Prodi::withTrashed()->orderBy('nama_prodi', 'asc')->get()->map(function ($prodi) {
