@@ -160,4 +160,12 @@ class Mahasiswa extends Authenticatable
 
         return $completedPelayananCount >= $publishedPelayananCount;
     }
+
+    /**
+     * Relasi ke Feeder Wilayah.
+     */
+    public function feederWilayah()
+    {
+        return $this->belongsTo(FeederWilayah::class, 'id_wilayah', 'id_wilayah');
+    }
 }

@@ -382,6 +382,7 @@ Route::prefix('/presensi')->group(function () {
 
 use App\Http\Controllers\V2\Admin\DashboardController as AdminDashboardV2;
 use App\Http\Controllers\V2\Admin\DataNilaiController;
+use App\Http\Controllers\V2\Admin\FeederSyncController;
 use App\Http\Controllers\V2\Admin\InformasiTambahanController;
 use App\Http\Controllers\V2\Admin\JabatanController;
 use App\Http\Controllers\V2\Admin\JadwalMengajarController;
@@ -641,6 +642,10 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::resource('jadwal-ujian', App\Http\Controllers\V2\Admin\JadwalUjianController::class)
             ->names('v2.admin.jadwal-ujian')
             ->except(['create', 'edit', 'show']);
+
+        // Feeder Autocomplete
+        Route::get('feeder/search-wilayah', [FeederSyncController::class, 'searchWilayah'])
+            ->name('v2.admin.feeder.search-wilayah');
 
         Route::get('data-mahasiswa/all', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'allStudents'])
             ->name('v2.admin.data-mahasiswa.all');

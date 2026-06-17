@@ -114,7 +114,8 @@ const form = useForm({
   singkatan: '',
   jenjang: '',
   alias_nama: '',
-  alias_jenjang: ''
+  alias_jenjang: '',
+  biaya_masuk: 0
 })
 
 const editForm = useForm({
@@ -124,7 +125,8 @@ const editForm = useForm({
   singkatan: '',
   jenjang: '',
   alias_nama: '',
-  alias_jenjang: ''
+  alias_jenjang: '',
+  biaya_masuk: 0
 })
 
 // Actions
@@ -137,6 +139,7 @@ const openEditModal = (prodi) => {
   editForm.jenjang = prodi.jenjang
   editForm.alias_nama = prodi.alias_nama
   editForm.alias_jenjang = prodi.alias_jenjang
+  editForm.biaya_masuk = prodi.biaya_masuk ?? 0
   isEditModalOpen.value = true
 }
 
@@ -226,6 +229,7 @@ const clearFilters = () => {
               <TableHead class="font-bold text-[#374151]">Program Studi</TableHead>
               <TableHead class="font-bold text-[#374151]">Singkatan</TableHead>
               <TableHead class="font-bold text-[#374151]">Jenjang</TableHead>
+              <TableHead class="font-bold text-[#374151]">Biaya Masuk Feeder</TableHead>
               <TableHead class="text-right font-bold text-[#374151]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -245,6 +249,9 @@ const clearFilters = () => {
                 </span>
                 <div class="text-[10px] text-gray-400 mt-0.5 italic">({{ prodi.alias_jenjang }})</div>
               </TableCell>
+              <TableCell class="text-[#4B5563] font-mono text-sm font-semibold">
+                Rp {{ Number(prodi.biaya_masuk ?? 0).toLocaleString('id-ID') }}
+              </TableCell>
               <TableCell class="text-right">
                 <div class="flex justify-end gap-2">
                   <Button variant="ghost" size="sm" @click="openEditModal(prodi)" class="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8 p-0">
@@ -257,7 +264,7 @@ const clearFilters = () => {
               </TableCell>
             </TableRow>
             <TableRow v-if="prodis.data.length === 0">
-              <TableCell colspan="5" class="h-32 text-center text-[#9CA3AF]">
+              <TableCell colspan="6" class="h-32 text-center text-[#9CA3AF]">
                 <div class="flex flex-col items-center justify-center space-y-2">
                   <GraduationCap class="w-8 h-8 opacity-20" />
                   <p>Tidak ada program studi yang ditemukan.</p>
@@ -391,6 +398,18 @@ const clearFilters = () => {
                   />
                 </div>
               </div>
+
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Biaya Masuk Feeder (Rp)</Label>
+                <Input 
+                  type="number"
+                  v-model="form.biaya_masuk" 
+                  placeholder="Misal: 100000" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+                <p v-if="form.errors.biaya_masuk" class="text-xs text-red-500 font-medium">{{ form.errors.biaya_masuk }}</p>
+              </div>
             </div>
           </div>
 
@@ -491,6 +510,18 @@ const clearFilters = () => {
                     required 
                   />
                 </div>
+              </div>
+
+              <div class="space-y-2">
+                <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Biaya Masuk Feeder (Rp)</Label>
+                <Input 
+                  type="number"
+                  v-model="editForm.biaya_masuk" 
+                  placeholder="Misal: 100000" 
+                  class="h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 rounded-lg transition-all"
+                  required 
+                />
+                <p v-if="editForm.errors.biaya_masuk" class="text-xs text-red-500 font-medium">{{ editForm.errors.biaya_masuk }}</p>
               </div>
             </div>
           </div>

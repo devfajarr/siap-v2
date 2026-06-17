@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import axios from 'axios';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
@@ -11,7 +12,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/Components/ui/select';
-import { Loader2, Save, AlertCircle, Wand2, Eye, EyeOff, GraduationCap, BookOpen, Clock } from 'lucide-vue-next';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/Components/ui/popover';
+import { Loader2, Save, AlertCircle, Wand2, Eye, EyeOff, GraduationCap, BookOpen, Clock, Check, ChevronsUpDown, Search, X } from 'lucide-vue-next';
 
 const props = defineProps({
     mahasiswa: {
@@ -29,6 +35,10 @@ const props = defineProps({
     currentKelasId: {
         type: [Number, String],
         default: null
+    },
+    agamas: {
+        type: Array,
+        required: true
     }
 });
 
@@ -44,6 +54,8 @@ const form = useForm({
     tempat_lahir: props.mahasiswa?.tempat_lahir ?? '',
     tanggal_lahir: props.mahasiswa?.tanggal_lahir ?? '',
     jenis_kelamin: props.mahasiswa?.jenis_kelamin ?? '',
+    id_agama: props.mahasiswa?.id_agama?.toString() ?? '',
+    id_wilayah: props.mahasiswa?.id_wilayah ?? '',
     tahun_masuk: props.mahasiswa?.tahun_masuk ?? new Date().getFullYear().toString(),
     nama_ibu: props.mahasiswa?.nama_ibu ?? '',
     dosen_pembimbing_id: props.mahasiswa?.dosen_pembimbing_id?.toString() ?? '',
@@ -53,6 +65,93 @@ const form = useForm({
 });
 
 const showPassword = ref(false);
+
+const openPopoverDosen = ref(false);
+const searchDosen = ref('');
+
+const filteredDosens = computed(() => {
+    if (!searchDosen.value) {
+        return props.dosens;
+    }
+    const q = searchDosen.value.toLowerCase();
+    return props.dosens.filter(d => 
+        d.nama.toLowerCase().includes(q) || 
+        (d.nidn && d.nidn.toLowerCase().includes(q))
+    );
+});
+
+watch(openPopoverDosen, (val) => {
+    if (!val) {
+        searchDosen.value = '';
+    }
+});
+
+const getDosenLabel = (dosenId) => {
+    if (!dosenId) {
+        return 'Pilih Dosen...';
+    }
+    const d = props.dosens.find(x => String(x.id) === String(dosenId));
+    if (!d) {
+        return 'Pilih Dosen...';
+    }
+    return `${d.nama} (${d.nidn || 'Tanpa NIDN'})`;
+};
+
+const getInitialWilayahLabel = () => {
+    if (!props.mahasiswa || !props.mahasiswa.feeder_wilayah) return '';
+    const w = props.mahasiswa.feeder_wilayah;
+    const kabName = w.parent ? w.parent.nama_wilayah : '';
+    const provName = (w.parent && w.parent.parent) ? w.parent.parent.nama_wilayah : '';
+    let label = w.nama_wilayah;
+    if (kabName) {
+        label += `, ${kabName}`;
+    }
+    if (provName) {
+        label += `, ${provName}`;
+    }
+    return label;
+};
+
+const wilayahSearch = ref(getInitialWilayahLabel());
+const wilayahResults = ref([]);
+const isSearchingWilayah = ref(false);
+const showWilayahDropdown = ref(false);
+
+let searchTimeout = null;
+
+watch(wilayahSearch, (newVal) => {
+    if (!newVal || newVal.length < 3) {
+        wilayahResults.value = [];
+        return;
+    }
+
+    if (props.mahasiswa && newVal === getInitialWilayahLabel()) {
+        return;
+    }
+
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        isSearchingWilayah.value = true;
+        try {
+            const response = await axios.get(route('v2.admin.feeder.search-wilayah'), {
+                params: { q: newVal }
+            });
+            wilayahResults.value = response.data;
+            showWilayahDropdown.value = true;
+        } catch (error) {
+            console.error('Error fetching wilayah:', error);
+        } finally {
+            isSearchingWilayah.value = false;
+        }
+    }, 400);
+});
+
+const selectWilayah = (w) => {
+    form.id_wilayah = w.id_wilayah;
+    wilayahSearch.value = w.label;
+    showWilayahDropdown.value = false;
+    wilayahResults.value = [];
+};
 
 const selectedKelas = computed(() => {
     if (!form.kelas_id) return null;
@@ -188,6 +287,58 @@ const submit = () => {
                     </div>
                 </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Agama <span class="text-destructive">*</span></Label>
+                        <Select v-model="form.id_agama" required>
+                            <SelectTrigger class="h-11 border-gray-200 focus:ring-[#4B49AC]/20 rounded-lg">
+                                <SelectValue placeholder="Pilih Agama..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem v-for="agama in agamas" :key="agama.id_agama" :value="agama.id_agama.toString()">
+                                    {{ agama.nama_agama }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p v-if="form.errors.id_agama" class="text-xs text-red-500 font-medium">{{ form.errors.id_agama }}</p>
+                    </div>
+
+                    <div class="space-y-2 relative">
+                        <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Kecamatan Domisili <span class="text-destructive">*</span></Label>
+                        <div class="relative">
+                            <Input 
+                                v-model="wilayahSearch" 
+                                placeholder="Cari kecamatan..." 
+                                :disabled="form.processing" 
+                                class="h-11 rounded-lg pr-10"
+                                @focus="showWilayahDropdown = wilayahResults.length > 0"
+                                required 
+                            />
+                            <div v-if="isSearchingWilayah" class="absolute right-3 top-1/2 -translate-y-1/2">
+                                <Loader2 class="h-4 w-4 animate-spin text-gray-400" />
+                            </div>
+                        </div>
+                        <p v-if="form.errors.id_wilayah" class="text-xs text-red-500 font-medium">{{ form.errors.id_wilayah }}</p>
+
+                        <!-- Autocomplete Dropdown List -->
+                        <div 
+                            v-if="showWilayahDropdown && wilayahResults.length > 0" 
+                            class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                        >
+                            <ul class="py-1 text-sm text-gray-700">
+                                <li 
+                                    v-for="w in wilayahResults" 
+                                    :key="w.id_wilayah"
+                                    @click="selectWilayah(w)"
+                                    class="px-4 py-2 hover:bg-indigo-50 cursor-pointer transition-colors"
+                                >
+                                    {{ w.label }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="space-y-2">
                     <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Ibu Kandung <span class="text-destructive">*</span></Label>
                     <Input v-model="form.nama_ibu" placeholder="Nama Ibu" :disabled="form.processing" class="h-11 rounded-lg" required />
@@ -233,16 +384,67 @@ const submit = () => {
 
                     <div class="space-y-2">
                         <Label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pembimbing Akademik <span class="text-destructive">*</span></Label>
-                        <Select v-model="form.dosen_pembimbing_id" required>
-                            <SelectTrigger class="h-11 border-gray-200 focus:ring-[#4B49AC]/20 rounded-lg">
-                                <SelectValue placeholder="Pilih Dosen..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem v-for="dosen in dosens" :key="dosen.id" :value="dosen.id.toString()">
-                                    {{ dosen.nama }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <Popover v-model:open="openPopoverDosen">
+                            <PopoverTrigger as-child>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    role="combobox"
+                                    :aria-expanded="openPopoverDosen"
+                                    class="w-full justify-between h-11 border-gray-200 focus:border-[#4B49AC] focus:ring-[#4B49AC]/20 font-normal rounded-lg text-left bg-white px-3"
+                                    :class="!form.dosen_pembimbing_id ? 'text-gray-400' : 'text-gray-900'"
+                                >
+                                    <span class="truncate">{{ getDosenLabel(form.dosen_pembimbing_id) }}</span>
+                                    <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent class="w-[380px] sm:w-[480px] p-0 bg-white border border-gray-200 shadow-lg z-50 rounded-lg" align="start">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center border-b px-3 py-2 sticky top-0 bg-white z-10">
+                                        <Search class="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-500" />
+                                        <input
+                                            v-model="searchDosen"
+                                            type="text"
+                                            placeholder="Cari nama atau NIDN dosen..."
+                                            class="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
+                                        <button
+                                            v-if="searchDosen"
+                                            type="button"
+                                            @click="searchDosen = ''"
+                                            class="ml-1 text-gray-400 hover:text-gray-600"
+                                        >
+                                            <X class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="max-h-[300px] overflow-y-auto p-1">
+                                        <div v-if="filteredDosens.length === 0" class="py-6 text-center text-sm text-gray-500">
+                                            Dosen tidak ditemukan.
+                                        </div>
+                                        <button
+                                            v-else
+                                            v-for="dosen in filteredDosens"
+                                            :key="dosen.id"
+                                            type="button"
+                                            @click="() => {
+                                                form.dosen_pembimbing_id = String(dosen.id)
+                                                openPopoverDosen = false
+                                                searchDosen = ''
+                                            }"
+                                            class="w-full text-left flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+                                            :class="form.dosen_pembimbing_id === String(dosen.id) ? 'bg-[#4b49ac]/10 text-[#4B49AC] font-semibold' : 'text-gray-700'"
+                                        >
+                                            <Check
+                                                :class="form.dosen_pembimbing_id === String(dosen.id) ? 'opacity-100' : 'opacity-0'"
+                                                class="mr-2 h-4 w-4 text-[#4B49AC] shrink-0"
+                                            />
+                                            <span class="truncate">{{ dosen.nama }} ({{ dosen.nidn || 'Tanpa NIDN' }})</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                         <p v-if="form.errors.dosen_pembimbing_id" class="text-xs text-red-500 font-medium">{{ form.errors.dosen_pembimbing_id }}</p>
                     </div>
                 </div>

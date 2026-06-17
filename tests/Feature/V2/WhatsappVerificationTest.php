@@ -5,6 +5,7 @@ namespace Tests\Feature\V2;
 use App\Models\ContactVerification;
 use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\Prodi;
 use App\Models\Semester;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +22,7 @@ class WhatsappVerificationTest extends TestCase
     {
         parent::setUp();
 
-        $prodi = \App\Models\Prodi::firstOrCreate(
+        $prodi = Prodi::firstOrCreate(
             ['kode_prodi' => '1001'],
             [
                 'nama_prodi' => 'Teknik Elektro',

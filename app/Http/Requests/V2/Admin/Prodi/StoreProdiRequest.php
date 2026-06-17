@@ -35,6 +35,7 @@ class StoreProdiRequest extends FormRequest
             'jenjang' => 'required|string|max:50',
             'alias_nama' => 'required|string|max:255',
             'alias_jenjang' => 'required|string|max:50',
+            'biaya_masuk' => 'nullable|integer|min:0',
         ];
     }
 

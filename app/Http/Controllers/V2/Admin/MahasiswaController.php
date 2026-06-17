@@ -9,6 +9,7 @@ use App\Http\Requests\V2\Admin\Mahasiswa\StoreMahasiswaRequest;
 use App\Http\Requests\V2\Admin\Mahasiswa\UpdateMahasiswaRequest;
 use App\Imports\MahasiswaImport;
 use App\Models\Dosen;
+use App\Models\FeederAgama;
 use App\Models\Kelas;
 use App\Models\Mahasiswa;
 use App\Models\Prodi;
@@ -57,7 +58,7 @@ class MahasiswaController extends Controller
      */
     public function allStudents(Request $request)
     {
-        $query = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas']);
+        $query = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas', 'feederWilayah.parent.parent']);
 
         // Filter search (NIM or Name)
         if ($request->filled('search')) {
@@ -121,7 +122,7 @@ class MahasiswaController extends Controller
         ];
 
         $allKelas = Kelas::with(['prodi', 'semester'])->get();
-        $dosens = Dosen::where('pembimbing_akademik', 1)->where('status', 1)->get();
+        $dosens = Dosen::where('status', 1)->orderBy('nama', 'asc')->get();
 
         return Inertia::render('Admin/Mahasiswa/All', [
             'mahasiswas' => $mahasiswas,
@@ -131,6 +132,7 @@ class MahasiswaController extends Controller
             'stats' => $stats,
             'allKelas' => $allKelas,
             'dosens' => $dosens,
+            'agamas' => FeederAgama::all(),
         ]);
     }
 
@@ -141,7 +143,7 @@ class MahasiswaController extends Controller
     {
         $kelas = Kelas::with(['prodi', 'semester'])->findOrFail($id);
 
-        $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas'])
+        $mahasiswas = Mahasiswa::with(['kelas.semester', 'kelas.prodi', 'pembimbingAkademik', 'orangTuas', 'feederWilayah.parent.parent'])
             ->where('kelas_id', $id)
             ->where('status_mahasiswa', 'Aktif')
             ->orderBy('nim', 'asc')
@@ -165,8 +167,8 @@ class MahasiswaController extends Controller
             ->orderBy('id_semester')
             ->get();
 
-        $dosens = Dosen::where('pembimbing_akademik', 1)
-            ->where('status', 1)
+        $dosens = Dosen::where('status', 1)
+            ->orderBy('nama', 'asc')
             ->get();
 
         return Inertia::render('Admin/Mahasiswa/Detail', [
@@ -176,6 +178,7 @@ class MahasiswaController extends Controller
             'kelasSamProdi' => $kelasSamProdi,
             'kelasLintas' => $kelasLintas,
             'dosens' => $dosens,
+            'agamas' => FeederAgama::all(),
         ]);
     }
 

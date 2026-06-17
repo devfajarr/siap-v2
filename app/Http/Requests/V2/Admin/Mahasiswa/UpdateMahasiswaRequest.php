@@ -31,6 +31,8 @@ class UpdateMahasiswaRequest extends FormRequest
             'nama_ibu' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:Laki-Laki,Perempuan',
             'kelas_id' => 'required|exists:kelas,id',
+            'id_agama' => 'nullable|exists:feeder_agamas,id_agama',
+            'id_wilayah' => 'nullable|exists:feeder_wilayahs,id_wilayah',
         ];
     }
 

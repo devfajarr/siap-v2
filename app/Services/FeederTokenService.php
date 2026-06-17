@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Dosen;
+use App\Models\FeederAgama;
+use App\Models\FeederWilayah;
 use App\Models\Jadwal;
 use App\Models\Kelas;
 use App\Models\Mahasiswa;
@@ -1312,6 +1314,301 @@ class FeederTokenService
             'synced_classes' => $syncedClasses,
             'synced_lecturers' => $syncedLecturers,
             'synced_krs_records' => $syncedKrsRecords,
+        ];
+    }
+
+    /**
+     * Push a student record and their educational history registration to Neo Feeder.
+     */
+    public function pushMahasiswaToFeeder(Mahasiswa $mahasiswa): array
+    {
+        $kelas = $mahasiswa->kelas;
+        if (! $kelas) {
+            return [
+                'success' => false,
+                'message' => 'Mahasiswa tidak memiliki kelas rombel.',
+            ];
+        }
+
+        $prodi = $kelas->prodi;
+        if (! $prodi || ! $prodi->feeder_id_prodi) {
+            return [
+                'success' => false,
+                'message' => 'Program studi terkait kelas belum memiliki feeder_id_prodi.',
+            ];
+        }
+
+        $token = $this->getToken();
+        if (! $token) {
+            return [
+                'success' => false,
+                'message' => 'Gagal mendapatkan token Feeder.',
+            ];
+        }
+
+        // Tahap 1: Cek/Insert Biodata Mahasiswa (id_mahasiswa)
+        $idMahasiswa = $mahasiswa->feeder_id_mahasiswa;
+
+        if (empty($idMahasiswa)) {
+            // Cek apakah data biodata sudah ada di Feeder menggunakan NIK
+            $nik = trim($mahasiswa->nik);
+            if (! empty($nik) && $nik !== '-') {
+                $bioCheck = $this->fetchFirstRecord('GetBiodataMahasiswa', "nik = '{$nik}'");
+                if ($bioCheck && ! empty($bioCheck['id_mahasiswa'])) {
+                    $idMahasiswa = $bioCheck['id_mahasiswa'];
+                }
+            }
+
+            // Jika masih kosong, cari berdasarkan nama lengkap dan tanggal lahir
+            if (empty($idMahasiswa)) {
+                $nama = trim($mahasiswa->nama_lengkap);
+                $tglLahir = $mahasiswa->tanggal_lahir;
+                if (! empty($nama) && ! empty($tglLahir)) {
+                    $bioCheck = $this->fetchFirstRecord('GetBiodataMahasiswa', "nama_mahasiswa = '{$nama}' and tanggal_lahir = '{$tglLahir}'");
+                    if ($bioCheck && ! empty($bioCheck['id_mahasiswa'])) {
+                        $idMahasiswa = $bioCheck['id_mahasiswa'];
+                    }
+                }
+            }
+
+            // Jika belum ada di Feeder, lakukan InsertBiodataMahasiswa
+            if (empty($idMahasiswa)) {
+                $jk = ($mahasiswa->jenis_kelamin === 'Perempuan') ? 'P' : 'L';
+                $tglLahir = $mahasiswa->tanggal_lahir ?: now()->format('Y-m-d');
+                $nisn = $mahasiswa->nisn ?: '0000000000'; // Default NISN if missing
+
+                $biodataRecord = [
+                    'nama_mahasiswa' => $mahasiswa->nama_lengkap,
+                    'jenis_kelamin' => $jk,
+                    'tempat_lahir' => $mahasiswa->tempat_lahir ?: '-',
+                    'tanggal_lahir' => $tglLahir,
+                    'id_agama' => $mahasiswa->id_agama ?: 1, // Dynamic religion from DB (default 1 = Islam)
+                    'nik' => $mahasiswa->nik ?: '',
+                    'nisn' => $nisn,
+                    'nama_ibu_kandung' => $mahasiswa->nama_ibu ?: '-',
+                    'kewarganegaraan' => 'ID',
+                    'kelurahan' => 'Kelurahan',
+                    'id_wilayah' => $mahasiswa->id_wilayah ?: '030606', // Dynamic subdistrict (default 030606 = Kec. Purworejo)
+                    'jalan' => $mahasiswa->alamat ?: '',
+                    'handphone' => $mahasiswa->no_telephone ?: '',
+                    'email' => $mahasiswa->email ?: ($mahasiswa->nim.'@sawunggalih.ac.id'),
+                ];
+
+                $responseBio = $this->feederRequest('InsertBiodataMahasiswa', ['record' => $biodataRecord]);
+
+                if ($responseBio['success'] && ! empty($responseBio['data']['data']['id_mahasiswa'])) {
+                    $idMahasiswa = $responseBio['data']['data']['id_mahasiswa'];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Gagal membuat biodata mahasiswa di Feeder: '.($responseBio['message'] ?? 'Unknown error'),
+                    ];
+                }
+            }
+
+            // Update feeder_id_mahasiswa lokal
+            $mahasiswa->feeder_id_mahasiswa = $idMahasiswa;
+            $mahasiswa->save();
+        }
+
+        // Tahap 2: Cek/Insert Riwayat Pendidikan (id_registrasi_mahasiswa)
+        $idRegistrasi = $mahasiswa->feeder_id_registrasi;
+
+        if (empty($idRegistrasi)) {
+            // Cek apakah sudah terdaftar di Feeder berdasarkan NIM
+            $nim = trim($mahasiswa->nim);
+            $regCheck = $this->fetchFirstRecord('GetListRiwayatPendidikanMahasiswa', "nim = '{$nim}'");
+            if ($regCheck && ! empty($regCheck['id_registrasi_mahasiswa'])) {
+                $idRegistrasi = $regCheck['id_registrasi_mahasiswa'];
+            }
+
+            // Jika belum terdaftar, lakukan InsertRiwayatPendidikanMahasiswa
+            if (empty($idRegistrasi)) {
+                $periodeMasuk = $mahasiswa->id_periode_masuk;
+                if (empty($periodeMasuk)) {
+                    $periodeMasuk = ($mahasiswa->tahun_masuk ?: now()->format('Y')).'1';
+                }
+
+                $riwayatRecord = [
+                    'id_mahasiswa' => $idMahasiswa,
+                    'nim' => $mahasiswa->nim,
+                    'id_jenis_daftar' => 1, // Peserta didik baru
+                    'id_jalur_daftar' => 12, // Seleksi Mandiri
+                    'id_periode_masuk' => $periodeMasuk,
+                    'tanggal_daftar' => $mahasiswa->created_at ? $mahasiswa->created_at->format('Y-m-d') : now()->format('Y-m-d'),
+                    'id_prodi' => $prodi->feeder_id_prodi,
+                    'id_perguruan_tinggi' => $prodi->feeder_id_perguruan_tinggi ?? $this->getPerguruanTinggiId() ?? '',
+                    'id_pembiayaan' => 1, // Mandiri
+                    'biaya_masuk' => $prodi->biaya_masuk ?: 100000, // Dynamic entry fee from Prodi (default 100k fallback)
+                ];
+
+                $responseReg = $this->feederRequest('InsertRiwayatPendidikanMahasiswa', ['record' => $riwayatRecord]);
+
+                if ($responseReg['success'] && ! empty($responseReg['data']['data']['id_registrasi_mahasiswa'])) {
+                    $idRegistrasi = $responseReg['data']['data']['id_registrasi_mahasiswa'];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Gagal mendaftarkan riwayat pendidikan mahasiswa di Feeder: '.($responseReg['message'] ?? 'Unknown error'),
+                    ];
+                }
+            }
+
+            // Update feeder_id_registrasi lokal
+            $mahasiswa->feeder_id_registrasi = $idRegistrasi;
+            $mahasiswa->save();
+        }
+
+        return [
+            'success' => true,
+            'id_mahasiswa' => $idMahasiswa,
+            'id_registrasi_mahasiswa' => $idRegistrasi,
+        ];
+    }
+
+    /**
+     * Retrieve the institution (perguruan tinggi) Feeder ID.
+     */
+    public function getPerguruanTinggiId(): ?string
+    {
+        $pt = $this->fetchFirstRecord('GetProfilPerguruanTinggi');
+
+        return $pt ? ($pt['id_perguruan_tinggi'] ?? null) : null;
+    }
+
+    /**
+     * Push all active students within a class rombel to Neo Feeder.
+     */
+    public function pushMahasiswasByKelas(int $kelasId): array
+    {
+        $kelas = Kelas::find($kelasId);
+        if (! $kelas) {
+            return [
+                'success' => false,
+                'message' => "Kelas Rombel ID {$kelasId} tidak ditemukan.",
+            ];
+        }
+
+        $students = Mahasiswa::where('kelas_id', $kelas->id)
+            ->where('status_mahasiswa', 'Aktif')
+            ->get();
+
+        if ($students->isEmpty()) {
+            return [
+                'success' => true,
+                'total' => 0,
+                'success_count' => 0,
+                'failed_count' => 0,
+                'results' => [],
+            ];
+        }
+
+        $successCount = 0;
+        $failedCount = 0;
+        $results = [];
+
+        foreach ($students as $student) {
+            $res = $this->pushMahasiswaToFeeder($student);
+            if ($res['success']) {
+                $successCount++;
+            } else {
+                $failedCount++;
+            }
+            $results[$student->nim] = $res;
+        }
+
+        return [
+            'success' => true,
+            'total' => $students->count(),
+            'success_count' => $successCount,
+            'failed_count' => $failedCount,
+            'results' => $results,
+        ];
+    }
+
+    /**
+     * Pull religion records from Neo Feeder and cache locally.
+     */
+    public function pullAgamas(): array
+    {
+        $res = $this->feederRequest('GetAgama', ['limit' => 100]);
+
+        if (! $res['success']) {
+            return [
+                'success' => false,
+                'message' => 'Gagal menarik data agama: '.($res['message'] ?? 'Unknown error'),
+            ];
+        }
+
+        $records = $res['data']['data'] ?? [];
+        $count = 0;
+
+        foreach ($records as $record) {
+            FeederAgama::updateOrCreate(
+                ['id_agama' => (int) $record['id_agama']],
+                ['nama_agama' => $record['nama_agama']]
+            );
+            $count++;
+        }
+
+        return [
+            'success' => true,
+            'total' => $count,
+        ];
+    }
+
+    /**
+     * Pull administrative regions (wilayah) from Neo Feeder and cache locally.
+     */
+    public function pullWilayahs(int $level = 3): array
+    {
+        $limit = 500;
+        $offset = 0;
+        $hasMore = true;
+        $totalProcessed = 0;
+
+        while ($hasMore) {
+            $res = $this->feederRequest('GetWilayah', [
+                'filter' => "id_level_wilayah = '{$level}'",
+                'limit' => $limit,
+                'offset' => $offset,
+            ]);
+
+            if (! $res['success']) {
+                return [
+                    'success' => false,
+                    'message' => "Gagal menarik wilayah level {$level}: ".($res['message'] ?? 'Unknown error'),
+                ];
+            }
+
+            $records = $res['data']['data'] ?? [];
+            if (empty($records)) {
+                $hasMore = false;
+                break;
+            }
+
+            foreach ($records as $record) {
+                FeederWilayah::updateOrCreate(
+                    ['id_wilayah' => trim($record['id_wilayah'])],
+                    [
+                        'nama_wilayah' => $record['nama_wilayah'],
+                        'id_induk_wilayah' => $record['id_induk_wilayah'] ? trim($record['id_induk_wilayah']) : null,
+                        'id_level_wilayah' => (int) $record['id_level_wilayah'],
+                    ]
+                );
+                $totalProcessed++;
+            }
+
+            if (count($records) < $limit) {
+                $hasMore = false;
+            } else {
+                $offset += $limit;
+            }
+        }
+
+        return [
+            'success' => true,
+            'total_processed' => $totalProcessed,
         ];
     }
 }

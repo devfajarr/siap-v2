@@ -44,6 +44,7 @@ const props = defineProps({
     stats: Object,
     allKelas: Array,
     dosens: Array,
+    agamas: Array,
 });
 
 const page = usePage();
@@ -495,6 +496,7 @@ const getStatusBadgeClass = (statusStr) => {
                     class="flex-1 min-h-0"
                     :dosens="dosens" 
                     :all-kelas="allKelas" 
+                    :agamas="agamas"
                     @success="isAddSheetOpen = false; router.reload();"
                     @cancel="isAddSheetOpen = false"
                 />
@@ -518,6 +520,7 @@ const getStatusBadgeClass = (statusStr) => {
                     :mahasiswa="editingMahasiswa"
                     :dosens="dosens" 
                     :all-kelas="allKelas" 
+                    :agamas="agamas"
                     @success="isEditSheetOpen = false; router.reload();"
                     @cancel="isEditSheetOpen = false"
                 />

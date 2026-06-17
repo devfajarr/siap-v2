@@ -44,6 +44,7 @@ const props = defineProps({
     kelasSamProdi: Array,  // Kelas seprodi & sejenis (pindah rombel/semester)
     kelasLintas: Array,    // Kelas seprodi & lintas jenis (Reguler ↔ Karyawan)
     dosens: Array,
+    agamas: Array,
 });
 
 const page = usePage();
@@ -665,6 +666,7 @@ const submitImport = () => {
                     :dosens="dosens" 
                     :all-kelas="allKelas" 
                     :current-kelas-id="namaKelas.id"
+                    :agamas="agamas"
                     @success="isAddSheetOpen = false"
                     @cancel="isAddSheetOpen = false"
                 />
@@ -688,6 +690,7 @@ const submitImport = () => {
                     :mahasiswa="editingMahasiswa"
                     :dosens="dosens" 
                     :all-kelas="allKelas" 
+                    :agamas="agamas"
                     @success="isEditSheetOpen = false"
                     @cancel="isEditSheetOpen = false"
                 />
