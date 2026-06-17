@@ -26,3 +26,5 @@ sequenceDiagram
         View-->>User: Render Error Alert
     end
 ```
+
+Sequence diagram ini menggambarkan alur umum autentikasi multi-guard (login) oleh Mahasiswa, Dosen, atau Admin, yang berlaku untuk ketiga peran pengguna tersebut. Pengguna menginput kredensial dan mengirimkan formulir login, sistem melakukan validasi record pengguna ke database berdasarkan guard yang dipilih, lalu mengembalikan pesan kesalahan jika kredensial tidak valid. Setelah kredensial terbukti valid, sistem menyimpan sesi atau menghasilkan token JWT, melakukan pen galihan halaman, dan akhirnya menampilkan dasbor V2 yang sesuai dengan hak akses pengguna. Alur ini mewakili proses masuk yang terpadu untuk semua level pengguna di sistem.

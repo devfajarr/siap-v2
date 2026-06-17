@@ -31,3 +31,5 @@ sequenceDiagram
         View-->>Mahasiswa: Render Success Toast
     end
 ```
+
+Sequence diagram ini menggambarkan alur umum pengajuan kontrak KRS oleh Mahasiswa, yang berlaku untuk semua mahasiswa yang aktif dalam periode kontrak mata kuliah. Mahasiswa memilih mata kuliah serta rombel lalu mengirimkan formulir KRS, sistem melakukan validasi status pembayaran ke database, lalu mengembalikan pesan peringatan jika pembayaran SPP belum lunas. Setelah data pembayaran dinyatakan valid (lunas), sistem menyimpan data mata kuliah yang dikontrak satu per satu ke database, dan akhirnya menampilkan status sukses pengisian KRS. Alur ini mewakili proses pemeriksaan administratif keuangan sebelum mahasiswa diizinkan mengunci kontrak mata kuliah.

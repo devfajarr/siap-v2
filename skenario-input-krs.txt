@@ -1,7 +1,0 @@
-Gunakan service GetDictionary untuk melakukan analisa dan pengujian input data atau pengelolaan KRS mahasiswa melalui ACT berikut:
-- InsertPesertaKelasKuliah
-- InsertDosenPengajarKelasKuliah
-- InsertKelasKuliah
-
-tujuan analisa digunakan untuk memudahkan admin untuk melakukan input KRS mahasiswa sekaligus sebagai importer ke server guna perlaporan data KRS mahasiswa.
-setelah berhasil melakukan analisa dari ACT ACT tersebut, lakukan pengujian input data dengan referensi data yang dibutuhkan, Jika membutuhkan data dari ACT lain maka lakukan pengambilan data yang ada di ACT tersebut.
