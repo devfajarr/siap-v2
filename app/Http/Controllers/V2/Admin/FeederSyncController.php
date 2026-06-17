@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\FeederSyncJob;
 use App\Models\FeederWilayah;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,5 +48,83 @@ class FeederSyncController extends Controller
         });
 
         return response()->json($results);
+    }
+
+    /**
+     * Pull study programs from Neo Feeder.
+     */
+    public function pullProdis(): JsonResponse
+    {
+        FeederSyncJob::dispatch('pull-prodis');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sinkronisasi program studi telah dimulai di latar belakang.',
+        ]);
+    }
+
+    /**
+     * Pull lecturers from Neo Feeder.
+     */
+    public function pullDosens(): JsonResponse
+    {
+        FeederSyncJob::dispatch('pull-dosens');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sinkronisasi penugasan dosen telah dimulai di latar belakang.',
+        ]);
+    }
+
+    /**
+     * Pull courses from Neo Feeder.
+     */
+    public function pullMatkuls(): JsonResponse
+    {
+        FeederSyncJob::dispatch('pull-matkuls');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sinkronisasi mata kuliah telah dimulai di latar belakang.',
+        ]);
+    }
+
+    /**
+     * Pull students from Neo Feeder.
+     */
+    public function pullMahasiswas(): JsonResponse
+    {
+        FeederSyncJob::dispatch('pull-mahasiswas');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sinkronisasi data riwayat mahasiswa telah dimulai di latar belakang.',
+        ]);
+    }
+
+    /**
+     * Push a single student to Neo Feeder.
+     */
+    public function pushMahasiswa(int $id): JsonResponse
+    {
+        FeederSyncJob::dispatch('push-mahasiswa', ['mahasiswa_id' => $id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kirim data mahasiswa ke Feeder telah dimulai di latar belakang.',
+        ]);
+    }
+
+    /**
+     * Push all active students of a class to Neo Feeder.
+     */
+    public function pushMahasiswaKelas(int $kelas_id): JsonResponse
+    {
+        FeederSyncJob::dispatch('push-mahasiswa-kelas', ['kelas_id' => $kelas_id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kirim data mahasiswa rombel telah dimulai di latar belakang.',
+        ]);
     }
 }

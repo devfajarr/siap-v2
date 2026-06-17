@@ -51,8 +51,10 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
-  XCircle
+  XCircle,
+  UploadCloud
 } from 'lucide-vue-next'
+import { useFeederSync } from '@/Composables/useFeederSync'
 
 const props = defineProps({
   matkuls: Object,
@@ -62,6 +64,7 @@ const props = defineProps({
 })
 
 const page = usePage()
+const { triggerSync } = useFeederSync()
 
 // Filters & Search
 const search = ref(props.filters.search || '')
@@ -199,10 +202,16 @@ const clearFilters = () => {
           <h1 class="text-2xl font-bold text-[#1F2937]">Data Mata Kuliah</h1>
           <p class="text-[#6B7280]">Kelola daftar mata kuliah, SKS, dan kurikulum.</p>
         </div>
-        <Button @click="isAddModalOpen = true" class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-sm">
-          <Plus class="w-4 h-4 mr-2" />
-          Tambah Matkul
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button @click="triggerSync('pull-matkuls')" class="bg-indigo-50 border border-indigo-200 text-[#4B49AC] hover:bg-indigo-100 rounded-lg shadow-sm transition-all h-10">
+            <UploadCloud class="w-4 h-4 mr-2" />
+            Tarik Data Matkul
+          </Button>
+          <Button @click="isAddModalOpen = true" class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-sm h-10">
+            <Plus class="w-4 h-4 mr-2" />
+            Tambah Matkul
+          </Button>
+        </div>
       </div>
 
       <!-- Filters Card -->

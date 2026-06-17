@@ -33,8 +33,10 @@ import {
     UserX,
     Briefcase,
     ChevronLeft,
-    UserPlus
+    UserPlus,
+    UploadCloud
 } from 'lucide-vue-next';
+import { useFeederSync } from '@/Composables/useFeederSync';
 
 const props = defineProps({
     mahasiswas: Object, // Paginated
@@ -48,6 +50,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const { triggerSync } = useFeederSync();
 
 // Filter states
 const search = ref(props.filters.search || '');
@@ -213,6 +216,10 @@ const getStatusBadgeClass = (statusStr) => {
                     </div>
                     
                     <div class="flex flex-wrap items-center gap-2">
+                        <Button @click="triggerSync('pull-mahasiswas')" class="bg-indigo-50 border border-indigo-200 text-[#4B49AC] hover:bg-indigo-100 rounded-lg shadow-sm transition-all">
+                            <UploadCloud class="mr-2 h-4 w-4" /> Tarik Semua Mahasiswa
+                        </Button>
+
                         <Button @click="isAddSheetOpen = true" class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-md transition-all">
                             <Plus class="mr-2 h-4 w-4" /> Tambah Mahasiswa
                         </Button>
@@ -375,6 +382,7 @@ const getStatusBadgeClass = (statusStr) => {
                                     <TableHead>Kelas</TableHead>
                                     <TableHead>Angkatan</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Status Feeder</TableHead>
                                     <TableHead class="text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -402,6 +410,19 @@ const getStatusBadgeClass = (statusStr) => {
                                             {{ mhs.status_mahasiswa }}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-1.5">
+                                            <Badge v-if="mhs.feeder_id_registrasi" variant="outline" class="border-emerald-200 bg-emerald-50 text-emerald-700 font-semibold text-xs shrink-0">
+                                                Sinkron
+                                            </Badge>
+                                            <Badge v-else variant="outline" class="border-gray-200 bg-gray-50 text-gray-500 font-semibold text-xs shrink-0">
+                                                Belum Sinkron
+                                            </Badge>
+                                            <Button v-if="!mhs.feeder_id_registrasi" variant="ghost" size="sm" class="h-6 px-2 text-[10px] text-[#4B49AC] hover:bg-indigo-50 border border-indigo-200 rounded font-semibold transition-all shrink-0" @click="triggerSync('push-mahasiswa', { id: mhs.id })" title="Push data ke Feeder">
+                                                Push
+                                            </Button>
+                                        </div>
+                                    </TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                             <Button variant="ghost" size="icon" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all" @click="openParentSheet(mhs)" title="Kelola Orang Tua">
@@ -417,7 +438,7 @@ const getStatusBadgeClass = (statusStr) => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-slot:empty v-if="mahasiswas.data.length === 0">
-                                    <TableCell colspan="7" class="h-64 text-center">
+                                    <TableCell colspan="8" class="h-64 text-center">
                                         <div class="flex flex-col items-center justify-center space-y-3">
                                             <div class="rounded-full bg-gray-100 p-4">
                                                 <Users class="h-8 w-8 text-gray-400" />

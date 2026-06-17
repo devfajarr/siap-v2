@@ -647,6 +647,20 @@ Route::prefix('v2')->middleware(['auth:admin,mahasiswa,direktur,wakil_direktur,d
         Route::get('feeder/search-wilayah', [FeederSyncController::class, 'searchWilayah'])
             ->name('v2.admin.feeder.search-wilayah');
 
+        // Feeder Sync Actions
+        Route::post('feeder/pull-prodis', [FeederSyncController::class, 'pullProdis'])
+            ->name('v2.admin.feeder.pull-prodis');
+        Route::post('feeder/pull-dosens', [FeederSyncController::class, 'pullDosens'])
+            ->name('v2.admin.feeder.pull-dosens');
+        Route::post('feeder/pull-matkuls', [FeederSyncController::class, 'pullMatkuls'])
+            ->name('v2.admin.feeder.pull-matkuls');
+        Route::post('feeder/pull-mahasiswas', [FeederSyncController::class, 'pullMahasiswas'])
+            ->name('v2.admin.feeder.pull-mahasiswas');
+        Route::post('feeder/push-mahasiswa/{id}', [FeederSyncController::class, 'pushMahasiswa'])
+            ->name('v2.admin.feeder.push-mahasiswa');
+        Route::post('feeder/push-mahasiswa-kelas/{kelas_id}', [FeederSyncController::class, 'pushMahasiswaKelas'])
+            ->name('v2.admin.feeder.push-mahasiswa-kelas');
+
         Route::get('data-mahasiswa/all', [App\Http\Controllers\V2\Admin\MahasiswaController::class, 'allStudents'])
             ->name('v2.admin.data-mahasiswa.all');
 

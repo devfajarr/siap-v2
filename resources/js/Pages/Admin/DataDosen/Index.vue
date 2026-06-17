@@ -53,8 +53,10 @@ import {
   XCircle,
   Download,
   Upload,
-  FileSpreadsheet
+  FileSpreadsheet,
+  UploadCloud
 } from 'lucide-vue-next'
+import { useFeederSync } from '@/Composables/useFeederSync'
 
 const props = defineProps({
   dosens: Object,
@@ -62,6 +64,7 @@ const props = defineProps({
 })
 
 const page = usePage()
+const { triggerSync } = useFeederSync()
 
 // Filters & Search
 const search = ref(props.filters.search || '')
@@ -231,6 +234,10 @@ const downloadTemplate = () => {
           <p class="text-[#6B7280]">Manajemen data tenaga pengajar dan pembimbing akademik.</p>
         </div>
         <div class="flex items-center gap-2">
+          <Button @click="triggerSync('pull-dosens')" class="bg-indigo-50 border border-indigo-200 text-[#4B49AC] hover:bg-indigo-100 rounded-lg shadow-sm transition-all">
+            <UploadCloud class="w-4 h-4 mr-2" />
+            Tarik Data Dosen
+          </Button>
           <Button variant="outline" @click="isImportModalOpen = true" class="border-gray-200 text-[#4B5563] hover:bg-gray-50 rounded-lg">
             <Upload class="w-4 h-4 mr-2" />
             Import

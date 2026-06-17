@@ -34,8 +34,10 @@ import {
     Home,
     Info,
     BookOpen,
-    ArrowRight
+    ArrowRight,
+    UploadCloud
 } from 'lucide-vue-next';
+import { useFeederSync } from '@/Composables/useFeederSync';
 
 const props = defineProps({
     namaKelas: Object,
@@ -48,6 +50,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const { triggerSync } = useFeederSync();
 const search = ref('');
 const selectedIds = ref([]);
 const isAddSheetOpen = ref(false);
@@ -299,6 +302,10 @@ const submitImport = () => {
                     </div>
                     
                     <div class="flex flex-wrap items-center gap-2">
+                        <Button @click="triggerSync('push-mahasiswa-kelas', { kelas_id: namaKelas.id })" class="bg-indigo-50 border border-indigo-200 text-[#4B49AC] hover:bg-indigo-100 rounded-lg shadow-sm transition-all">
+                            <UploadCloud class="mr-2 h-4 w-4" /> Push Rombel ke Feeder
+                        </Button>
+
                         <Button @click="isAddSheetOpen = true" class="bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-lg shadow-md transition-all">
                             <Plus class="mr-2 h-4 w-4" /> Tambah Mahasiswa
                         </Button>
@@ -584,6 +591,7 @@ const submitImport = () => {
                                     <TableHead>Jenis Kelamin</TableHead>
                                     <TableHead>Pembimbing</TableHead>
                                     <TableHead>Kontak</TableHead>
+                                    <TableHead>Status Feeder</TableHead>
                                     <TableHead class="text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -612,6 +620,19 @@ const submitImport = () => {
                                     </TableCell>
                                     <TableCell>
                                         <div class="text-xs text-muted-foreground">{{ mhs.no_telephone }}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-1.5">
+                                            <Badge v-if="mhs.feeder_id_registrasi" variant="outline" class="border-emerald-200 bg-emerald-50 text-emerald-700 font-semibold text-xs shrink-0">
+                                                Sinkron
+                                            </Badge>
+                                            <Badge v-else variant="outline" class="border-gray-200 bg-gray-50 text-gray-500 font-semibold text-xs shrink-0">
+                                                Belum Sinkron
+                                            </Badge>
+                                            <Button v-if="!mhs.feeder_id_registrasi" variant="ghost" size="sm" class="h-6 px-2 text-[10px] text-[#4B49AC] hover:bg-indigo-50 border border-indigo-200 rounded font-semibold transition-all shrink-0" @click="triggerSync('push-mahasiswa', { id: mhs.id })" title="Push data ke Feeder">
+                                                Push
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
