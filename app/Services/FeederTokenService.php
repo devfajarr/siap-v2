@@ -322,6 +322,15 @@ class FeederTokenService
             }
 
             $resData = $response->json();
+
+            // Validasi error code dari Neo Feeder
+            if (isset($resData['error_code']) && (int) $resData['error_code'] !== 0) {
+                return [
+                    'success' => false,
+                    'message' => $resData['error_desc'] ?? 'Feeder error '.$resData['error_code'],
+                ];
+            }
+
             $records = $resData['data'] ?? [];
 
             if (empty($records)) {
