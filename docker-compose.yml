@@ -222,6 +222,5 @@ volumes:
 networks:
   siap-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/24
+    # Subnet tidak di-hardcode agar Docker otomatis memilih range yang bebas.
+    # Subnet statis 172.20.0.0/24 sebelumnya konflik dengan network Docker lain di VPS.
