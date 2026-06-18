@@ -19,15 +19,24 @@ export default defineConfig({
         }),
     ],
     resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './resources/js'),
-            // Alias lowercase → uppercase Components untuk kompatibilitas Linux Docker.
-            // Di Windows (case-insensitive), '@/components' dan '@/Components' keduanya
-            // bekerja. Di Linux Docker (case-sensitive), hanya '@/Components' yang valid
-            // karena direktori aslinya bernama 'Components' (C kapital).
-            // Alias ini memastikan 68 import lowercase tetap bekerja di Docker.
-            '@/components': path.resolve(__dirname, './resources/js/Components'),
-        },
+        alias: [
+            // URUTAN PENTING: alias spesifik HARUS di atas alias general.
+            // Vite/Rollup mencocokkan alias dari atas ke bawah dan berhenti di match pertama.
+            //
+            // Masalah: direktori di git adalah 'Components' (C kapital), tapi 68 file Vue
+            // mengimport '@/components/...' (c kecil). Di Windows tidak masalah karena
+            // file system-nya case-insensitive. Di Linux/Docker, case-sensitive → build gagal.
+            //
+            // '@/components' harus di atas '@' agar tidak kalah oleh catch-all '@'.
+            {
+                find: '@/components',
+                replacement: path.resolve(__dirname, './resources/js/Components'),
+            },
+            {
+                find: '@',
+                replacement: path.resolve(__dirname, './resources/js'),
+            },
+        ],
     },
     server: {
         host: 'localhost',
