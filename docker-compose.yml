@@ -60,13 +60,13 @@ services:
       REVERB_APP_ID: "${REVERB_APP_ID}"
       REVERB_APP_KEY: "${REVERB_APP_KEY}"
       REVERB_APP_SECRET: "${REVERB_APP_SECRET}"
-      # Reverb dijalankan di service terpisah (container siap-reverb)
       REVERB_HOST: "${APP_DOMAIN:-siapv2.polsa.ac.id}"
       REVERB_PORT: "${REVERB_EXTERNAL_PORT:-8201}"
       REVERB_SCHEME: "${REVERB_SCHEME:-https}"
-      # Server internal Reverb mendengarkan di port 9000 (internal container)
-      REVERB_SERVER_HOST: "0.0.0.0"
+      REVERB_SERVER_HOST: "reverb"
       REVERB_SERVER_PORT: 9000
+      REVERB_SERVER_SCHEME: "http"
+
 
       # -- External APIs --
       WA_API_URL: "${WA_API_URL:-https://wa-api.polsa.ac.id/send-message}"
