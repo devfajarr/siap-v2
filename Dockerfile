@@ -157,7 +157,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # SERVER_NAME tidak menggunakan port default (80/443).
 # Port 8000 untuk HTTP → akan di-proxy oleh web server VPS.
 ENV SERVER_NAME=":8000"
-ENV FRANKENPHP_CONFIG="worker ./public/index.php"
 
 # ---------- Expose Ports ----------
 # 8000 → HTTP (Laravel app via FrankenPHP/Caddy)
