@@ -2,12 +2,34 @@
 # SIAP - Sistem Informasi Akademik POLSA
 # Dockerfile: FrankenPHP (Caddy + PHP 8.3 Runtime)
 # =============================================================================
-# Build Stage: Node.js → compile frontend assets (Vite + Tailwind + Vue 3)
-# Final Stage: FrankenPHP → serve Laravel app via Caddy worker mode
+# Stage 1 (composer-deps) : Install PHP vendor — untuk menyediakan ziggy ke Vite
+# Stage 2 (node-builder)  : Compile frontend assets (Vite + Tailwind + Vue 3)
+# Stage 3 (final)         : FrankenPHP — serve Laravel app via Caddy worker mode
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Stage 1: Build Frontend Assets
+# Stage 1: PHP Vendor Dependencies
+# -----------------------------------------------------------------------------
+# resources/js/app.js mengimport "../../vendor/tightenco/ziggy" (Ziggy route helper).
+# Import ini diresolved oleh Vite/Rollup saat build, sehingga vendor/tightenco/ziggy
+# HARUS tersedia di stage node-builder meski bukan PHP runtime.
+# Solusi: install composer di stage terpisah, lalu COPY hanya package ziggy-nya.
+# -----------------------------------------------------------------------------
+FROM composer:2 AS composer-deps
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --ignore-platform-reqs \
+    --no-interaction
+
+# -----------------------------------------------------------------------------
+# Stage 2: Build Frontend Assets
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS node-builder
 
@@ -18,6 +40,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline
 
+# Ziggy membutuhkan vendor/tightenco/ziggy agar Vite dapat me-resolve import-nya.
+# Hanya copy package ini (bukan seluruh vendor) agar node-builder tetap ringan.
+COPY --from=composer-deps /app/vendor/tightenco ./vendor/tightenco
+
 # Copy seluruh source untuk dicompile
 COPY resources/ ./resources/
 COPY vite.config.js tailwind.config.js postcss.config.js ./
@@ -27,7 +53,7 @@ COPY public/ ./public/
 RUN npm run build
 
 # -----------------------------------------------------------------------------
-# Stage 2: PHP Application (FrankenPHP)
+# Stage 3: PHP Application (FrankenPHP)
 # -----------------------------------------------------------------------------
 FROM dunglas/frankenphp:latest-php8.3-alpine AS final
 
