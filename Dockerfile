@@ -149,7 +149,7 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 RUN mkdir -p /var/log/supervisor /var/run
 
 # ---------- Copy Configuration Files ----------
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

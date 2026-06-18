@@ -71,4 +71,4 @@ echo " Starting Supervisor (FrankenPHP + Queue + Scheduler)"
 echo "====================================================="
 
 # Jalankan Supervisor sebagai PID 1
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+exec /usr/bin/supervisord -c /etc/supervisord.conf
