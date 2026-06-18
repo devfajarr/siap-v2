@@ -25,13 +25,22 @@ else
     echo "[0/7] ✓ .env sudah ada."
 fi
 
-# ---------- Wait for PostgreSQL ----------
-echo "[1/6] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}..."
-until pg_isready -h "${DB_HOST:-db}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-siap_user}" -d "${DB_DATABASE:-siakad}" 2>/dev/null; do
-  echo "  PostgreSQL not ready yet, retrying in 3s..."
-  sleep 3
-done
-echo "  ✓ PostgreSQL is ready."
+# ---------- Wait for MySQL ----------
+echo "[1/6] Waiting for MySQL at ${DB_HOST}:${DB_PORT:-3306}..."
+php -r "
+\$max = 30;
+while (\$max--) {
+    try {
+        new PDO('mysql:host=' . '${DB_HOST}' . ';port=' . '${DB_PORT:-3306}' . ';dbname=' . '${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');
+        exit(0);
+    } catch (Exception \$e) {
+        echo '  MySQL not ready yet, retrying in 3s... (' . \$e->getMessage() . ')' . PHP_EOL;
+        sleep(3);
+    }
+}
+exit(1);
+"
+echo "  ✓ MySQL is ready."
 
 # ---------- Laravel Key ----------
 if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:GENERATE_WITH_artisan_key_generate" ]; then

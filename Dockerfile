@@ -61,7 +61,7 @@ FROM dunglas/frankenphp:latest-php8.3-alpine AS final
 RUN apk add --no-cache \
     supervisor \
     tzdata \
-    postgresql-client \
+    mysql-client \
     curl \
     bash \
     libpng-dev \
@@ -76,8 +76,7 @@ RUN apk add --no-cache \
 # install-php-extensions adalah utility bawaan image FrankenPHP
 # yang menangani semua system dependencies secara otomatis.
 RUN install-php-extensions \
-    pdo_pgsql \
-    pgsql \
+    pdo_mysql \
     gd \
     zip \
     intl \

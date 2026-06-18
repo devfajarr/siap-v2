@@ -41,14 +41,14 @@ services:
       APP_URL: "${APP_URL:-http://siapv2.polsa.ac.id}"
 
       # -- Database --
-      DB_CONNECTION: pgsql
+      DB_CONNECTION: mysql
       DB_HOST: db
-      DB_PORT: 5432
+      DB_PORT: 3306
       DB_DATABASE: "${DB_DATABASE:-siakad}"
       DB_USERNAME: "${DB_USERNAME:-siap_user}"
       DB_PASSWORD: "${DB_PASSWORD}"
 
-      # -- Session / Cache / Queue (menggunakan database PostgreSQL) --
+      # -- Session / Cache / Queue (menggunakan database MySQL) --
       SESSION_DRIVER: database
       SESSION_LIFETIME: 120
       QUEUE_CONNECTION: database
@@ -132,9 +132,9 @@ services:
       APP_KEY: "${APP_KEY}"
       APP_DEBUG: "${APP_DEBUG:-false}"
       APP_URL: "${APP_URL:-http://siapv2.polsa.ac.id}"
-      DB_CONNECTION: pgsql
+      DB_CONNECTION: mysql
       DB_HOST: db
-      DB_PORT: 5432
+      DB_PORT: 3306
       DB_DATABASE: "${DB_DATABASE:-siakad}"
       DB_USERNAME: "${DB_USERNAME:-siap_user}"
       DB_PASSWORD: "${DB_PASSWORD}"
@@ -154,56 +154,33 @@ services:
       - siap-network
 
   # ---------------------------------------------------------------------------
-  # Service: db (PostgreSQL 16)
+  # Service: db (MySQL 8.0)
   # ---------------------------------------------------------------------------
-  # PostgreSQL 16 Alpine sebagai database engine utama.
+  # MySQL 8.0 sebagai database engine utama (sejalan dengan Laragon/MySQL lokal).
   # Volume db-data memastikan data persisten antar restart container.
-  # Port host 5445 dipilih:
-  #   - 5432: default PostgreSQL (tidak terpakai di host, tapi dihindari)
-  #   - 5433: SUDAH TERPAKAI oleh docker-proxy (container siapv2 lama)
-  #   - 5444: aman, tapi 5445 dipakai agar lebih mudah dibedakan
-  #   - 5445: BEBAS ✓
+  # Port host 3308 dipilih (3306 default dihindari karena berpotensi konflik).
   # ---------------------------------------------------------------------------
   db:
-    image: postgres:16-alpine
+    image: mysql:8.0
     container_name: siap-db
     restart: unless-stopped
     ports:
-      # Port DBA — port 5433 SUDAH TERPAKAI container siapv2 lama di VPS ini
-      # Gunakan 5445. Pertimbangkan hapus baris ini setelah migrasi stabil.
-      - "${DB_PORT:-5445}:5432"
+      - "${DB_PORT:-3308}:3306"
     environment:
-      POSTGRES_DB: "${DB_DATABASE:-siakad}"
-      POSTGRES_USER: "${DB_USERNAME:-siap_user}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD}"
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=id_ID.utf8 --lc-ctype=id_ID.utf8"
-      # Tuning performa PostgreSQL untuk workload akademik
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      MYSQL_DATABASE: "${DB_DATABASE:-siakad}"
+      MYSQL_USER: "${DB_USERNAME:-siap_user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
     volumes:
-      - db-data:/var/lib/postgresql/data
-      # Script inisialisasi (opsional, dijalankan hanya sekali saat DB kosong)
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-siap_user} -d ${DB_DATABASE:-siakad}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     networks:
       - siap-network
-    command: >
-      postgres
-        -c shared_buffers=256MB
-        -c effective_cache_size=768MB
-        -c maintenance_work_mem=64MB
-        -c checkpoint_completion_target=0.9
-        -c wal_buffers=16MB
-        -c default_statistics_target=100
-        -c random_page_cost=1.1
-        -c effective_io_concurrency=200
-        -c work_mem=4MB
-        -c max_connections=100
-        -c log_min_duration_statement=1000
 
 # =============================================================================
 # Named Volumes
