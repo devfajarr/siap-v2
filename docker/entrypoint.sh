@@ -34,9 +34,14 @@ done
 echo "  ✓ PostgreSQL is ready."
 
 # ---------- Laravel Key ----------
-if [ -z "$APP_KEY" ]; then
-  echo "[2/6] Generating application key..."
-  php /app/artisan key:generate --force --no-interaction
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:GENERATE_WITH_artisan_key_generate" ]; then
+  echo "[2/6] WARNING: APP_KEY is empty or using placeholder!"
+  echo "      Generating a new key for you. Please copy and paste this key into your HOST's .env file:"
+  echo ""
+  php /app/artisan key:generate --show --no-interaction
+  echo ""
+  echo "      After updating your HOST's .env, run: docker compose up -d"
+  echo "====================================================="
 else
   echo "[2/6] ✓ APP_KEY already set."
 fi
