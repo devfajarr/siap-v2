@@ -22,12 +22,12 @@ window.Pusher = Pusher;
 
 window.Echo = new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-    forceTLS: false,
-    enabledTransports: ['ws'], // Hanya gunakan WS (non-secure)
+    key: window.reverbConfig?.key || import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: window.reverbConfig?.host || import.meta.env.VITE_REVERB_HOST,
+    wsPort: window.reverbConfig?.port || import.meta.env.VITE_REVERB_PORT || 8080,
+    wssPort: window.reverbConfig?.port || import.meta.env.VITE_REVERB_PORT || 8080,
+    forceTLS: (window.reverbConfig?.scheme ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
     authEndpoint: '/broadcasting/auth',
     auth: {
         headers: {
