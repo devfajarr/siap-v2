@@ -14,6 +14,17 @@ echo " SIAP - Sistem Informasi Akademik POLSA"
 echo " Initializing container..."
 echo "====================================================="
 
+# ---------- Buat .env jika belum ada ----------
+# Laravel membutuhkan file .env untuk artisan commands (key:generate, config:cache, dll).
+# Nilai aktual tetap diambil dari environment variables docker-compose (lebih prioritas).
+if [ ! -f /app/.env ]; then
+    echo "[0/7] .env tidak ditemukan — membuat dari .env.example..."
+    cp /app/.env.example /app/.env
+    echo "  ✓ .env dibuat dari .env.example."
+else
+    echo "[0/7] ✓ .env sudah ada."
+fi
+
 # ---------- Wait for PostgreSQL ----------
 echo "[1/6] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}..."
 until pg_isready -h "${DB_HOST:-db}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-siap_user}" -d "${DB_DATABASE:-siakad}" 2>/dev/null; do
