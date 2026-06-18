@@ -2,13 +2,25 @@
 # SIAP - Sistem Informasi Akademik POLSA
 # Docker Compose: FrankenPHP + PostgreSQL
 # =============================================================================
+#
+# PEMETAAN PORT (Port Forwarding VPS — verified 2026-06-18):
+#   HOST:8200  → app:8000    (Laravel HTTP via FrankenPHP/Caddy)
+#   HOST:8201  → reverb:9000 (Laravel Reverb WebSocket)
+#   HOST:5445  → db:5432     (PostgreSQL — akses DBA, tutup di production)
+#
+# Port-port ini dipilih setelah verifikasi `ss -tunlp` di VPS:
+#   TERPAKAI  : 80,443(Apache), 3306(MySQL), 3307,3366(docker), 5433(docker/siapv2-lama)
+#               8081,8088,8443,8801,8880(docker), 9443(docker), 10000(Webmin)
+#   BEBAS/AMAN: 8200, 8201, 5445  ← digunakan sistem ini
+# =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
   # Service: app (Laravel + FrankenPHP)
   # ---------------------------------------------------------------------------
   # FrankenPHP bertindak sebagai web server (Caddy) sekaligus PHP execution
-  # engine, menghilangkan kebutuhan container terpisah untuk Nginx dan PHP-FPM.
+  # engine. Queue Worker, Scheduler, dan Reverb dikelola oleh Supervisor
+  # yang berjalan sebagai PID 1 di dalam container yang sama.
   # ---------------------------------------------------------------------------
   app:
     build:
@@ -17,26 +29,124 @@ services:
     container_name: siap-app
     restart: unless-stopped
     ports:
-      - "8888:80"
-      - "8843:443"
-    volumes:
-      - ./:/app
+      # HTTP App — akan di-proxy oleh Apache VPS ke domain production
+      # Host port 8200 dipilih: 8081/8088/8443/8801/8880 sudah terpakai docker lain
+      - "${APP_PORT:-8200}:8000"
     environment:
-      APP_NAME: "SIA POLSA"
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://siapv2.polsa.ac.id
+      # -- Application --
+      APP_NAME: "${APP_NAME:-SIA POLSA}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "${APP_KEY}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://siapv2.polsa.ac.id}"
+
+      # -- Database --
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
-      DB_DATABASE: siakad
-      DB_USERNAME: postgres
-      DB_PASSWORD: secret
+      DB_DATABASE: "${DB_DATABASE:-siakad}"
+      DB_USERNAME: "${DB_USERNAME:-siap_user}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+
+      # -- Session / Cache / Queue (menggunakan database PostgreSQL) --
       SESSION_DRIVER: database
+      SESSION_LIFETIME: 120
       QUEUE_CONNECTION: database
       CACHE_STORE: database
-      WA_API_URL: https://wa-api.polsa.ac.id/send-message
-      WA_API_KEY: dhimas
+      CACHE_DRIVER: database
+
+      # -- Broadcasting (Reverb) --
+      BROADCAST_DRIVER: reverb
+      REVERB_APP_ID: "${REVERB_APP_ID}"
+      REVERB_APP_KEY: "${REVERB_APP_KEY}"
+      REVERB_APP_SECRET: "${REVERB_APP_SECRET}"
+      # Reverb dijalankan di service terpisah (container siap-reverb)
+      REVERB_HOST: "${APP_DOMAIN:-siapv2.polsa.ac.id}"
+      REVERB_PORT: "${REVERB_EXTERNAL_PORT:-8201}"
+      REVERB_SCHEME: "${REVERB_SCHEME:-https}"
+      # Server internal Reverb mendengarkan di port 9000 (internal container)
+      REVERB_SERVER_HOST: "0.0.0.0"
+      REVERB_SERVER_PORT: 9000
+
+      # -- External APIs --
+      WA_API_URL: "${WA_API_URL:-https://wa-api.polsa.ac.id/send-message}"
+      WA_API_KEY: "${WA_API_KEY}"
+      FEEDER_API_URL: "${FEEDER_API_URL:-http://121.101.130.140:3003/ws/sandbox2.php}"
+      FEEDER_USERNAME: "${FEEDER_USERNAME}"
+      FEEDER_PASSWORD: "${FEEDER_PASSWORD}"
+      FEEDER_SYNC_BATCH_SIZE: "${FEEDER_SYNC_BATCH_SIZE:-100}"
+      FEEDER_SYNC_DELAY_MS: "${FEEDER_SYNC_DELAY_MS:-200}"
+      FEEDER_MAX_RETRIES: "${FEEDER_MAX_RETRIES:-3}"
+
+      # -- Log --
+      LOG_CHANNEL: stack
+      LOG_LEVEL: "${LOG_LEVEL:-error}"
+
+    volumes:
+      # Storage persisten: logs, uploads, generated files (laporan Excel, dll)
+      - app-storage:/app/storage
+      # Cache bootstrap (opsional, meningkatkan boot time)
+      - app-cache:/app/bootstrap/cache
+
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - siap-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Service: reverb (Laravel Reverb WebSocket Server)
+  # ---------------------------------------------------------------------------
+  # Reverb dijalankan sebagai service terpisah untuk memudahkan scaling
+  # dan port-forwarding independen.
+  # Port internal container: 9000 | Port host VPS: 8201
+  # 8201 bebas konflik — 8081/8088/8801/8880 sudah dipakai container lain di VPS
+  # ---------------------------------------------------------------------------
+  reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siap-reverb
+    restart: unless-stopped
+    # Override entrypoint: jalankan hanya Reverb, bukan full Supervisor stack
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        php /app/artisan reverb:start \
+          --host=0.0.0.0 \
+          --port=9000 \
+          --debug
+    ports:
+      # WebSocket — akan di-proxy Apache VPS (mod_proxy_wstunnel) ke domain
+      # Host port 8201: berdekatan dengan app (8200), semantik jelas, bebas konflik
+      - "${REVERB_PORT:-8201}:9000"
+    environment:
+      APP_NAME: "${APP_NAME:-SIA POLSA}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "${APP_KEY}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://siapv2.polsa.ac.id}"
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: "${DB_DATABASE:-siakad}"
+      DB_USERNAME: "${DB_USERNAME:-siap_user}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      BROADCAST_DRIVER: reverb
+      REVERB_APP_ID: "${REVERB_APP_ID}"
+      REVERB_APP_KEY: "${REVERB_APP_KEY}"
+      REVERB_APP_SECRET: "${REVERB_APP_SECRET}"
+      REVERB_HOST: "${APP_DOMAIN:-siapv2.polsa.ac.id}"
+      REVERB_PORT: "${REVERB_EXTERNAL_PORT:-8201}"
+      REVERB_SCHEME: "${REVERB_SCHEME:-https}"
+      REVERB_SERVER_HOST: "0.0.0.0"
+      REVERB_SERVER_PORT: 9000
     depends_on:
       db:
         condition: service_healthy
@@ -44,36 +154,66 @@ services:
       - siap-network
 
   # ---------------------------------------------------------------------------
-  # Service: db (PostgreSQL)
+  # Service: db (PostgreSQL 16)
   # ---------------------------------------------------------------------------
-  # PostgreSQL 15 Alpine sebagai database engine utama.
+  # PostgreSQL 16 Alpine sebagai database engine utama.
   # Volume db-data memastikan data persisten antar restart container.
+  # Port host 5445 dipilih:
+  #   - 5432: default PostgreSQL (tidak terpakai di host, tapi dihindari)
+  #   - 5433: SUDAH TERPAKAI oleh docker-proxy (container siapv2 lama)
+  #   - 5444: aman, tapi 5445 dipakai agar lebih mudah dibedakan
+  #   - 5445: BEBAS ✓
   # ---------------------------------------------------------------------------
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: siap-db
     restart: unless-stopped
     ports:
-      - "5433:5432"
+      # Port DBA — port 5433 SUDAH TERPAKAI container siapv2 lama di VPS ini
+      # Gunakan 5445. Pertimbangkan hapus baris ini setelah migrasi stabil.
+      - "${DB_PORT:-5445}:5432"
     environment:
-      POSTGRES_DB: siakad
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: "${DB_DATABASE:-siakad}"
+      POSTGRES_USER: "${DB_USERNAME:-siap_user}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=id_ID.utf8 --lc-ctype=id_ID.utf8"
+      # Tuning performa PostgreSQL untuk workload akademik
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
     volumes:
       - db-data:/var/lib/postgresql/data
+      # Script inisialisasi (opsional, dijalankan hanya sekali saat DB kosong)
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d siakad" ]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-siap_user} -d ${DB_DATABASE:-siakad}"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - siap-network
+    command: >
+      postgres
+        -c shared_buffers=256MB
+        -c effective_cache_size=768MB
+        -c maintenance_work_mem=64MB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=4MB
+        -c max_connections=100
+        -c log_min_duration_statement=1000
 
 # =============================================================================
 # Named Volumes
 # =============================================================================
 volumes:
   db-data:
+    driver: local
+  app-storage:
+    driver: local
+  app-cache:
     driver: local
 
 # =============================================================================
@@ -82,3 +222,6 @@ volumes:
 networks:
   siap-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
